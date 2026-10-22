@@ -1,412 +1,621 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<meta name="theme-color" content="#10152b" />
-<title>BEAN ROYALE 3D</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#122047">
+<title>Bean Battle 3D - Fall Race</title>
 <style>
-:root{color-scheme:dark;--ink:#f8fbff;--panel:rgba(13,18,42,.82);--line:rgba(255,255,255,.18);--cyan:#43e7ff;--pink:#ff5e9a;--gold:#ffd45d}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#10152b;color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:none}body{user-select:none;-webkit-user-select:none}canvas{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
-#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(4,7,20,.38) 100%);z-index:1}
-#hud{position:fixed;inset:0;z-index:3;pointer-events:none;display:none}.hudTop{position:absolute;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.pill{border:1px solid var(--line);background:rgba(9,14,35,.72);backdrop-filter:blur(12px);border-radius:14px;padding:9px 12px;box-shadow:0 8px 24px #0002}.hudLeft{display:flex;flex-wrap:wrap;gap:7px;max-width:75%}.smallLabel{font-size:10px;letter-spacing:.13em;color:#aab7d9;text-transform:uppercase}.bigValue{font-weight:900;font-size:15px;line-height:1.25}.timer{font-size:24px;font-weight:1000;font-variant-numeric:tabular-nums;color:#fff}.hudRight{display:flex;gap:8px;align-items:flex-start}.hudRound{min-width:136px}.progressTrack{height:5px;border-radius:8px;background:#ffffff24;overflow:hidden;margin-top:7px}.progressFill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),#a0ffce);border-radius:8px;transition:width .12s}
-#roundNotice{position:absolute;top:22%;left:50%;transform:translateX(-50%);font-size:clamp(20px,4vw,42px);font-weight:1000;letter-spacing:.04em;text-shadow:0 4px 22px #0009;text-align:center;white-space:nowrap;opacity:0;transition:opacity .25s}#roundNotice.show{opacity:1}#noticeSub{display:block;font-size:12px;font-weight:700;letter-spacing:.12em;color:#d2defa;margin-top:4px}
-#help{position:absolute;left:14px;bottom:14px;font-size:11px;line-height:1.6;color:#e3eaff;background:rgba(9,14,35,.56);border:1px solid #ffffff1f;border-radius:12px;padding:9px 12px;max-width:340px}
-#pauseBtn{pointer-events:auto;border:1px solid var(--line);background:rgba(9,14,35,.8);color:white;border-radius:12px;font-size:12px;font-weight:800;padding:11px 13px;cursor:pointer}
-#screen{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,rgba(6,9,25,.24),rgba(6,9,25,.48));}
-.panel{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:linear-gradient(145deg,rgba(24,32,72,.94),rgba(10,15,38,.94));border:1px solid #ffffff30;box-shadow:0 25px 80px #0007,inset 0 1px #ffffff20;border-radius:26px;padding:clamp(20px,5vw,34px);text-align:center;backdrop-filter:blur(18px)}
-.logoMark{width:76px;height:76px;margin:0 auto 12px;border-radius:26px;background:linear-gradient(135deg,#43e7ff,#a274ff 52%,#ff5e9a);display:grid;place-items:center;transform:rotate(-7deg);box-shadow:0 12px 35px #8c62ff45}.beanIcon{position:relative;width:34px;height:45px;border-radius:45% 45% 40% 40%;background:#fff;border:3px solid #d9f7ff;box-shadow:inset -5px -5px #bde9ff}.beanIcon:before,.beanIcon:after{content:"";position:absolute;top:15px;width:5px;height:7px;background:#172148;border-radius:50%}.beanIcon:before{left:7px}.beanIcon:after{right:7px}
-h1{font-size:clamp(30px,7vw,47px);line-height:1;margin:8px 0 10px;letter-spacing:-.05em;font-weight:1000}h1 em{font-style:normal;background:linear-gradient(90deg,#43e7ff,#b09bff,#ff80b4);background-clip:text;-webkit-background-clip:text;color:transparent}.tagline{margin:0 auto 22px;color:#c1cbed;font-size:13px;line-height:1.7;max-width:410px}.featureGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0 20px}.feature{padding:11px 7px;background:#ffffff09;border:1px solid #ffffff15;border-radius:14px}.feature b{display:block;font-size:17px;margin-bottom:4px}.feature span{font-size:10px;color:#b8c5e7}.primaryBtn,.secondaryBtn{border:0;border-radius:14px;font:900 15px system-ui;cursor:pointer;padding:15px 18px;color:#11152e;transition:transform .12s,filter .12s}.primaryBtn{width:100%;background:linear-gradient(90deg,#61edff,#a7ffc5);box-shadow:0 7px 0 #1b8caa,0 12px 25px #35cae333}.primaryBtn:active,.secondaryBtn:active{transform:translateY(2px);filter:brightness(.95)}.secondaryBtn{background:#ffffff12;border:1px solid #ffffff26;color:#f4f7ff;width:100%;margin-top:9px}.tiny{font-size:10px;line-height:1.6;color:#97a6d1;margin-top:14px}
-#resultTitle{font-size:clamp(30px,7vw,48px);font-weight:1000;margin:5px 0 8px}#resultText{font-size:13px;line-height:1.7;color:#c4cfee;margin:0 0 22px}#screen.hidden{display:none}
-#touchControls{position:fixed;inset:0;z-index:4;pointer-events:none;display:none}.stickZone{position:absolute;bottom:max(24px,env(safe-area-inset-bottom));width:132px;height:132px;pointer-events:auto;touch-action:none}.stickZone.left{left:max(14px,env(safe-area-inset-left))}.stickZone.right{right:max(14px,env(safe-area-inset-right))}.stickBase{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#26325b9c,#121a389e);border:1.5px solid #ffffff50;box-shadow:inset 0 0 0 8px #ffffff07,0 8px 28px #0003}.stickKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:linear-gradient(145deg,#f5fbffef,#8ca5d9d9);border:2px solid #fff9;box-shadow:0 5px 14px #0005;transform:translate(0,0)}.stickCaption{position:absolute;width:100%;text-align:center;bottom:-19px;left:0;font-size:10px;letter-spacing:.12em;font-weight:900;color:#ffffffc9;text-shadow:0 2px 4px #000}
-.actionButtons{position:absolute;right:clamp(150px,30vw,190px);bottom:max(25px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;pointer-events:auto}.actionBtn{width:66px;height:66px;border:1.5px solid #ffffff8a;border-radius:50%;background:linear-gradient(145deg,#ffffffd9,#dce7ffb8);box-shadow:0 7px 15px #0004;color:#172044;font-weight:1000;font-size:12px;touch-action:none}.actionBtn.jump{background:linear-gradient(145deg,#bbfff2,#54d6c8);border-color:#e2fffb}.actionBtn.dive{background:linear-gradient(145deg,#ffd3e7,#ff72ab);border-color:#ffe8f2}.actionBtn:active{transform:scale(.94)}
-@media (pointer:coarse),(max-width:800px){#touchControls{display:block}#help{display:none}.hudLeft{max-width:68%}.hudRound{min-width:0}.pill{padding:8px 10px}.smallLabel{font-size:9px}.bigValue{font-size:13px}.timer{font-size:21px}.hudTop{left:8px;right:8px}.actionButtons{right:clamp(142px,31vw,180px)}.stickZone{width:118px;height:118px}.stickKnob{width:50px;height:50px;margin:-25px}}
-@media (max-height:520px){.stickZone{width:98px;height:98px;bottom:10px}.stickKnob{width:44px;height:44px;margin:-22px}.actionButtons{bottom:12px;right:125px;gap:6px}.actionBtn{width:55px;height:55px}.panel{padding:16px 22px}.logoMark{width:52px;height:52px;border-radius:18px}.beanIcon{transform:scale(.75)}.featureGrid{margin:10px 0}.tagline{margin-bottom:10px}}
+  :root{color-scheme:dark;--ink:#f8fbff;--panel:rgba(12,22,53,.86);--cyan:#45e5f5;--pink:#ff5caa;--yellow:#ffe66b}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#75cfff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);touch-action:none;user-select:none}
+  #game{position:fixed;inset:0;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hud{position:absolute;inset:0;pointer-events:none;display:none}
+  .hud-card{position:absolute;top:calc(env(safe-area-inset-top) + 12px);padding:10px 14px;border:1px solid rgba(255,255,255,.2);border-radius:15px;background:rgba(11,20,49,.68);backdrop-filter:blur(8px);box-shadow:0 8px 24px #08122c26;max-width:50vw}
+  #round-card{left:12px;min-width:155px}
+  #alive-card{right:12px;text-align:right;min-width:112px}
+  .tiny{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a9d9ff;font-weight:800}
+  .hud-big{font-size:17px;font-weight:900;line-height:1.2;margin-top:3px}
+  #subinfo{font-size:12px;color:#d4eaff;margin-top:4px}
+  #progress-wrap{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);width:min(32vw,260px);padding:9px 12px;border-radius:15px;background:rgba(11,20,49,.68);border:1px solid #ffffff2b}
+  #progress-label{font-size:11px;font-weight:800;text-align:center;margin-bottom:5px;color:#dff8ff}
+  #progress-track{height:8px;border-radius:99px;background:#ffffff30;overflow:hidden}
+  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#43e8e6,#fff176);border-radius:99px;transition:width .12s}
+  #hint{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 86px);transform:translateX(-50%);padding:7px 12px;border-radius:99px;background:#101a3c9c;font-size:12px;font-weight:700;white-space:nowrap;text-align:center;max-width:88vw}
+  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#08143035,#08143025);}
+  #panel{width:min(570px,100%);max-height:88vh;overflow:auto;text-align:center;padding:clamp(22px,5vw,36px);border:1px solid #ffffff40;border-radius:26px;background:linear-gradient(145deg,rgba(14,27,67,.94),rgba(33,30,82,.92));box-shadow:0 24px 80px #08102b66;backdrop-filter:blur(14px)}
+  .logo-line{font-size:clamp(30px,7vw,56px);font-weight:1000;line-height:.98;letter-spacing:-.055em;text-shadow:0 5px 0 #15265b;margin:0 0 12px}
+  .logo-line span{color:var(--yellow)}
+  .eyebrow{display:inline-block;border:1px solid #ffffff38;border-radius:99px;padding:6px 11px;font-size:11px;font-weight:900;letter-spacing:.12em;color:#9cefff;margin-bottom:14px}
+  #panel h2{font-size:clamp(23px,5vw,33px);line-height:1.1;margin:3px 0 10px}
+  #panel p{color:#dce9ff;line-height:1.65;margin:8px 0 16px;font-size:14px}
+  .rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:18px 0;text-align:left}
+  .rule{padding:11px;border-radius:13px;background:#ffffff0c;border:1px solid #ffffff19;font-size:12px;color:#dce9ff;line-height:1.5}
+  .rule b{display:block;color:#fff;font-size:13px;margin-bottom:3px}
+  button{font:inherit;border:0;cursor:pointer;touch-action:manipulation}
+  .main-btn{width:100%;padding:15px 20px;border-radius:15px;font-size:17px;font-weight:1000;color:#171f45;background:linear-gradient(135deg,#fff27a,#ffbd62);box-shadow:0 5px 0 #b77636;transition:transform .12s,filter .12s;margin-top:5px}
+  .main-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b77636}
+  .secondary{background:#ffffff16;color:#fff;box-shadow:none;border:1px solid #ffffff2e;margin-top:12px}
+  .pill-row{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:13px 0 18px}
+  .pill{padding:7px 10px;border-radius:99px;background:#ffffff12;border:1px solid #ffffff20;color:#eff7ff;font-size:12px;font-weight:800}
+  #touch-controls{display:none;position:absolute;inset:0;pointer-events:none}
+  #stick-base{position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;background:#0e184a48;border:2px solid #ffffff67;box-shadow:inset 0 0 20px #ffffff10;pointer-events:auto;touch-action:none}
+  #stick-knob{position:absolute;width:57px;height:57px;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(145deg,#ffffffde,#a9d5ffb8);border:2px solid #fff;box-shadow:0 5px 15px #09153673;pointer-events:none}
+  .touch-btn{position:absolute;right:max(22px,env(safe-area-inset-right));width:76px;height:76px;border-radius:50%;font-weight:1000;font-size:14px;color:#121b44;border:3px solid #ffffffc7;box-shadow:0 6px 0 #20275d99,0 8px 18px #0915364d;pointer-events:auto;touch-action:none}
+  #jump-btn{bottom:max(30px,env(safe-area-inset-bottom));background:linear-gradient(135deg,#fff27a,#ffc261)}
+  #dive-btn{bottom:calc(max(30px,env(safe-area-inset-bottom)) + 88px);right:max(31px,env(safe-area-inset-right));width:64px;height:64px;background:linear-gradient(135deg,#77fff4,#56b5ff);font-size:12px}
+  #toast{position:absolute;left:50%;top:35%;transform:translate(-50%,-50%) scale(.9);opacity:0;padding:12px 18px;background:#101a3ee8;border:1px solid #ffffff3b;border-radius:14px;font-weight:900;text-align:center;pointer-events:none;transition:opacity .2s,transform .2s;max-width:85vw}
+  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  @media (pointer:coarse){#touch-controls{display:block}#hint{top:auto;bottom:calc(max(28px,env(safe-area-inset-bottom)) + 150px);font-size:11px;white-space:normal;width:max-content;max-width:48vw;left:50%;}#progress-wrap{top:calc(env(safe-area-inset-top) + 82px);width:min(45vw,220px)}#round-card,#alive-card{top:calc(env(safe-area-inset-top) + 10px)}}
+  @media (max-width:520px){#round-card{min-width:0;max-width:42vw;padding:8px 10px}#alive-card{min-width:0;padding:8px 10px}.hud-big{font-size:14px}#subinfo{font-size:10px}.tiny{font-size:9px}#progress-wrap{padding:7px 9px}#progress-label{font-size:10px}.rules{gap:7px}.rule{padding:9px;font-size:11px}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 </head>
 <body>
-<div id="vignette"></div>
-<div id="hud">
-  <div class="hudTop">
-    <div class="hudLeft">
-      <div class="pill hudRound"><div class="smallLabel" id="stageLabel">ROUND 1 / 4</div><div class="bigValue" id="roundName">スカイダッシュ</div><div class="progressTrack"><div class="progressFill" id="progressFill"></div></div></div>
-      <div class="pill"><div class="smallLabel">残りプレイヤー</div><div class="bigValue" id="aliveLabel">33 / 33</div></div>
-      <div class="pill"><div class="smallLabel">目標</div><div class="bigValue" id="objectiveLabel">ゴールへ走れ！</div></div>
+<div id="game">
+  <div id="hud">
+    <div id="round-card" class="hud-card"><div class="tiny" id="stage-kicker">ROUND 1 / 4</div><div class="hud-big" id="stage-name">スライム・ラン</div><div id="subinfo">ゴールまで走れ！</div></div>
+    <div id="progress-wrap"><div id="progress-label">ゴールまで</div><div id="progress-track"><div id="progress-fill"></div></div></div>
+    <div id="alive-card" class="hud-card"><div class="tiny">まだ残ってる</div><div class="hud-big" id="alive-number">33 人</div><div id="subinfo">BOT 32体</div></div>
+    <div id="hint">移動：WASD / 矢印　ジャンプ：Space　ダイブ：Shift</div>
+  </div>
+  <div id="touch-controls">
+    <div id="stick-base"><div id="stick-knob"></div></div>
+    <button id="jump-btn" class="touch-btn" aria-label="ジャンプ">JUMP</button>
+    <button id="dive-btn" class="touch-btn" aria-label="ダイブ">DIVE</button>
+  </div>
+  <div id="toast"></div>
+  <div id="overlay"><div id="panel">
+    <div class="eyebrow">3D PARTY RACE</div>
+    <h1 class="logo-line">BEAN <span>BATTLE</span></h1>
+    <p>32体のBotと勝ち抜け！ ランダムに選ばれる3つの予選を突破して、ファイナルでクラウンをつかもう。</p>
+    <div class="pill-row"><span class="pill">3Dコース</span><span class="pill">ジャンプ＆ダイブ</span><span class="pill">全4ラウンド</span><span class="pill">毎回ランダム選出</span></div>
+    <div class="rules">
+      <div class="rule"><b>📱 スマホ</b>左スティックで移動。右のJUMP / DIVEでアクション。</div>
+      <div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div>
+      <div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div>
+      <div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div>
     </div>
-    <div class="hudRight"><div class="pill"><div class="smallLabel">TIME</div><div class="timer" id="timerLabel">45</div></div><button id="pauseBtn" type="button">一時停止</button></div>
-  </div>
-  <div id="roundNotice">READY!<span id="noticeSub">3・2・1・GO!</span></div>
-  <div id="help">移動：WASD / 矢印キー　ジャンプ：Space　ダイブ：Shift<br>視点：マウスドラッグ　※ゴールや障害物をよく見て進もう</div>
+    <p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p>
+    <button id="start-btn" class="main-btn">ゲームスタート！</button>
+  </div></div>
 </div>
-<div id="touchControls">
-  <div class="stickZone left" id="moveStick" aria-label="移動スティック"><div class="stickBase"></div><div class="stickKnob" id="moveKnob"></div><div class="stickCaption">MOVE</div></div>
-  <div class="stickZone right" id="lookStick" aria-label="視点操作スティック"><div class="stickBase"></div><div class="stickKnob" id="lookKnob"></div><div class="stickCaption">LOOK</div></div>
-  <div class="actionButtons"><button class="actionBtn jump" id="jumpBtn" type="button">JUMP</button><button class="actionBtn dive" id="diveBtn" type="button">DIVE</button></div>
-</div>
-<div id="screen">
-  <div class="panel" id="introPanel">
-    <div class="logoMark"><div class="beanIcon"></div></div>
-    <h1><em>BEAN ROYALE</em><br>3D</h1>
-    <p class="tagline">走って、跳んで、ダイブ！<br>ランダムなステージを勝ち抜いて、最後の1人を目指そう。</p>
-    <div class="featureGrid"><div class="feature"><b>32 BOT</b><span>自分を含め33人</span></div><div class="feature"><b>3 + FINAL</b><span>予選3回と決勝</span></div><div class="feature"><b>RANDOM</b><span>毎回違うラウンド</span></div></div>
-    <button class="primaryBtn" id="startBtn" type="button">レース開始！</button>
-    <p class="tiny">PC：WASD / 矢印・Space・Shift・マウスドラッグ<br>スマホ：左スティックで移動、右スティックで視点、JUMP / DIVE<br>※3D描画ライブラリの読み込みにインターネット接続が必要</p>
-  </div>
-  <div class="panel" id="intermissionPanel" hidden>
-    <div class="logoMark"><div class="beanIcon"></div></div><div class="smallLabel" id="intermissionKicker">QUALIFIED</div>
-    <div id="resultTitle">ROUND CLEAR!</div><p id="resultText">次のラウンドへ進もう！</p>
-    <button class="primaryBtn" id="nextBtn" type="button">次のラウンドへ</button><button class="secondaryBtn" id="menuBtnA" type="button">最初からやり直す</button>
-  </div>
-  <div class="panel" id="gameOverPanel" hidden>
-    <div class="logoMark"><div class="beanIcon"></div></div><div class="smallLabel" id="gameOverKicker">GAME OVER</div>
-    <div id="gameOverTitle">おしい！</div><p id="gameOverText">もう一度チャレンジしよう。</p>
-    <button class="primaryBtn" id="retryBtn" type="button">もう一度プレイ</button><button class="secondaryBtn" id="menuBtnB" type="button">タイトルへ戻る</button>
-  </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-(() => {
-'use strict';
-const $ = (id) => document.getElementById(id);
-const ui = {
-  screen:$('screen'), intro:$('introPanel'), intermission:$('intermissionPanel'), gameOver:$('gameOverPanel'),
-  hud:$('hud'), touch:$('touchControls'), start:$('startBtn'), next:$('nextBtn'), retry:$('retryBtn'),
-  menuA:$('menuBtnA'), menuB:$('menuBtnB'), pause:$('pauseBtn'), stage:$('stageLabel'), round:$('roundName'),
-  alive:$('aliveLabel'), objective:$('objectiveLabel'), timer:$('timerLabel'), progress:$('progressFill'), notice:$('roundNotice'), noticeSub:$('noticeSub'),
-  interKicker:$('intermissionKicker'), resultTitle:$('resultTitle'), resultText:$('resultText'),
-  overKicker:$('gameOverKicker'), overTitle:$('gameOverTitle'), overText:$('gameOverText')
-};
-if (!window.THREE) {
-  ui.intro.innerHTML = '<h1>3Dエンジンを読み込めなかった</h1><p class="tagline">インターネットに接続してページを再読み込みしてね。</p><button class="primaryBtn" onclick="location.reload()">再読み込み</button>';
-  return;
-}
-const THREE = window.THREE;
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111832);
-scene.fog = new THREE.Fog(0x111832, 32, 145);
-const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.1, 260);
-const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
-renderer.setSize(innerWidth, innerHeight);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
-document.body.insertBefore(renderer.domElement, document.body.firstChild);
-renderer.domElement.id = 'gameCanvas';
-const ambient = new THREE.HemisphereLight(0xc5dcff, 0x463c72, 2.05); scene.add(ambient);
-const sun = new THREE.DirectionalLight(0xffffff, 2.1); sun.position.set(-14,28,-6); scene.add(sun);
-const fill = new THREE.DirectionalLight(0x7c89ff, .8); fill.position.set(12,10,24); scene.add(fill);
-const arenaGroup = new THREE.Group(); scene.add(arenaGroup);
-const actorGroup = new THREE.Group(); scene.add(actorGroup);
-const menuGroup = new THREE.Group(); scene.add(menuGroup);
-const mats = {};
-function mat(color, roughness=.72, metalness=0){const k=color+'|'+roughness+'|'+metalness;if(!mats[k]) mats[k]=new THREE.MeshStandardMaterial({color,roughness,metalness});return mats[k];}
-function mesh(geometry, material, x=0,y=0,z=0, parent=arenaGroup){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m;}
-function box(w,h,d,color,x,y,z,parent=arenaGroup){return mesh(new THREE.BoxGeometry(w,h,d),mat(color),x,y,z,parent);}
-function cylinder(rt,rb,h,color,x,y,z,parent=arenaGroup,radial=12){return mesh(new THREE.CylinderGeometry(rt,rb,h,radial),mat(color),x,y,z,parent);}
-const roundTypes = [
- {id:'sky',name:'スカイダッシュ',kind:'race',desc:'穴をジャンプで飛び越えてゴール！',goal:'ゴールへ走れ！',time:48,color:0x47d8f6,gaps:[[23,27],[47,51],[70,74]],obstacles:'blocks'},
- {id:'hammer',name:'ハンマーパス',kind:'race',desc:'回転ハンマーをよけて駆け抜けろ！',goal:'ハンマーをよけてゴール！',time:48,color:0xffb45d,gaps:[],obstacles:'hammers'},
- {id:'zigzag',name:'ジグザグ・ゲート',kind:'race',desc:'壁のすき間を抜けて最後まで走ろう。',goal:'すき間を抜けてゴール！',time:48,color:0x9c85ff,gaps:[[54,58]],obstacles:'zigzag'},
- {id:'hurdles',name:'ジャンプゲート',kind:'race',desc:'低い壁をジャンプで越えよう！',goal:'壁を越えてゴール！',time:48,color:0xff78b4,gaps:[[42,46]],obstacles:'hurdles'},
- {id:'sweep',name:'スイーパーパニック',kind:'survival',desc:'回転する棒に当たらないように生き残れ！',goal:'落ちずに生き残れ！',time:48,color:0x43e7ff},
- {id:'tiles',name:'消えるタイル',kind:'survival',desc:'床が消えていく！落ちないタイルを探そう。',goal:'床から落ちるな！',time:48,color:0x82ffba},
- {id:'doubleSweep',name:'ダブルスイーパー',kind:'survival',desc:'2本の回転棒をよけながら生き残ろう。',goal:'2本の棒をよけろ！',time:48,color:0xff8cc4}
-];
-const finalTypes = [
- {id:'crown',name:'クラウン・ラッシュ',kind:'race',desc:'最後のゴールを先に駆け抜けて王冠をつかめ！',goal:'王冠へ急げ！',time:42,color:0xffd45d,gaps:[[25,29],[49,53]],obstacles:'hammers',final:true},
- {id:'finalSweep',name:'ラスト・スイーパー',kind:'survival',desc:'最後の1人になるまで回転棒をよけ続けろ！',goal:'最後の1人になれ！',time:48,color:0xff6d9d,final:true},
- {id:'finalTiles',name:'ラスト・タイル',kind:'survival',desc:'床が消えていく最終決戦！最後まで落ちるな。',goal:'最後の1人になれ！',time:48,color:0x8c79ff,final:true}
-];
-let phase='menu', paused=false, stageIndex=0, roundDef=null, roundTime=0, roundElapsed=0, roundStarting=0, currentQuota=24;
-let roster=[], actors=[], player=null, colliders=[], floors=[], gaps=[], hazards=[], tiles=[], tileTimer=0, tileCursor=0, lastHud=0, menuClock=0, mouseDragging=false, lastMouseX=0,lastMouseY=0;
-let yaw=0,pitch=.18;
-const moveInput={x:0,y:0}, lookInput={x:0,y:0};
-let jumpQueued=false,diveQueued=false;
+
+const $ = (s)=>document.querySelector(s);
+const gameEl=$('#game'), overlay=$('#overlay'), panel=$('#panel'), hud=$('#hud');
+const stageNameEl=$('#stage-name'), stageKickerEl=$('#stage-kicker'), subInfoEl=$('#subinfo');
+const aliveNumberEl=$('#alive-number'), progressFill=$('#progress-fill'), progressLabel=$('#progress-label');
+const toastEl=$('#toast');
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x7ed4ff);
+scene.fog=new THREE.Fog(0x7ed4ff,48,145);
+const camera=new THREE.PerspectiveCamera(63,window.innerWidth/window.innerHeight,.1,350);
+camera.position.set(0,8,12);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled=false;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+gameEl.prepend(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xeaf9ff,0x5c6597,2.0));
+const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-15,28,18);scene.add(sun);
+const fillLight=new THREE.DirectionalLight(0xffc9ef,.75);fillLight.position.set(18,10,-25);scene.add(fillLight);
+let world=new THREE.Group();scene.add(world);
 const clock=new THREE.Clock();
-const palette=[0xff6584,0x62d8ff,0xffca5c,0xb19aff,0x69edbd,0xff8dcd,0x93b9ff,0xff8b55,0xe8f4ff,0x96edff,0xf28cff,0xb2ff70];
-function clearGroup(g){while(g.children.length){const c=g.children.pop();if(c.geometry)c.geometry.dispose();if(c.material && !Array.isArray(c.material) && !Object.values(mats).includes(c.material))c.material.dispose();}}
-function clearRound(){for(const a of actors){actorGroup.remove(a.group);a.group.traverse(o=>{if(o.geometry)o.geometry.dispose();});}actors=[];player=null;clearGroup(arenaGroup);colliders=[];floors=[];gaps=[];hazards=[];tiles=[];}
-function addFloor(x,z,w,d,color,y=0){const m=box(w,.6,d,color,x,y-.3,z);m.receiveShadow=false;floors.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2,y,mesh:m});return m;}
-function addPlatformDecor(x,z,w,d,color){box(w,.12,d,color,x,.08,z);}
-function addWall(x,z,w,d,h,color,solid=true){const m=box(w,h,d,color,x,h/2,z);if(solid)colliders.push({x,z,w,d,h,mesh:m});return m;}
-function addHazard(cx,cz,length,width,color,angle=0){const pivot=new THREE.Group();pivot.position.set(cx,.78,cz);pivot.rotation.y=angle;arenaGroup.add(pivot);const beam=box(length,.48,width,color,0,0,0,pivot);cylinder(.9,.9,.8,0xffffff,0,0,0,pivot,16);hazards.push({pivot,cx,cz,length,width,spin:1.05+Math.random()*.55,beam});return pivot;}
-function addGap(a,b){gaps.push([a,b]);}
-function addDecorTrack(finishZ,color){
-  for(let z=-10;z<finishZ+8;z+=8){box(17,.12,.12,0xffffff,z===-999?0:0,.055,z);}
+
+const raceRounds=[
+ {id:'slime',name:'スライム・ラン',desc:'動く障害物をかわしてゴールへ！',type:'mover'},
+ {id:'spin',name:'スピン・ラッシュ',desc:'回転バーのタイミングを見切れ！',type:'beam'},
+ {id:'hammer',name:'ハンマー・アレー',desc:'巨大ハンマーに飛ばされるな！',type:'hammer'},
+ {id:'balls',name:'ボール・ラン',desc:'横切るボールをよけて進め！',type:'ball'},
+ {id:'pipes',name:'パイプ・スプリント',desc:'低い障害物はジャンプで越えろ！',type:'barrier'},
+ {id:'walls',name:'ウォール・バウンス',desc:'壁のすき間を見つけて突破！',type:'wall'},
+ {id:'mix',name:'カオス・コース',desc:'いろいろな障害物が待っている！',type:'mix'}
+];
+const finalRounds=[
+ {id:'jump',name:'ジャンプ・ショーダウン',desc:'回転するバーを避けて最後まで生き残れ！',type:'jump'},
+ {id:'hex',name:'ヘキサゴン・サバイバル',desc:'踏んだタイルは消える。足場を探せ！',type:'hex'},
+ {id:'block',name:'ブロック・パーティー',desc:'迫ってくる壁を避けて生き残れ！',type:'block'},
+ {id:'crown',name:'クラウン・マウンテン',desc:'障害物を越え、誰よりも早くクラウンへ！',type:'crown'}
+];
+const QUALIFY=[24,16,8];
+const COLORS=[0xff6688,0x35d6d0,0xffc94e,0x9b7bff,0x79e05b,0xff8c42,0x56a8ff,0xf17dce,0xffe9a5,0x76f1a0,0xd8ecff,0xb4a2ff];
+let bots=Array.from({length:32},(_,i)=>({id:'bot'+i,color:COLORS[i%COLORS.length],alive:true,botIndex:i,phase:Math.random()*10,baseLane:0,finished:false,finishTime:null,speed:5.2+Math.random()*2.45,aiTimer:Math.random()*1.5,aiX:0,aiZ:0,hitCooldown:0}));
+let player={id:'player',color:0xffe760,alive:true,isPlayer:true,finished:false,finishTime:null,speed:9.0,phase:0,hitCooldown:0};
+let state='menu', roundIndex=0, chosenRaces=[], chosenFinal=null, currentRound=null, isFinalRace=false;
+let elapsed=0, stageTime=0, finishTarget=24, finishers=0, survivalElimTimer=6.2, lastHud=0;
+let obstacles=[], tiles=[], tileMap=new Map(), stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
+let joystick={active:false,id:null,x:0,y:0};
+let cameraLook=new THREE.Vector3(0,0,0), desiredCamera=new THREE.Vector3();
+
+function mat(color,roughness=.65,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
+function box(parent,w,h,d,color,x,y,z,extra={}){
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color,extra.roughness??.68,extra.metalness??0));
+ mesh.position.set(x,y,z);if(extra.rotationY)mesh.rotation.y=extra.rotationY;parent.add(mesh);return mesh;
+}
+function sphere(parent,r,color,x,y,z,segments=14){const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,Math.max(8,Math.floor(segments*.7))),mat(color,.55));m.position.set(x,y,z);parent.add(m);return m;}
+function addWorld(mesh){world.add(mesh);return mesh;}
+function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();worldActors=[];}
+function makeBean(actor){
+ const group=new THREE.Group();
+ const visual=new THREE.Group();visual.position.y=1.02;group.add(visual);
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(.54,.68,5,12),mat(actor.color,.5,.02));visual.add(body);
+ const belly=new THREE.Mesh(new THREE.SphereGeometry(.32,14,10),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.8,transparent:true,opacity:.12}));belly.position.set(0,-.15,-.43);belly.scale.set(1,.8,.25);visual.add(belly);
+ for(const ex of [-.16,.16]){
+   const eye=sphere(visual,.105,0xffffff,ex,.15,-.473,12);eye.scale.set(.82,1.05,.5);
+   const pupil=sphere(visual,.052,0x17203d,ex+.012,.145,-.518,10);pupil.scale.set(.8,1,.45);
+   sphere(visual,.018,0xffffff,ex-.012,.17,-.54,8);
+ }
+ const footRing=new THREE.Mesh(new THREE.TorusGeometry(.42,.055,6,20),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.38}));footRing.rotation.x=Math.PI/2;footRing.position.y=.06;group.add(footRing);
+ group.userData.visual=visual;group.userData.footRing=footRing;
+ actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.jumpLock=0;actor.hitCooldown=0;
+ world.add(group);return group;
+}
+function resetActorForRound(actor,x,z){
+ actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.visual.rotation.set(0,0,0);actor.group.visible=true;
+}
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function pickGameRounds(){chosenRaces=shuffle(raceRounds).slice(0,3);chosenFinal=finalRounds[Math.floor(Math.random()*finalRounds.length)];}
+function allAliveBots(){return bots.filter(b=>b.alive);}
+function currentActors(){return [player,...allAliveBots()];}
+function setOverlay(html){panel.innerHTML=html;overlay.style.display='flex';}
+function hideOverlay(){overlay.style.display='none';}
+function toast(text){toastEl.textContent=text;toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),1200);}
+function showMenu(){state='menu';hud.style.display='none';$('#touch-controls').style.display='none';overlay.style.display='flex';setOverlay(`<div class="eyebrow">3D PARTY RACE</div><h1 class="logo-line">BEAN <span>BATTLE</span></h1><p>32体のBotと勝ち抜け！ ランダムに選ばれる3つの予選を突破して、ファイナルでクラウンをつかもう。</p><div class="pill-row"><span class="pill">3Dコース</span><span class="pill">ジャンプ＆ダイブ</span><span class="pill">全4ラウンド</span><span class="pill">毎回ランダム選出</span></div><div class="rules"><div class="rule"><b>📱 スマホ</b>左スティックで移動。右のJUMP / DIVEでアクション。</div><div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div><div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div><div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div></div><p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p><button id="start-btn" class="main-btn">ゲームスタート！</button>`);
+ $('#start-btn').addEventListener('click',startGame,{once:true});
+}
+function buildCourse(stage){
+ newWorld();stageBounds={kind:'race'};
+ const length=100, centerZ=-5;
+ box(world,23,.9,length,0x4b60a3,0,-.5,centerZ);
+ box(world,21.5,.045,length,0x6178bf,0,-.025,centerZ);
+ // soft color strips along the track
+ for(let z=36;z>=-48;z-=5){box(world,21.35,.025,.18,(Math.round(z/5)%2===0)?0x8fe9f0:0x8aa5ed,0,.012,z);}
+ box(world,.42,.85,length,0x263b7c,-11.38,.32,centerZ);box(world,.42,.85,length,0x263b7c,11.38,.32,centerZ);
+ for(const side of [-1,1]){
+   for(let z=34;z>-46;z-=8){box(world,.55,2.4,.55,side<0?0xff83c4:0x62f0e8,side*11.05,1.1,z);}
+ }
+ // start and finish lines
+ box(world,21.2,.04,.7,0xfbf1a1,0,.035,31.5);
+ box(world,21.2,.05,.8,0xffdf59,0,.04,-43.7);
+ for(let x=-9.5;x<=9.5;x+=1.9){box(world,.75,.055,.82,0xffffff,x,.075,-43.7);}
+ // finish arch + crown marker
+ box(world,.55,4.2,.55,0xffcf4f,-9.5,2.05,-43.5);box(world,.55,4.2,.55,0xffcf4f,9.5,2.05,-43.5);box(world,19.5,.5,.65,0xffcf4f,0,4.1,-43.5);
+ const crown=new THREE.Mesh(new THREE.TorusGeometry(.7,.2,8,18),mat(0xffef75,.3,.45));crown.position.set(0,4.9,-43.5);world.add(crown);crown.rotation.x=Math.PI/2;
+ // colorful side decorations and floating flags
+ for(let i=0;i<15;i++){
+  const z=28-i*5.2;
+  const colors=[0xff6ab0,0x66f3e4,0xffd85a,0x9a8aff];
   for(const side of [-1,1]){
-    box(.4,.8,finishZ+25,color,side*9,.1,(finishZ-12)/2);
-    for(let z=0;z<finishZ;z+=10){cylinder(.16,.16,1.15,0xdbeeff,side*8.6,.6,z,arenaGroup,8);}
+   const pole=box(world,.13,2.8,.13,0xf4f7ff,side*13,1.4,z);
+   const flag=box(world,1.35,.7,.12,colors[(i+(side===1?1:0))%colors.length],side*12.65,2.35,z);
+   flag.rotation.y=side*-.1;
   }
+ }
+ const isCrown=stage.type==='crown';
+ const zones=isCrown?[-1,-13,-25]:[17,3,-11,-25,-35];
+ zones.forEach((z,i)=>{
+  let kind=stage.type;
+  if(kind==='mix')kind=['mover','beam','ball','barrier','wall'][i%5];
+  if(kind==='mover')addMover(z,3.2+(i%2)*.6,1.8,1.2,1.3+i*.13,5.8,(i%2)*Math.PI);
+  else if(kind==='beam')addRotatingBeam(z,18,1.1+(i%3)*.23,0.88,0x55f4e5);
+  else if(kind==='hammer')addHammer(z,i);
+  else if(kind==='ball')addRollingBall(z,1.05,1.0+i*.12,6.7,(i%2)*Math.PI);
+  else if(kind==='barrier')addBarrierSet(z,i);
+  else if(kind==='wall')addWallGate(z,i);
+ });
+ // checkpoints are only visual, the player is respawned at the nearest one after a knock-off
+ for(const z of [8,-6,-20,-32]){
+  box(world,20.8,.025,.16,0x7af8f2,0,.04,z);
+ }
+ // distant candy-colored skyline
+ for(let i=0;i<35;i++){
+  const x=(i%2===0?-1:1)*(15+Math.random()*22),z=35-Math.random()*88,h=3+Math.random()*13,w=2+Math.random()*5;
+  const building=box(world,w,h,w,[0x5a78c2,0x7d68bd,0x65b9d5,0xff9ecb][i%4],x,h/2-1,z);
+  building.material.transparent=true;building.material.opacity=.65;
+ }
 }
-function buildRace(def){
-  const finishZ=def.id==='crown'?82:94;roundDef.finishZ=finishZ;
-  const allGaps=(def.gaps||[]).slice();
-  let cursor=-14;
-  for(const [a,b] of allGaps){if(a>cursor)addFloor(0,(cursor+a)/2,18,a-cursor,def.color);cursor=b;}
-  if(cursor<finishZ+9)addFloor(0,(cursor+finishZ+9)/2,18,finishZ+9-cursor,def.color);
-  addDecorTrack(finishZ,def.color);
-  // Bright runway strips and starting/finishing gates.
-  for(const side of [-1,1]){
-    box(.2,.06,finishZ+22,0xffffff,side*7.5,.04,(finishZ-10)/2);
-    for(let z=8;z<finishZ;z+=16)box(14,.03,.12,0xffffff,0,.07,z);
+function addRotatingBeam(z,length,speed,y,color=0x5af4e3,phase=0){
+ const pivot=new THREE.Group();pivot.position.set(0,y,z);pivot.rotation.y=phase;world.add(pivot);
+ const bar=box(pivot,length,.42,.78,color,0,0,0,{metalness:.1});
+ const end1=sphere(pivot,.48,0xffe66b,-length/2,0,0,12),end2=sphere(pivot,.48,0xffe66b,length/2,0,0,12);
+ obstacles.push({kind:'beam',mesh:pivot,bar,length,speed,phase,y,z,x:0});
+}
+function addHammer(z,i){
+ const pivot=new THREE.Group();pivot.position.set((i%2===0?-5.5:5.5),1.25,z);world.add(pivot);
+ const bar=box(pivot,8,.48,.7,0xff7a9e,0,0,0);sphere(pivot,.82,0xffd76a,4,0,.02,14);sphere(pivot,.24,0xffffff,4.25,.18,-.26,10);
+ obstacles.push({kind:'hammer',mesh:pivot,bar,length:8,speed:(i%2===0?1:-1)*(1.15+i*.08),phase:i*1.8,y:1.25,z,x:pivot.position.x});
+}
+function addMover(z,w,h,d,speed,amp,phase=0){
+ const mesh=box(world,w,h,d,0xff78a7,0,h/2,z,{metalness:.08});
+ const cap=box(world,w*.65,.16,d*.9,0xffc5de,0,h+.02,z);
+ obstacles.push({kind:'mover',mesh,cap,width:w,height:h,depth:d,speed,amp,phase,z,x:0});
+}
+function addRollingBall(z,r,speed,amp,phase=0){
+ const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),mat(0xffcc51,.35,.05));mesh.position.set(0,r+.1,z);world.add(mesh);
+ const stripe=new THREE.Mesh(new THREE.TorusGeometry(r*.78,.09,6,18),mat(0xff6c9d));stripe.rotation.x=Math.PI/2;mesh.add(stripe);
+ obstacles.push({kind:'ball',mesh,r,speed,amp,phase,z,x:0});
+}
+function addBarrierSet(z,i){
+ const gap=(i%2===0?-4.4:4.4);const width=10.4;
+ for(const side of [-1,1]){
+  const center=gap+side*(width/2+.5);
+  const m=box(world,width,.9,.7,0x8b8bff,center,.45,z);
+  obstacles.push({kind:'barrier',mesh:m,width,height:.9,depth:.7,x:center,z});
+ }
+}
+function addWallGate(z,i){
+ const gap=(i%2===0?-5.4:5.4);const width=11.2;
+ for(const side of [-1,1]){
+  const center=gap+side*(width/2);
+  const m=box(world,width,3.1,1.05,0x72d7f7,center,1.55,z);
+  box(m,1,1,1,0xffffff,0,0,0); // small decorative center highlight inside the gate block
+  obstacles.push({kind:'wallblock',mesh:m,width,height:3.1,depth:1.05,x:center,z});
+ }
+}
+function distPointSegment(px,pz,x1,z1,x2,z2){
+ const dx=x2-x1,dz=z2-z1,den=dx*dx+dz*dz;
+ let t=den?((px-x1)*dx+(pz-z1)*dz)/den:0;t=Math.max(0,Math.min(1,t));
+ const x=x1+t*dx,z=z1+t*dz;return Math.hypot(px-x,pz-z);
+}
+function obstacleHit(actor,o){
+ if(!actor.group||actor.hitCooldown>0||!actor.alive)return false;
+ const p=actor.group.position;let hit=false,nx=0,nz=0;
+ if(o.kind==='beam'||o.kind==='hammer'){
+  const angle=o.mesh.rotation.y;const dx=Math.cos(angle)*o.length/2,dz=-Math.sin(angle)*o.length/2;
+  const dist=distPointSegment(p.x,p.z,o.mesh.position.x-dx,o.z-dz,o.mesh.position.x+dx,o.z+dz);
+  const vertical=(p.y+1.0>o.y-.45&&p.y+0.1<o.y+.45);
+  if(dist<.82&&vertical){hit=true;const d=Math.max(.01,Math.hypot(p.x-o.mesh.position.x,p.z-o.z));nx=(p.x-o.mesh.position.x)/d;nz=(p.z-o.z)/d;}
+ }else if(o.kind==='ball'){
+  const dx=p.x-o.mesh.position.x,dz=p.z-o.z,d=Math.hypot(dx,dz);
+  if(d<o.r+.62&&p.y<1.2){hit=true;nx=dx/(d||1);nz=dz/(d||1);}
+ }else{
+  const dx=p.x-o.mesh.position.x,dz=p.z-o.z;
+  const vertical=(p.y+1.65>o.mesh.position.y-o.height/2&&p.y<o.mesh.position.y+o.height/2+.1);
+  if(Math.abs(dx)<(o.width||1)/2+.48&&Math.abs(dz)<(o.depth||1)/2+.5&&vertical){hit=true;const d=Math.hypot(dx,dz)||1;nx=dx/d;nz=dz/d;}
+ }
+ if(hit){actor.hitCooldown=.62;actor.vx+=nx*7.8;actor.vz+=nz*7.8;actor.vy=Math.max(actor.vy,4.2);if(actor.isPlayer)toast('ぶつかった！ 体勢を立て直せ！');return true;}
+ return false;
+}
+function updateObstacles(dt){
+ for(const o of obstacles){
+  if(o.kind==='beam'||o.kind==='hammer'){
+   o.mesh.rotation.y+=o.speed*dt;
+  }else if(o.kind==='mover'){
+   o.x=Math.sin(stageTime*o.speed+o.phase)*o.amp;o.mesh.position.x=o.x;o.cap.position.x=o.x;
+  }else if(o.kind==='ball'){
+   o.x=Math.sin(stageTime*o.speed+o.phase)*o.amp;o.mesh.position.x=o.x;o.mesh.rotation.x+=dt*o.speed*2;o.mesh.rotation.z+=dt*o.speed;
   }
-  addWall(-7.4, -7, .25,2,1.7,0xeff7ff,false); addWall(7.4,-7,.25,2,1.7,0xeff7ff,false);
-  if(def.obstacles==='blocks'){
-    addWall(-3.2,16,3.8,1.8,1.25,0xff719f);addWall(3.4,16,3.7,1.8,1.25,0x4de2f1);
-    addWall(0,38,4.4,1.8,1.3,0xffd45d);addWall(-3.5,61,3.8,1.8,1.4,0x9d82ff);addWall(3.6,84,3.5,1.8,1.25,0x78edb4);
-  } else if(def.obstacles==='hammers'){
-    addHazard(0,25,13,1.15,0xff669d,.2);addHazard(0,52,13,1.15,0xffd45d,1.2);addHazard(0,76,13,1.15,0x9e86ff,.7);
-    for(const z of [13,40,66]){cylinder(.7,.7,1.15,0xf6fbff,0,.6,z,arenaGroup,12);}
-  } else if(def.obstacles==='zigzag'){
-    addWall(-4.6,15,7.2,1.8,2.4,0xff7eae);addWall(4.5,29,7.4,1.8,2.4,0x5de1ff);addWall(-4.6,43,7.2,1.8,2.4,0xb49cff);addWall(4.5,68,7.4,1.8,2.4,0x72f0bd);addHazard(0,79,10,1,0xffd45d,.7);
-  } else if(def.obstacles==='hurdles'){
-    for(const [z,c] of [[18,0xff759f],[31,0x6be2ff],[58,0xffd45d],[77,0x9f8bff]])addWall(0,z,11,1.1,0.85,c);
-    addHazard(0,67,12,.9,0xff709c,1.2);
+ }
+}
+function startGame(){
+ pickGameRounds();roundIndex=0;player.alive=true;player.color=0xffe760;player.isPlayer=true;
+ bots.forEach(b=>{b.alive=true;b.speed=5.1+Math.random()*2.55;b.phase=Math.random()*15;b.aiTimer=Math.random()*1.4;});
+ hud.style.display='block';hideOverlay();$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
+ startRaceStage(chosenRaces[0],false);
+}
+function startRaceStage(stage,isFinal){
+ currentRound=stage;isFinalRace=isFinal;state='race';elapsed=0;stageTime=0;finishers=0;
+ buildCourse(stage);
+ const active=allAliveBots();
+ active.forEach((b,i)=>makeBean(b));makeBean(player);
+ const cols=9;
+ active.forEach((b,i)=>{
+  const col=i%cols,row=Math.floor(i/cols);const x=(col-(Math.min(cols,active.length-row*cols)-1)/2)*2.2;
+  resetActorForRound(b,Math.max(-9.3,Math.min(9.3,x)),28-row*2.35);
+  b.baseLane=x;b.speed=5.2+Math.random()*2.5;
+ });
+ resetActorForRound(player,0,32.2);
+ if(isFinal){player.speed=9.35;active.forEach(b=>b.speed=5.9+Math.random()*2.1);finishTarget=1;}
+ else {player.speed=9.0;finishTarget=QUALIFY[roundIndex];}
+ stageBounds={kind:'race'};
+ updateHud(true);progressLabel.textContent=isFinal?'クラウンへ！':'ゴールまで';
+ $('#hint').textContent=matchMedia('(pointer:coarse)').matches?'左スティック：移動　JUMP：ジャンプ　DIVE：ダイブ':'移動：WASD / 矢印　ジャンプ：Space　ダイブ：Shift';
+ const kicker=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;
+ stageKickerEl.textContent=kicker;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
+ camera.position.set(0,8,42);cameraLook.set(0,1,-5);
+ toast(isFinal?'ファイナル！':'予選スタート！');
+}
+function getInput(){
+ let x=0,y=0;
+ if(keys.has('KeyA')||keys.has('ArrowLeft'))x-=1;if(keys.has('KeyD')||keys.has('ArrowRight'))x+=1;
+ if(keys.has('KeyW')||keys.has('ArrowUp'))y+=1;if(keys.has('KeyS')||keys.has('ArrowDown'))y-=1;
+ x+=joystick.x;y+=-joystick.y;
+ const len=Math.hypot(x,y);if(len>1){x/=len;y/=len;}
+ input.x=x;input.y=y;
+}
+function doJump(){if(state!=='race'&&state!=='survival')return;input.jump=true;}
+function doDive(){if(state!=='race'&&state!=='survival')return;input.dive=true;}
+function controlPlayer(dt){
+ const a=player,p=player.group;if(!p)return;
+ a.hitCooldown=Math.max(0,a.hitCooldown-dt);a.jumpLock=Math.max(0,a.jumpLock-dt);a.diveTimer=Math.max(0,a.diveTimer-dt);
+ const speed=(state==='survival'?7.3:a.speed);const accel=a.grounded?28:15;
+ a.vx+=input.x*accel*dt;a.vz+=-input.y*accel*dt;
+ const damp=Math.exp(-(input.x||input.y?1.6:7.0)*dt);a.vx*=damp;a.vz*=damp;
+ const max=speed*(a.diveTimer>0?1.45:1);const v=Math.hypot(a.vx,a.vz);if(v>max){a.vx*=max/v;a.vz*=max/v;}
+ if(input.jump&&a.grounded&&a.jumpLock<=0){a.vy=8.2;a.grounded=false;a.jumpLock=.18;}
+ if(input.dive&&a.diveTimer<=0){
+  let dx=input.x,dz=-input.y;const d=Math.hypot(dx,dz);
+  if(d<.15){dz=-1;dx=0;}else{dx/=d;dz/=d;}
+  a.vx+=dx*6.2;a.vz+=dz*6.2;a.vy=Math.max(a.vy,2.2);a.diveTimer=.52;a.jumpLock=.2;
+ }
+ input.jump=false;input.dive=false;
+ a.vy-=22*dt;p.position.x+=a.vx*dt;p.position.z+=a.vz*dt;p.position.y+=a.vy*dt;
+ if(a.diveTimer>0){a.visual.rotation.x=-.95; a.visual.rotation.z=-a.vx*.035;}else{a.visual.rotation.x=THREE.MathUtils.damp(a.visual.rotation.x,0,9,dt);a.visual.rotation.z=THREE.MathUtils.damp(a.visual.rotation.z,-a.vx*.025,7,dt);}
+ a.group.rotation.y=THREE.MathUtils.damp(a.group.rotation.y,Math.atan2(a.vx,-a.vz),5,dt);
+ const groundUnderPlayer=hasGround(p.position.x,p.position.z,a);
+ if(p.position.y<=0&&a.vy<=0&&groundUnderPlayer){p.position.y=0;a.vy=0;a.grounded=true;}
+ else {a.grounded=false;}
+ if(state==='race'){
+  p.position.x=THREE.MathUtils.clamp(p.position.x,-10.15,10.15);
+  if(p.position.z<=-43.7&&!a.finished){a.finished=true;a.finishTime=stageTime;p.position.z=-43.7;a.vx=0;a.vz=0;toast(isFinalRace?'ゴール！':'ゴール！');}
+  if(p.position.y<-3||Math.abs(p.position.x)>11.5){
+   p.position.y=0;p.position.x=THREE.MathUtils.clamp(p.position.x,-8.5,8.5);p.position.z=Math.max(-37,Math.min(26,Math.ceil(p.position.z/14)*14));a.vy=0;a.vx=0;a.vz=0;a.grounded=true;toast('コースに戻った！');
   }
-  // finish arch and crown marker for the final race
-  addWall(-6.4,finishZ,0.35,1,6,0xffffff,false);addWall(6.4,finishZ,.35,1,6,0xffffff,false);addWall(0,finishZ,13,.8,.35,0xffffff,false);
-  if(def.id==='crown'){
-    const crown=cylinder(1.1,.7,.25,0xffd45d,0,3.4,finishZ,arenaGroup,12);crown.rotation.x=Math.PI/2;
-    for(let i=0;i<5;i++){const p=cylinder(.13,.2,.65,0xffe98b,(i-2)*.38,3.9,finishZ,arenaGroup,6);p.rotation.z=(i-2)*-.16;}
+  if(!a.finished){for(const o of obstacles)obstacleHit(a,o);}
+ }else if(state==='survival'){
+  if(stageBounds.kind==='circle'&&Math.hypot(p.position.x,p.position.z)>14.8){a.grounded=false;}
+  if(stageBounds.kind==='rect'&&(Math.abs(p.position.x)>12.4||Math.abs(p.position.z)>15.2)){a.grounded=false;}
+  if(stageBounds.kind==='hex'&&p.position.y<=0&&a.vy<=0&&hasGround(p.position.x,p.position.z,a)){
+   p.position.y=0;a.vy=0;a.grounded=true;
   }
-  roundDef.floorMode='race';addGapList(allGaps);
+  if(stageBounds.kind!=='hex'&&a.vy<=0&&hasGround(p.position.x,p.position.z,a)){p.position.y=0;a.vy=0;a.grounded=true;}
+  if(stageBounds.kind==='hex'&&a.grounded)touchTileAt(p.position.x,p.position.z);
+  if(stageBounds.kind!=='hex'&&obstacles.length){for(const o of obstacles)obstacleHit(a,o);}
+  if(p.position.y<-5){eliminateActor(a,true);}
+ }
 }
-function addGapList(list){gaps=list.map(g=>[g[0],g[1]]);}
-function buildSurvival(def){
-  roundDef.floorMode=def.id==='tiles'||def.id==='finalTiles'?'tiles':'arena';
-  if(roundDef.floorMode==='tiles'){
-    const size=3.8, spacing=4, extent=7;
-    const colors=[0x67dcff,0x8b7dff,0xff83bc,0x6bf1c1,0xffcc66];
-    for(let ix=-3;ix<=3;ix++)for(let iz=-3;iz<=3;iz++){
-      const x=ix*spacing,z=iz*spacing;
-      const m=box(size,.6,size,colors[(ix*5+iz*7+100)%colors.length],x,-.3,z);
-      tiles.push({ix,iz,x,z,mesh:m,gone:false});
-    }
-    // Low, colorful outer rails; gaps are still the main danger.
-    for(const x of [-15.8,15.8])box(.35,.8,31.8,0xffffff,x,.35,0);
-    for(const z of [-15.8,15.8])box(31.8,.8,.35,0xffffff,0,.35,z);
-    tileTimer=2.1;
-  } else {
-    addFloor(0,0,31.5,31.5,def.color);
-    // Colored outer rim and small corner bumpers.
-    for(const side of [-1,1]){box(.5,.55,32,0xffffff,side*15.8,.25,0);box(32,.55,.5,0xffffff,0,.25,side*15.8);}
-    for(const x of [-11,11])for(const z of [-11,11])cylinder(.65,.65,1.2,0xffdf75,x,.6,z,arenaGroup,10);
+function hasGround(x,z,actor){
+ if(state==='race')return true;
+ if(stageBounds.kind==='circle')return Math.hypot(x,z)<=14.4;
+ if(stageBounds.kind==='rect')return Math.abs(x)<=12&&Math.abs(z)<=15;
+ if(stageBounds.kind==='hex')return !!findTile(x,z);
+ return true;
+}
+function updateRaceBots(dt){
+ const active=allAliveBots();
+ for(const b of active){if(!b.group)continue;
+  b.hitCooldown=Math.max(0,b.hitCooldown-dt);
+  if(b.finished)continue;
+  const p=b.group.position;
+  const targetX=THREE.MathUtils.clamp(b.baseLane+Math.sin(stageTime*.75+b.phase)*1.6,-9.3,9.3);
+  p.x=THREE.MathUtils.damp(p.x,targetX,1.7,dt);
+  p.z-=b.speed*dt;
+  const jumpZone=obstacles.some(o=>Math.abs(p.z-o.z)<1.25&&(o.kind==='barrier'||o.kind==='beam'||o.kind==='hammer'));
+  if(jumpZone&&Math.sin(stageTime*2.7+b.phase)>.25)b.group.position.y=Math.max(0,b.group.position.y+Math.sin(stageTime*8+b.phase)*.012);
+  if(p.z<=-43.7){p.z=-43.7;b.finished=true;b.finishTime=stageTime;}
+ }
+ if(isFinalRace){
+  const botFinishers=active.filter(b=>b.finished).sort((a,b)=>a.finishTime-b.finishTime);
+  const firstBot=botFinishers[0];
+  if(player.finished&&(!firstBot||player.finishTime<=firstBot.finishTime)){finishFinal(true,'クラウンをつかんだ！');return;}
+  if(firstBot){finishFinal(false,'Botが先にクラウンへ到着！');return;}
+  if(stageTime>35){finishFinal(false,'時間切れ！次はもっと早くゴールしよう。');return;}
+ }else{
+  const n=active.filter(b=>b.finished).length+(player.finished?1:0);
+  if(n>=finishTarget){endQualifier();return;}
+  if(stageTime>35){endQualifier(true);return;}
+ }
+}
+function endQualifier(timeout=false){
+ if(state!=='race'||isFinalRace)return;
+ const participants=[player,...allAliveBots()];
+ const sorted=participants.slice().sort((a,b)=>{
+  const af=a.finished?0:1,bf=b.finished?0:1;
+  if(af!==bf)return af-bf;
+  if(a.finished&&b.finished)return a.finishTime-b.finishTime;
+  return a.group.position.z-b.group.position.z;
+ });
+ const survivors=sorted.slice(0,Math.min(finishTarget,sorted.length));
+ const survived=survivors.includes(player);
+ const survivorIds=new Set(survivors.map(a=>a.id));
+ bots.forEach(b=>{if(b.alive&&!survivorIds.has(b.id)){b.alive=false;if(b.group)b.group.visible=false;}});
+ state='between';
+ if(!survived){finishEliminated(`予選${roundIndex+1}で脱落…`,`${player.finished?'ゴールしたけど、通過順位に届かなかった。':'ゴールに間に合わなかった。'} 次のゲームでリベンジしよう！`);return;}
+ const place=sorted.indexOf(player)+1;
+ const isLast=roundIndex===2;
+ hud.style.display='none';$('#touch-controls').style.display='none';
+ setOverlay(`<div class="eyebrow">${isLast?'FINAL QUALIFIED':'QUALIFIED!'}</div><h2>${isLast?'ファイナル進出！':'予選突破！'}</h2><p>${currentRound.name}を突破！<br>今回の順位：<b>${place}位</b> ／ 通過人数：${survivors.length}人</p><div class="pill-row"><span class="pill">残り ${survivors.length} 人</span><span class="pill">${isLast?'次はファイナル！':'次の予選へ'}</span></div><button id="continue-btn" class="main-btn">${isLast?'ファイナルへ！':'次のラウンドへ'}</button>`);
+ $('#continue-btn').addEventListener('click',()=>{roundIndex++;if(roundIndex<3)startRaceStage(chosenRaces[roundIndex],false);else startFinalStage();},{once:true});
+}
+function startFinalStage(){
+ roundIndex=3;
+ if(chosenFinal.type==='crown'){startRaceStage(chosenFinal,true);return;}
+ startSurvivalStage(chosenFinal);
+}
+function buildArenaBase(kind){
+ newWorld();
+ if(kind==='circle'){
+  const disc=new THREE.Mesh(new THREE.CylinderGeometry(14.5,14.5,.9,64),mat(0x5b6fbd,.7));disc.position.y=-.5;world.add(disc);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(14.2,.22,8,64),mat(0x52f0dc,.35));rim.rotation.x=Math.PI/2;rim.position.y=.02;world.add(rim);
+  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;const x=Math.cos(a)*14.5,z=Math.sin(a)*14.5;const post=box(world,.28,1.7,.28,i%2?0xff83bc:0x58e9ed,x,.4,z);}
+ }else if(kind==='rect'){
+  box(world,24.4,.9,30.4,0x586cba,0,-.5,0);
+  box(world,24,.05,30,0x7088d0,0,-.025,0);
+  for(let x=-10;x<=10;x+=4){box(world,.22,.3,.22,0x6bf5ee,x,.1,-14.7);box(world,.22,.3,.22,0x6bf5ee,x,.1,14.7);}
+ }else if(kind==='hex'){
+  // No solid floor beneath the tiles.
+  for(let iz=0;iz<9;iz++)for(let ix=0;ix<9;ix++){
+   const x=(ix-4)*2,z=(iz-4)*2;
+   const mesh=box(world,1.82,.48,1.82,[0x56bfe4,0x62dfdc,0x7c9bff][(ix+iz)%3],x,-.24,z);
+   const tile={ix,iz,x,z,mesh,touched:false,expire:0,removed:false};tiles.push(tile);tileMap.set(`${ix},${iz}`,tile);
   }
-  if(def.id==='sweep'||def.id==='finalSweep')addHazard(0,0,27,.95,0xff6097,.1);
-  else if(def.id==='doubleSweep'||def.id==='finalTiles'){
-    addHazard(0,0,25,.9,0xff6097,.1);
-    addHazard(0,0,19,.85,0xffd55e,1.25);
-  } else if(def.id==='tiles'){
-    addHazard(0,0,16,.8,0x8d7dff,.45);
+ }
+ // soft scenic sky dots
+ for(let i=0;i<28;i++){const a=Math.random()*Math.PI*2,r=18+Math.random()*10,y=2+Math.random()*8;sphere(world,.25+Math.random()*.3,[0xffffff,0xffd6f0,0xb5f9ff][i%3],Math.cos(a)*r,y,Math.sin(a)*r,8);}
+}
+function startSurvivalStage(stage){
+ currentRound=stage;isFinalRace=false;state='survival';elapsed=0;stageTime=0;survivalElimTimer=5.8;obstacles=[];
+ const kind=stage.type==='jump'?'circle':stage.type==='hex'?'hex':'rect';stageBounds={kind};
+ buildArenaBase(kind);
+ if(stage.type==='jump'){
+  addRotatingBeam(0,25,1.12,.72,0xff6ea7,.4);
+  addRotatingBeam(0,23,-.72,1.98,0x61f6ee,1.45);
+ }else if(stage.type==='block'){
+  addBlockWall(15,0);addBlockWall(-15,1);
+ }
+ const active=allAliveBots();active.forEach(b=>makeBean(b));makeBean(player);
+ resetActorForRound(player,0,0);
+ active.forEach((b,i)=>{
+  const angle=i/Math.max(1,active.length)*Math.PI*2;
+  const r=5.2+(i%3)*.9;
+  resetActorForRound(b,Math.cos(angle)*r,Math.sin(angle)*r);
+  b.aiX=Math.cos(angle+Math.PI/2);b.aiZ=Math.sin(angle+Math.PI/2);b.aiTimer=.4+Math.random()*1.5;b.aiSpeed=3.4+Math.random()*1.8;b.jumpNext=1+Math.random()*2.4;
+ });
+ hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
+ stageKickerEl.textContent='FINAL ROUND';stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
+ progressLabel.textContent=stage.type==='hex'?'足場を探せ！':'生き残れ！';progressFill.style.width='100%';
+ $('#hint').textContent=matchMedia('(pointer:coarse)').matches?'左スティック：移動　JUMP：ジャンプ　DIVE：ダイブ':'移動：WASD / 矢印　ジャンプ：Space　ダイブ：Shift';
+ camera.position.set(0,13,17);cameraLook.set(0,0,0);updateHud(true);toast('ファイナル！');
+}
+function addBlockWall(z,idx){
+ const gap=idx===0?-4.5:4.5;
+ const left=box(world,12,3.2,1.2,0xff719f,-6+gap,1.6,z);
+ const right=box(world,12,3.2,1.2,0x5fe8e4,6+gap,1.6,z);
+ obstacles.push({kind:'blockwall',mesh:left,width:12,height:3.2,depth:1.2,z,x:left.position.x,wall:true,dir:-1,speed:3.7,active:true});
+ obstacles.push({kind:'blockwall',mesh:right,width:12,height:3.2,depth:1.2,z,x:right.position.x,wall:true,dir:-1,speed:3.7,active:true});
+}
+function findTile(x,z){
+ const ix=Math.round((x+8)/2),iz=Math.round((z+8)/2);
+ if(ix<0||ix>8||iz<0||iz>8)return null;
+ const tile=tileMap.get(`${ix},${iz}`);
+ if(!tile||tile.removed||Math.abs(x-tile.x)>.92||Math.abs(z-tile.z)>.92)return null;
+ return tile;
+}
+function touchTileAt(x,z){const tile=findTile(x,z);if(tile&&!tile.touched){tile.touched=true;tile.expire=stageTime+1.75;tile.mesh.material.color.setHex(0xffbe5b);}}
+function updateTiles(dt){
+ for(const t of tiles){if(t.removed)continue;if(t.touched){const remaining=t.expire-stageTime;t.mesh.position.y=-.24-Math.max(0,(1.75-remaining))*.22;if(remaining<.65)t.mesh.material.color.setHex(0xff5c79);if(remaining<=0){t.removed=true;world.remove(t.mesh);}}}
+}
+function updateSurvivalBots(dt){
+ for(const b of allAliveBots()){
+  if(!b.group)continue;
+  b.hitCooldown=Math.max(0,b.hitCooldown-dt);b.aiTimer-=dt;b.jumpNext-=dt;
+  const p=b.group.position;
+  if(b.aiTimer<=0){
+   const a=Math.random()*Math.PI*2;b.aiX=Math.cos(a);b.aiZ=Math.sin(a);b.aiTimer=.9+Math.random()*1.8;
   }
-  // Center beacon helps keep orientation in the arena.
-  cylinder(.45,.65,1.4,0xf8fbff,0,.7,0,arenaGroup,10);
-  for(let i=0;i<8;i++){const a=i*Math.PI/4;cylinder(.13,.13,1.6,0xffd45d,Math.cos(a)*12,.8,Math.sin(a)*12,arenaGroup,8);}
-}
-function createActor(model,isPlayer){
-  const group=new THREE.Group();
-  const color=model.color||palette[Math.floor(Math.random()*palette.length)];
-  const body=mesh(new THREE.CapsuleGeometry(.56,.72,4,8),mat(color,.43),0,1.05,0,group);
-  const head=mesh(new THREE.SphereGeometry(.49,16,12),mat(color,.4),0,1.77,.02,group);
-  const belly=mesh(new THREE.SphereGeometry(.32,12,10),mat(isPlayer?0xffffff:0xf2f5ff,.48),0,1.08,.43,group);belly.scale.set(1,.82,.48);
-  const eyeMat=mat(0x172044,.25);
-  mesh(new THREE.SphereGeometry(.075,8,8),eyeMat,-.16,1.84,.455,group);mesh(new THREE.SphereGeometry(.075,8,8),eyeMat,.16,1.84,.455,group);
-  mesh(new THREE.SphereGeometry(.025,6,6),mat(0xffffff,.2),-.18,1.87,.51,group);mesh(new THREE.SphereGeometry(.025,6,6),mat(0xffffff,.2),.14,1.87,.51,group);
-  const footMat=mat(0x25284a,.75);
-  const footL=mesh(new THREE.SphereGeometry(.23,9,7),footMat,-.3,.22,.06,group);footL.scale.set(1,.65,1.2);
-  const footR=mesh(new THREE.SphereGeometry(.23,9,7),footMat,.3,.22,.06,group);footR.scale.set(1,.65,1.2);
-  group.traverse(o=>{if(o.isMesh){o.castShadow=false;o.frustumCulled=true;}});
-  actorGroup.add(group);
-  return {model,isPlayer,group,body,head,footL,footR,alive:true,grounded:true,vx:0,vy:0,vz:0,progress:0,finished:false,finishTime:999,aliveTime:0,score:0,botTimer:Math.random()*1.5,targetX:0,targetZ:0,hitCooldown:0,diveTime:0,jumpPhase:Math.random()*Math.PI*2,stumble:0};
-}
-function makeRoster(){
-  roster=[{id:'player',name:'YOU',color:0x51e5ff,isPlayer:true,skill:1,seed:Math.random()}];
-  for(let i=0;i<32;i++)roster.push({id:'bot'+(i+1),name:'BOT '+String(i+1).padStart(2,'0'),color:palette[i%palette.length],isPlayer:false,skill:.62+Math.random()*.3,risk:.9+Math.random()*.7,seed:Math.random()});
-}
-function pickRound(index){
-  let pool=(index===3?finalTypes:roundTypes).slice();
-  if(index>0 && roundDef){const filtered=pool.filter(x=>x.id!==roundDef.id);if(filtered.length)pool=filtered;}
-  return {...pool[Math.floor(Math.random()*pool.length)]};
-}
-function showNotice(title,sub,ms=1600){ui.notice.firstChild.textContent=title;ui.noticeSub.textContent=sub;ui.notice.classList.add('show');window.clearTimeout(showNotice.timeout);showNotice.timeout=setTimeout(()=>ui.notice.classList.remove('show'),ms);}
-function enterRound(){
-  clearRound();menuGroup.visible=false;paused=false;ui.pause.textContent='一時停止';
-  roundDef=pickRound(stageIndex);roundTime=roundDef.time||48;roundElapsed=0;roundStarting=0;currentQuota=stageIndex===0?24:stageIndex===1?16:stageIndex===2?8:1;
-  const entrants=roster.filter(m=>m.isPlayer||m.inGame!==false);
-  actors=entrants.map(m=>createActor(m,!!m.isPlayer));
-  player=actors.find(a=>a.isPlayer)||null;
-  if(roundDef.kind==='race')buildRace(roundDef);else buildSurvival(roundDef);
-  if(roundDef.kind==='race'){
-    actors.forEach((a,i)=>{const slot=i===0?0:i-1;const row=Math.floor(slot/7),col=slot%7;a.group.position.set(i===0?0:(col-3)*1.9,0,i===0?-9:-7.5-row*2.1);a.vx=0;a.vz=0;a.model.currentLane=0;});
-  } else {
-    actors.forEach((a,i)=>{const angle=(i/actors.length)*Math.PI*2;const radius=i===0?1.2:3.2+((i%3)*.75);a.group.position.set(Math.cos(angle)*radius,0,Math.sin(angle)*radius);a.model.currentLane=0;});
+  if(stageBounds.kind==='circle'||stageBounds.kind==='rect'){
+   if(Math.hypot(p.x,p.z)>10.5||Math.abs(p.x)>9.7||Math.abs(p.z)>12){b.aiX=-p.x/(Math.hypot(p.x,p.z)||1);b.aiZ=-p.z/(Math.hypot(p.x,p.z)||1);}
   }
-  // Stage palette and HUD.
-  ui.hud.style.display='block';ui.touch.style.display='block';ui.screen.classList.add('hidden');
-  ui.stage.textContent=stageIndex===3?'FINAL / 4':'ROUND '+(stageIndex+1)+' / 4';ui.round.textContent=roundDef.name;ui.objective.textContent=roundDef.goal;ui.timer.textContent=String(Math.ceil(roundTime));
-  updateHud(true);yaw=0;pitch=.18;camera.position.set(0,6,-15);camera.lookAt(0,1,0);
-  showNotice(stageIndex===3?'FINAL ROUND!':'ROUND '+(stageIndex+1),roundDef.name+' — '+roundDef.desc,2300);
-  phase='running';clock.getDelta();
-}
-function moveInputCombined(){let x=moveInput.x,y=moveInput.y;
-  if(keys.has('a')||keys.has('arrowleft'))x-=1;if(keys.has('d')||keys.has('arrowright'))x+=1;
-  if(keys.has('w')||keys.has('arrowup'))y+=1;if(keys.has('s')||keys.has('arrowdown'))y-=1;
-  const len=Math.hypot(x,y);if(len>1){x/=len;y/=len;}return{x,y};}
-const keys=new Set();
-function tryJump(a){if(!a.alive)return;if(a.grounded){a.vy=10.6;a.grounded=false;a.jumpPhase=0;}}
-function tryDive(a){if(!a.alive||a.hitCooldown>.1||a.diveTime>.05)return;let dx=a.vx,dz=a.vz;const mag=Math.hypot(dx,dz);if(mag<1){dx=Math.sin(yaw);dz=Math.cos(yaw);}else{dx/=mag;dz/=mag;}a.vx+=dx*8.5;a.vz+=dz*8.5;a.vy=Math.max(a.vy,2.1);a.diveTime=.42;a.hitCooldown=.12;}
-function collideSolids(a,nx,nz){let x=nx,z=nz;for(const c of colliders){if(a.group.position.y>c.h-.08)continue;const nearX=Math.abs(x-c.x)<c.w/2+.48,nearZ=Math.abs(z-c.z)<c.d/2+.48;if(nearX&&nearZ){const oldX=a.group.position.x,oldZ=a.group.position.z;if(Math.abs(x-c.x)>Math.abs(z-c.z))x=oldX;else z=oldZ;if(Math.abs(x-c.x)<c.w/2+.48&&Math.abs(z-c.z)<c.d/2+.48){x=oldX;z=oldZ;}a.vx*=.18;a.vz*=.18;}}
-  return{x,z};}
-function floorAt(x,z){
-  if(roundDef.floorMode==='tiles'){
-    const ix=Math.round(x/4),iz=Math.round(z/4);if(Math.abs(ix)>3||Math.abs(iz)>3)return null;
-    const t=tiles.find(q=>q.ix===ix&&q.iz===iz);if(!t||t.gone)return null;
-    if(Math.abs(x-t.x)>1.96||Math.abs(z-t.z)>1.96)return null;return 0;
+  const sp=b.aiSpeed||4.2;
+  b.vx=THREE.MathUtils.damp(b.vx,b.aiX*sp,2.5,dt);b.vz=THREE.MathUtils.damp(b.vz,b.aiZ*sp,2.5,dt);
+  p.x+=b.vx*dt;p.z+=b.vz*dt;
+  if(b.jumpNext<=0&&b.grounded){b.vy=7.3;b.grounded=false;b.jumpNext=1.7+Math.random()*3;}
+  b.vy-=22*dt;p.y+=b.vy*dt;
+  if(p.y<=0&&b.vy<=0&&hasGround(p.x,p.z,b)){p.y=0;b.vy=0;b.grounded=true;}else{b.grounded=false;}
+  if(stageBounds.kind==='hex'&&b.grounded)touchTileAt(p.x,p.z);
+  b.visual.rotation.x=b.diveTimer>0?-.8:0;b.group.rotation.y=Math.atan2(b.vx,-b.vz);
+  if(stageBounds.kind==='circle'){
+   for(const o of obstacles)obstacleHit(b,o);
   }
-  for(const f of floors){if(x>=f.minX&&x<=f.maxX&&z>=f.minZ&&z<=f.maxZ){let blocked=false;if(roundDef.floorMode==='race'){for(const g of gaps){if(z>g[0]&&z<g[1]){blocked=true;break;}}}if(!blocked)return f.y;}}
-  return null;
+  if(p.y<-5)eliminateActor(b,false);
+ }
 }
-function updateHazards(dt){for(const h of hazards){h.pivot.rotation.y+=dt*h.spin;}}
-function handleHazardHit(a){if(!a.alive||a.hitCooldown>0||a.group.position.y>1.4)return;
-  for(const h of hazards){const dx=a.group.position.x-h.cx,dz=a.group.position.z-h.cz,ang=h.pivot.rotation.y;
-    const lx=Math.cos(ang)*dx-Math.sin(ang)*dz;const lz=Math.sin(ang)*dx+Math.cos(ang)*dz;
-    if(Math.abs(lx)<h.length/2+.48&&Math.abs(lz)<h.width/2+.46){
-      let rx=dx,rz=dz;let rm=Math.hypot(rx,rz)||1;rx/=rm;rz/=rm;
-      a.vx+=rx*8.2;a.vz+=rz*8.2;a.vy=Math.max(a.vy,5.8);a.grounded=false;a.hitCooldown=.75;a.stumble=.3;break;
-    }
+function updateSurvival(dt){
+ updateObstacles(dt);updateTiles(dt);updateSurvivalBots(dt);
+ // Moving block walls travel through the arena and return at the opposite edge.
+ if(currentRound.type==='block'){
+  for(const o of obstacles){if(o.kind==='blockwall'&&o.wall){o.mesh.position.z-=o.speed*dt;o.z=o.mesh.position.z;if(o.mesh.position.z<-17){o.mesh.position.z=17;o.z=17;const gap=Math.random()<.5?-4.7:4.7;o.mesh.position.x=Math.sign(o.mesh.position.x)*(Math.abs(o.mesh.position.x)>6?Math.abs(o.mesh.position.x):6)+gap*.5;}}
   }
+ }
+ // A gentle elimination cadence keeps the final round moving even when bots get lucky.
+ survivalElimTimer-=dt;
+ if(survivalElimTimer<=0&&allAliveBots().length){
+  const pool=allAliveBots();const victim=pool[Math.floor(Math.random()*pool.length)];eliminateActor(victim,false);survivalElimTimer=3.7+Math.random()*2.4;
+ }
+ if(state!=='survival')return;
+ if(allAliveBots().length===0)finishFinal(true,'最後まで生き残った！');
+ if(stageTime>70)finishFinal(true,'時間切れまで生き残った！');
 }
-function eliminate(a,reason='fall'){
-  if(!a.alive)return;a.alive=false;a.group.visible=false;a.model.inGame=false;
-  if(a.isPlayer){endGame(false,reason);}
+function eliminateActor(actor,byFall){
+ if(!actor||!actor.alive)return;
+ actor.alive=false;if(actor.group)actor.group.visible=false;
+ if(actor.isPlayer){finishFinal(false,byFall?'落下して脱落…':'脱落…');}
+ else if(state==='survival'&&allAliveBots().length===0){finishFinal(true,'最後まで生き残った！');}
 }
-function updatePlayer(a,dt){
-  const input=moveInputCombined();const fX=Math.sin(yaw),fZ=Math.cos(yaw),rX=Math.cos(yaw),rZ=-Math.sin(yaw);
-  let dx=fX*input.y+rX*input.x,dz=fZ*input.y+rZ*input.x;const len=Math.hypot(dx,dz);if(len>1){dx/=len;dz/=len;}
-  const speed=a.diveTime>0?5.4:8.6;const accel=Math.min(1,dt*(a.grounded?12:4.6));
-  a.vx+=(dx*speed-a.vx)*accel;a.vz+=(dz*speed-a.vz)*accel;
-  if(len<.05&&a.grounded){a.vx*=Math.max(0,1-dt*8);a.vz*=Math.max(0,1-dt*8);}
-  if(jumpQueued){tryJump(a);jumpQueued=false;}if(diveQueued){tryDive(a);diveQueued=false;}
-  if(a.diveTime>0)a.diveTime=Math.max(0,a.diveTime-dt);if(a.hitCooldown>0)a.hitCooldown=Math.max(0,a.hitCooldown-dt);if(a.stumble>0)a.stumble-=dt;
-  const old=a.group.position;let nx=old.x+a.vx*dt,nz=old.z+a.vz*dt;const corrected=collideSolids(a,nx,nz);old.x=corrected.x;old.z=corrected.z;
+function finishFinal(won,message){
+ if(state==='result'||state==='menu')return;
+ state='result';hud.style.display='none';$('#touch-controls').style.display='none';
+ const finalName=currentRound?.name||'ファイナル';
+ setOverlay(`<div class="eyebrow">${won?'CROWN WINNER':'GAME OVER'}</div><h1 class="logo-line">${won?'YOU <span>WIN!</span>':'ONE MORE <span>TRY!</span>'}</h1><h2>${message}</h2><p>${finalName}での戦いはここまで！<br>${won?'おめでとう！ 次のゲームでは別のラウンド構成が選ばれるよ。':'もう一度挑戦して、今度こそクラウンをつかもう。'}</p><div class="pill-row"><span class="pill">予選3ラウンド</span><span class="pill">Bot 32体</span><span class="pill">ファイナル：${finalName}</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
+ $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
 }
-function updateBot(a,dt){
-  a.botTimer-=dt;
-  const p=a.group.position;
-  if(roundDef.kind==='race'){
-    let targetLane=Math.sin((p.z*.075)+(a.model.seed*13))*4.3;
-    for(const c of colliders){if(Math.abs(p.z-c.z)<4&&Math.abs(p.x-c.x)<c.w/2+1.5)targetLane=(p.x>=c.x?1:-1)*Math.min(6.1,Math.abs(c.x)+3.4);}
-    a.targetX=targetLane;
-    const desiredX=Math.max(-6.5,Math.min(6.5,a.targetX));a.vx+=(desiredX-p.x)*Math.min(1,dt*1.7);a.vx=Math.max(-5,Math.min(5,a.vx));
-    const skill=a.model.skill||.75;const speed=5.4+skill*2.5;a.vz+=(speed-a.vz)*Math.min(1,dt*2.2);
-    if(roundDef.gaps){for(const g of roundDef.gaps){if(p.z>g[0]-2.6&&p.z<g[0]-.3&&a.grounded&&Math.random()<dt*(skill>.74?2.1:1.3)){tryJump(a);break;}}}
-    if(a.botTimer<=0){a.botTimer=.7+Math.random()*1.6;if(Math.random()<.12)a.vx+=(Math.random()-.5)*4;}
-    if(p.z>=roundDef.finishZ&&!a.finished){a.finished=true;a.finishTime=roundElapsed; a.vx=0;a.vz=0;a.progress=1;}
-  }else{
-    if(a.botTimer<=0){a.botTimer=.7+Math.random()*1.4;const radius=3+Math.random()*10;const angle=Math.random()*Math.PI*2;a.targetX=Math.cos(angle)*radius;a.targetZ=Math.sin(angle)*radius;if(Math.random()<.22&&a.grounded)tryJump(a);}
-    const dx=a.targetX-p.x,dz=a.targetZ-p.z,mag=Math.hypot(dx,dz)||1;const speed=3.3+(a.model.skill||.7)*2.1;
-    a.vx+=(dx/mag*speed-a.vx)*Math.min(1,dt*2.1);a.vz+=(dz/mag*speed-a.vz)*Math.min(1,dt*2.1);
-    a.score+=dt*(Math.max(0,1-Math.hypot(p.x,p.z)/22)*.25+Math.random()*.03);
-  }
-  if(a.hitCooldown>0)a.hitCooldown=Math.max(0,a.hitCooldown-dt);if(a.diveTime>0)a.diveTime=Math.max(0,a.diveTime-dt);
+function finishEliminated(title,desc){
+ hud.style.display='none';$('#touch-controls').style.display='none';
+ setOverlay(`<div class="eyebrow">ELIMINATED</div><h2>${title}</h2><p>${desc}</p><div class="pill-row"><span class="pill">挑戦ラウンド：${roundIndex+1} / 4</span><span class="pill">Botは毎回32体</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
+ $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
 }
-function actorPhysics(a,dt){
-  if(!a.alive||!a.group.visible)return;
-  if(roundDef.kind==='race'&&a.finished){return;}
-  a.aliveTime+=dt;if(!a.isPlayer&&roundDef.kind==='survival'&&Math.random()<dt*(.014+stageIndex*.004)){eliminate(a,'bot');return;}
-  if(a.isPlayer)updatePlayer(a,dt);else updateBot(a,dt);
-  if(!a.alive)return;
-  const p=a.group.position;
-  if(!a.grounded)a.vy-=25*dt;
-  p.y+=a.vy*dt;
-  const g=floorAt(p.x,p.z);
-  if(g!==null&&p.y<=g&&a.vy<=0){p.y=g;a.vy=0;a.grounded=true;}else{a.grounded=false;}
-  if(a.isPlayer)handleHazardHit(a);else if(roundDef.kind==='survival')handleHazardHit(a);
-  if(p.y < -7.5){eliminate(a,'fall');return;}
-  if(roundDef.kind==='race')a.progress=Math.max(0,Math.min(1,p.z/(roundDef.finishZ||94)));
-  else a.progress=Math.min(1,a.aliveTime/(roundDef.time||48));
-  if(Math.hypot(a.vx,a.vz)>.8){a.group.rotation.y=Math.atan2(a.vx,a.vz);}
-  const bob=Math.sin(menuClock*9+a.jumpPhase)*.045;
-  a.body.position.y=1.03+bob+(a.diveTime>0?-.18:0);a.head.position.y=1.77+bob;
-  a.footL.position.z=.05+Math.sin(menuClock*10+a.jumpPhase)*.08;a.footR.position.z=.05-Math.sin(menuClock*10+a.jumpPhase)*.08;
-  if(a.diveTime>0){a.group.rotation.x=-.42;}else if(a.grounded){a.group.rotation.x*=Math.max(0,1-dt*8);}else a.group.rotation.x=Math.min(.22,a.group.rotation.x+dt*.35);
+function updateHud(force=false){
+ if(!force&&stageTime-lastHud<.13)return;lastHud=stageTime;
+ aliveNumberEl.textContent=`${allAliveBots().length+(player.alive?1:0)} 人`;
+ const phase=state==='race'?(isFinalRace?'ファイナル':'予選'):state==='survival'?'ファイナル':'';
+ if(state==='race'){
+  const progress=THREE.MathUtils.clamp((32.2-player.group.position.z)/(32.2+43.7),0,1);
+  progressFill.style.width=`${(progress*100).toFixed(1)}%`;
+  progressLabel.textContent=isFinalRace?'クラウンへ！':'ゴールまで';
+ }else if(state==='survival'){
+  progressFill.style.width=`${Math.max(0,100-stageTime/70*100)}%`;
+  progressLabel.textContent=`生き残り ${Math.floor(stageTime)}秒`;
+ }
 }
-function updateTiles(dt){if(roundDef.floorMode!=='tiles')return;tileTimer-=dt;if(tileTimer<=0){tileTimer=1.1+Math.random()*1.15;const available=tiles.filter(t=>!t.gone);if(available.length>5){const count=Math.random()<.32?2:1;for(let i=0;i<count;i++){const t=available.splice(Math.floor(Math.random()*available.length),1)[0];if(t){t.gone=true;t.mesh.visible=false;}}}}}
-function rankValue(a){if(!a.alive)return -1000;if(roundDef.kind==='race'){if(a.finished)return 1000-a.finishTime;return Math.max(-50,a.group.position.z/(roundDef.finishZ||94)*50);}return 1000+a.score+a.aliveTime*.06+Math.max(0,14-Math.hypot(a.group.position.x,a.group.position.z))*.04;}
-function updateRound(dt){
-  if(phase!=='running'||paused)return;
-  roundElapsed+=dt;roundTime=Math.max(0,roundTime-dt);menuClock+=dt;
-  updateHazards(dt);updateTiles(dt);
-  for(const a of actors)actorPhysics(a,dt);
-  if(!player||!player.alive)return;
-  let alive=actors.filter(a=>a.alive).length;
-  if(roundDef.kind==='race'){
-    const finishers=actors.filter(a=>a.alive&&a.finished).length;
-    if(finishers>=currentQuota||roundTime<=0){finishRound();return;}
-  }else{
-    if(alive<=currentQuota||roundTime<=0){finishRound();return;}
-  }
-  if(roundDef.kind==='race'&&player.group.position.z>=roundDef.finishZ&&!player.finished){player.finished=true;player.finishTime=roundElapsed;player.progress=1;player.vx=0;player.vz=0;showNotice('FINISH!', 'ほかのプレイヤーのゴールを待とう',1200);}
-}
-function finishRound(){
-  if(phase!=='running')return;
-  const sorted=actors.slice().sort((a,b)=>rankValue(b)-rankValue(a));
-  const survivors=sorted.slice(0,currentQuota).map(a=>a.model);
-  const playerRank=sorted.findIndex(a=>a.isPlayer)+1;
-  const playerQualified=survivors.some(m=>m.isPlayer);
-  roster.forEach(m=>{m.inGame=survivors.includes(m);});
-  phase='intermission';paused=false;ui.pause.textContent='一時停止';
-  if(stageIndex===3){
-    const won=playerQualified;endGame(won,won?'win':'final');return;
-  }
-  if(!playerQualified){endGame(false,'rank');return;}
-  const labels=['24人','16人','8人'];
-  ui.intermission.hidden=false;ui.gameOver.hidden=true;ui.intro.hidden=true;ui.screen.classList.remove('hidden');
-  ui.interKicker.textContent='QUALIFIED';ui.resultTitle.textContent=stageIndex===2?'FINAL QUALIFIED!':'ROUND CLEAR!';
-  ui.resultText.textContent=`${roundDef.name} 通過！　今回の順位：${playerRank}位\n次は${labels[stageIndex+1]||'決勝'}で勝ち残ろう。`;
-  ui.nextBtn.textContent=stageIndex===2?'ファイナルへ！':'次のラウンドへ';ui.hud.style.display='none';ui.touch.style.display='none';
-}
-function endGame(won,reason){
-  phase='gameover';paused=false;ui.hud.style.display='none';ui.touch.style.display='none';ui.screen.classList.remove('hidden');ui.intro.hidden=true;ui.intermission.hidden=true;ui.gameOver.hidden=false;
-  if(won){ui.overKicker.textContent='CHAMPION';ui.overTitle.textContent='優勝！ 👑';ui.overText.textContent='全4ラウンドを勝ち抜いた！ 最高のBEAN ROYALEチャンピオン！';}
-  else {ui.overKicker.textContent=reason==='fall'?'ELIMINATED':'GAME OVER';ui.overTitle.textContent=reason==='final'?'あと一歩！':reason==='fall'?'落下してしまった！':reason==='rank'?'予選敗退…':'今回はここまで！';ui.overText.textContent=reason==='fall'?'落ちる前にジャンプやダイブを使ってみよう。もう一度挑戦できるよ！':reason==='rank'?'今回は予選通過ラインに届かなかった。ステージごとの動き方を変えて再挑戦！':'最後の1人にはなれなかった…。もう一度チャレンジ！';}
-}
-function updateHud(force=false){if(!player||!roundDef)return;const alive=actors.filter(a=>a.alive).length;ui.alive.textContent=alive+' / '+actors.length;ui.timer.textContent=String(Math.ceil(roundTime));ui.progress.style.width=Math.round(Math.max(0,player.progress)*100)+'%';if(roundDef.kind==='race'){ui.objective.textContent=player.finished?'ゴール済み！順位確定を待とう':roundDef.goal;}else ui.objective.textContent=roundDef.goal;}
-function animateMenu(dt){menuClock+=dt;for(let i=0;i<menuGroup.children.length;i++){const o=menuGroup.children[i];if(o.userData.spin)o.rotation.y+=dt*o.userData.spin;}}
-function buildMenuScene(){menuGroup.visible=true;clearGroup(menuGroup);clearGroup(arenaGroup);const floor=mesh(new THREE.PlaneGeometry(170,170),mat(0x202a50),0,-.8,0,menuGroup);floor.rotation.x=-Math.PI/2;
-  for(let i=0;i<14;i++){const z=8+i*5;const m=box(5,.7,2,palette[i%palette.length],Math.sin(i*.9)*5,Math.sin(i*.7)*.8,z,menuGroup);m.rotation.y=(i%2?-.25:.25);m.userData.spin=.14+(i%4)*.05;}
-  for(let i=0;i<7;i++){const m=cylinder(.28,.28,5,palette[(i+4)%palette.length],(i-3)*3,1.7,12+(i%3)*6,menuGroup,10);m.rotation.z=.3;m.userData.spin=(i%2?-.5:.5);}
-  for(let i=0;i<18;i++){const s=mesh(new THREE.IcosahedronGeometry(.24+Math.random()*.3,0),mat(palette[i%palette.length]),(Math.random()-.5)*30,Math.random()*8+1,Math.random()*42-2,menuGroup);s.userData.spin=(Math.random()-.5)*1.2;}
-  camera.position.set(11,9,-17);camera.lookAt(0,1,15);
-}
-function resetToMenu(){phase='menu';paused=false;stageIndex=0;roundDef=null;clearRound();ui.hud.style.display='none';ui.touch.style.display='none';ui.screen.classList.remove('hidden');ui.intro.hidden=false;ui.intermission.hidden=true;ui.gameOver.hidden=true;buildMenuScene();}
-function startGame(){makeRoster();stageIndex=0;enterRound();}
-ui.start.addEventListener('click',startGame);
-ui.next.addEventListener('click',()=>{stageIndex++;enterRound();});
-ui.retry.addEventListener('click',startGame);
-ui.menuA.addEventListener('click',resetToMenu);ui.menuB.addEventListener('click',resetToMenu);
-ui.pause.addEventListener('click',()=>{if(phase!=='running')return;paused=!paused;ui.pause.textContent=paused?'再開':'一時停止';if(paused)showNotice('PAUSED','一時停止中 — ボタンで再開',99999);else ui.notice.classList.remove('show');});
-window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys.add(k);if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k===' '&&!e.repeat)jumpQueued=true;if(k==='shift'&&!e.repeat)diveQueued=true;if(k==='escape'&&phase==='running'){paused=!paused;ui.pause.textContent=paused?'再開':'一時停止';}});
-window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
-window.addEventListener('blur',()=>{keys.clear();moveInput.x=moveInput.y=lookInput.x=lookInput.y=0;});
-renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){mouseDragging=true;lastMouseX=e.clientX;lastMouseY=e.clientY;renderer.domElement.setPointerCapture?.(e.pointerId);}});
-window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse')mouseDragging=false;});
-window.addEventListener('pointermove',e=>{if(mouseDragging&&phase==='running'&&!paused){const dx=e.clientX-lastMouseX,dy=e.clientY-lastMouseY;lastMouseX=e.clientX;lastMouseY=e.clientY;yaw+=dx*.005;pitch=Math.max(-.1,Math.min(.85,pitch+dy*.003));}});
-function bindStick(zoneId,knobId,state,isLook){const zone=$(zoneId),knob=$(knobId);let pid=null,centerX=0,centerY=0,max=zone.clientWidth*.34;function update(e){const dx=e.clientX-centerX,dy=e.clientY-centerY;const d=Math.hypot(dx,dy);const scale=d>max?max/d:1;const x=dx*scale,y=dy*scale;knob.style.transform=`translate(${x}px,${y}px)`;state.x=x/max;state.y=-y/max;if(isLook){state.x=Math.max(-1,Math.min(1,state.x));state.y=Math.max(-1,Math.min(1,state.y));}}
- zone.addEventListener('pointerdown',e=>{e.preventDefault();pid=e.pointerId;const r=zone.getBoundingClientRect();centerX=r.left+r.width/2;centerY=r.top+r.height/2;max=r.width*.34;zone.setPointerCapture(e.pointerId);update(e);});zone.addEventListener('pointermove',e=>{if(e.pointerId===pid){e.preventDefault();update(e);}});const release=e=>{if(pid===null||(e&&e.pointerId!==pid))return;pid=null;state.x=0;state.y=0;knob.style.transform='translate(0,0)';};zone.addEventListener('pointerup',release);zone.addEventListener('pointercancel',release);zone.addEventListener('lostpointercapture',release);}
-bindStick('moveStick','moveKnob',moveInput,false);bindStick('lookStick','lookKnob',lookInput,true);
-$('jumpBtn').addEventListener('pointerdown',e=>{e.preventDefault();jumpQueued=true;});$('diveBtn').addEventListener('pointerdown',e=>{e.preventDefault();diveQueued=true;});
-$('jumpBtn').addEventListener('contextmenu',e=>e.preventDefault());$('diveBtn').addEventListener('contextmenu',e=>e.preventDefault());
 function updateCamera(dt){
-  if(phase==='running'&&player){yaw+=lookInput.x*dt*2.25;pitch=Math.max(-.1,Math.min(.8,pitch+lookInput.y*dt*1.3));const p=player.group.position;const dist=9.2;const target=new THREE.Vector3(p.x+Math.sin(yaw)*dist,p.y+4.6+pitch*4,p.z-Math.cos(yaw)*dist);camera.position.lerp(target,Math.min(1,dt*5.5));const look=new THREE.Vector3(p.x+Math.sin(yaw)*2,p.y+1.2,p.z+Math.cos(yaw)*2);camera.lookAt(look);
-  }else if(phase==='menu'){camera.position.x=Math.sin(menuClock*.14)*13;camera.position.z=-17+Math.cos(menuClock*.1)*3;camera.position.y=8.5+Math.sin(menuClock*.22)*.8;camera.lookAt(0,1,15);}
+ if(!player.group)return;
+ const p=player.group.position;
+ let targetX=p.x*.38,targetY=0,targetZ=p.z;
+ if(state==='race'){
+  desiredCamera.set(p.x*.58,Math.max(5.7,p.y+6.8),p.z+9.5);
+  cameraLook.set(p.x*.35,p.y+1.2,p.z-5.8);
+ }else if(state==='survival'){
+  desiredCamera.set(p.x*.48,13+p.y*.2,p.z+17);
+  cameraLook.set(p.x*.2,0.4,p.z-1.5);
+ }else{
+  desiredCamera.set(0,10,24);cameraLook.set(0,0,0);
+ }
+ camera.position.lerp(desiredCamera,1-Math.exp(-3.2*dt));
+ camera.lookAt(cameraLook);
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(.035,clock.getDelta());if(phase==='menu'){animateMenu(dt);}else if(phase==='running'&&!paused){updateRound(dt);if(phase==='running'){updateHud();}}updateCamera(dt);renderer.render(scene,camera);}
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));});
-// If the browser restores this page with controls already held, start cleanly.
-resetToMenu();animate();
-})();
+function tick(){requestAnimationFrame(tick);let dt=Math.min(clock.getDelta(),.04);
+ if(state==='race'){
+  stageTime+=dt;elapsed+=dt;updateObstacles(dt);getInput();controlPlayer(dt);updateRaceBots(dt);
+  if(state==='race'){
+   if(isFinalRace&&player.finished)finishFinal(true,'クラウンをつかんだ！');
+   updateHud();
+  }
+ }else if(state==='survival'){
+  stageTime+=dt;elapsed+=dt;getInput();controlPlayer(dt);if(state==='survival')updateSurvival(dt);updateHud();
+ }else if(state==='menu'){
+  // Slow camera drift while the title is displayed.
+  camera.position.x=Math.sin(performance.now()*.00015)*.5;camera.lookAt(0,0,0);
+ }
+ if(player.group&&player.group.visible&&player.grounded&&state!=='menu'){
+  const ring=player.group.userData.footRing;if(ring){ring.material.opacity=.3+Math.sin(performance.now()*.01)*.08;}
+ }
+ updateCamera(dt);renderer.render(scene,camera);
+}
+
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.setSize(window.innerWidth,window.innerHeight);});
+window.addEventListener('keydown',e=>{
+ if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);
+ if(e.code==='Space'&&!e.repeat)doJump();if(e.code==='ShiftLeft'||e.code==='ShiftRight'){if(!e.repeat)doDive();}
+ if(state==='menu'&&e.code==='Enter')$('#start-btn')?.click();
+});
+window.addEventListener('keyup',e=>keys.delete(e.code));
+window.addEventListener('blur',()=>{keys.clear();input.jump=false;input.dive=false;});
+const stickBase=$('#stick-base'),stickKnob=$('#stick-knob');
+function setStick(clientX,clientY){const r=stickBase.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=clientX-cx,dy=clientY-cy;const max=43,d=Math.hypot(dx,dy);if(d>max){dx=dx/d*max;dy=dy/d*max;}joystick.x=dx/max;joystick.y=dy/max;stickKnob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;}
+stickBase.addEventListener('pointerdown',e=>{e.preventDefault();joystick.active=true;joystick.id=e.pointerId;stickBase.setPointerCapture(e.pointerId);setStick(e.clientX,e.clientY);});
+stickBase.addEventListener('pointermove',e=>{if(joystick.active&&joystick.id===e.pointerId){e.preventDefault();setStick(e.clientX,e.clientY);}});
+function releaseStick(e){if(joystick.active&&(e.pointerId===undefined||joystick.id===e.pointerId)){joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;stickKnob.style.transform='translate(-50%,-50%)';}}
+stickBase.addEventListener('pointerup',releaseStick);stickBase.addEventListener('pointercancel',releaseStick);stickBase.addEventListener('lostpointercapture',releaseStick);
+const jumpBtn=$('#jump-btn'),diveBtn=$('#dive-btn');
+jumpBtn.addEventListener('pointerdown',e=>{e.preventDefault();doJump();});
+diveBtn.addEventListener('pointerdown',e=>{e.preventDefault();doDive();});
+// A basic fallback for browsers without WebGL.
+if(!renderer.capabilities.isWebGL2&&!renderer.capabilities.isWebGL){setOverlay('<h2>このブラウザでは3Dを起動できないみたい</h2><p>Chrome / Edge / Safariの最新版で開いてみてね。</p>');}
+showMenu();tick();
 </script>
 </body>
 </html>
