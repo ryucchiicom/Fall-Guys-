@@ -44,6 +44,8 @@
   #stick-zone{position:absolute;left:0;top:0;width:50%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
   #stick-base{position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;background:#0e184a48;border:2px solid #ffffff67;box-shadow:inset 0 0 20px #ffffff10;pointer-events:none;touch-action:none}
   #stick-knob{position:absolute;width:57px;height:57px;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(145deg,#ffffffde,#a9d5ffb8);border:2px solid #fff;box-shadow:0 5px 15px #09153673;pointer-events:none}
+  #slime-back-label{display:none;position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:#65f59b55;border:3px solid #b9ffcd;color:#fff;font-size:28px;font-weight:1000;text-shadow:0 2px 5px #183c3b;pointer-events:none}
+  #slime-back-label span{font-size:11px;letter-spacing:.08em}
   .touch-btn{position:absolute;right:max(22px,env(safe-area-inset-right));width:76px;height:76px;border-radius:50%;font-weight:1000;font-size:14px;color:#121b44;border:3px solid #ffffffc7;box-shadow:0 6px 0 #20275d99,0 8px 18px #0915364d;pointer-events:auto;touch-action:none;z-index:3}
   #jump-btn{bottom:max(30px,env(safe-area-inset-bottom));background:linear-gradient(135deg,#fff27a,#ffc261)}
   #dive-btn{bottom:calc(max(30px,env(safe-area-inset-bottom)) + 88px);right:max(31px,env(safe-area-inset-right));width:64px;height:64px;background:linear-gradient(135deg,#77fff4,#56b5ff);font-size:12px}
@@ -51,7 +53,10 @@
   #countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:5;font-size:clamp(84px,25vw,180px);font-weight:1000;line-height:1;color:#fff9b5;text-shadow:0 7px 0 #5b3f9b,0 14px 35px #101a3ecc;letter-spacing:-.06em}
   #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
   @media (pointer:coarse){#touch-controls{display:block}#progress-wrap{top:calc(env(safe-area-inset-top) + 82px);width:min(45vw,220px)}#round-card,#alive-card{top:calc(env(safe-area-inset-top) + 10px)}}
-  .spectating #stick-zone{display:none!important}
+  .spectating #stick-zone{display:block!important;opacity:0!important}
+.spectating #stick-base,.spectating #slime-back-label{display:none!important}
+.slime-back-mode #stick-base{display:none!important}
+.slime-back-mode #slime-back-label{display:flex}
   @media (max-width:520px){#round-card{min-width:0;max-width:48vw;padding:8px 10px}.hud-big{font-size:14px}#subinfo{font-size:10px}.tiny{font-size:9px}.alive-inline{font-size:9px;gap:5px}.alive-inline strong{font-size:11px}#progress-wrap{padding:7px 9px}#progress-label{font-size:10px}.rules{gap:7px}.rule{padding:9px;font-size:11px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -69,7 +74,7 @@
     </div>
   <div id="touch-controls">
     <div id="look-zone" aria-label="視点操作"></div>
-    <div id="stick-zone" aria-label="移動操作"><div id="stick-base"><div id="stick-knob"></div></div></div>
+    <div id="stick-zone" aria-label="移動操作"><div id="stick-base"><div id="stick-knob"></div></div><div id="slime-back-label">↓<span>BACK ONLY</span></div></div>
   </div>
   <div id="countdown"></div>
   <div id="toast"></div>
@@ -135,12 +140,12 @@ const COLORS=[0xff6688,0x35d6d0,0xffc94e,0x9b7bff,0x79e05b,0xff8c42,0x56a8ff,0xf
 let bots=Array.from({length:32},(_,i)=>({id:'bot'+i,color:COLORS[i%COLORS.length],alive:true,botIndex:i,phase:Math.random()*10,baseLane:0,finished:false,finishTime:null,speed:5.2+Math.random()*2.45,aiTimer:Math.random()*1.5,aiThink:Math.random()*.3,aiTargetLane:0,aiJumpRequested:false,aiDiveRequested:false,aiDiveCooldown:Math.random()*2.5,aiX:0,aiZ:0,hitCooldown:0,bumpCooldown:0,stunTimer:0,traits:{awareness:.3+Math.random()*.68,patience:.2+Math.random()*.75,bravery:.2+Math.random()*.75,reaction:.16+Math.random()*.55,jumpChance:.25+Math.random()*.7,noise:.12+Math.random()*.38}}));
 let player={id:'player',color:0xffe760,alive:true,isPlayer:true,finished:false,finishTime:null,speed:9.0,phase:0,hitCooldown:0,bumpCooldown:0};
 let state='menu', roundIndex=0, chosenRaces=[], chosenFinal=null, currentRound=null, isFinalRace=false;
-let spectatorMode=false, crownTarget=null, spectatorTarget=null, spectatorTargetSwitch=0;
+let spectatorMode=false, crownTarget=null, spectatorTarget=null, spectatorTargetSwitch=0, spectatorSwipeId=null, spectatorSwipeStartX=0;
 let countdownActive=false,countdownRemaining=0,countdownTargetState='race';
 let cameraYaw=0,cameraPitch=0,lookPointer=null,lookLastX=0,lookLastY=0,lookStartX=0,lookStartY=0,lookMoved=false;
 let elapsed=0, stageTime=0, finishTarget=24, finishers=0, survivalElimTimer=6.2, lastHud=0;
 let obstacles=[], tiles=[], tileMap=new Map(), stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
-let joystick={active:false,id:null,x:0,y:0};
+let joystick={active:false,id:null,x:0,y:0,backHeld:false};
 let cameraLook=new THREE.Vector3(0,0,0), desiredCamera=new THREE.Vector3();
 
 function mat(color,roughness=.65,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
@@ -163,11 +168,11 @@ function makeBean(actor){
  }
  const footRing=new THREE.Mesh(new THREE.TorusGeometry(.42,.055,6,20),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.38}));footRing.rotation.x=Math.PI/2;footRing.position.y=.06;group.add(footRing);
  group.userData.visual=visual;group.userData.footRing=footRing;
- actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;
+ actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;
  world.add(group);return group;
 }
 function resetActorForRound(actor,x,z){
- actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.visual.rotation.set(0,0,0);actor.group.visible=true;
+ actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.visual.rotation.set(0,0,0);actor.group.visible=true;
 }
 function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 function pickGameRounds(){chosenRaces=shuffle(raceRounds).slice(0,3);chosenFinal=finalRounds[Math.floor(Math.random()*finalRounds.length)];}
@@ -195,6 +200,8 @@ function courseYawAt(z){return Math.atan(courseSlope(z));}
 function courseSidePoint(z,lateral){const yaw=courseYawAt(z);return {x:courseCenterX(z)+lateral*Math.cos(yaw),z:z-lateral*Math.sin(yaw),yaw};}
 function startCountdown(targetState){
  countdownTargetState=targetState;countdownActive=true;countdownRemaining=3.6;
+ // Every round starts with a neutral forward view, but look input stays active during countdown.
+ cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=false;
  countdownEl.textContent='3';countdownEl.style.display='flex';input.jump=false;input.dive=false;
 }
 function allAliveBots(){return bots.filter(b=>b.alive);}
@@ -252,11 +259,11 @@ function buildCourse(stage){
  }
  const zones=isCrown?[22,14,6,-2,-10,-18,-26,-32,-37,-40]:[17,3,-11,-25,-35];
  zones.forEach((z,i)=>{
-  let kind=stage.type;
+  let kind=stage.id==='slime'?'slime':stage.type;
   if(isCrown)kind=['hammer','mover','beam','ball','wall','barrier','hammer','mover','beam','ball'][i%10];
   else if(kind==='mix'||kind==='curve')kind=['mover','beam','ball','barrier','wall'][i%5];
   const before=obstacles.length;
-  if(kind==='mover')addMover(z,3.2+(i%2)*.6,1.8,1.2,1.3+i*.13,5.8,(i%2)*Math.PI);
+  if(kind==='mover'||kind==='slime')addMover(z,3.2+(i%2)*.6,1.8,1.2,1.3+i*.13,5.8,(i%2)*Math.PI,kind);
   else if(kind==='beam')addRotatingBeam(z,18,1.1+(i%3)*.23,0.88,0x55f4e5);
   else if(kind==='hammer')addHammer(z,i);
   else if(kind==='ball')addRollingBall(z,1.05,1.0+i*.12,6.7,(i%2)*Math.PI);
@@ -265,7 +272,7 @@ function buildCourse(stage){
   if(isCrown){for(const o of obstacles.slice(before)){if(typeof o.speed==='number')o.speed*=1.2;if(typeof o.amp==='number')o.amp*=1.12;}}
   const offset=courseCenterX(z);
   for(const o of obstacles.slice(before)){
-   if(o.kind==='mover'||o.kind==='ball'){
+   if(o.kind==='mover'||o.kind==='slime'||o.kind==='ball'){
     o.centerX=offset;o.centerZ=z;o.centerYaw=courseYawAt(z);o.z=z;o.x=0;
     o.mesh.position.x=offset;o.mesh.position.z=z;
     if(o.cap){o.cap.position.x=offset;o.cap.position.z=z;}
@@ -299,15 +306,18 @@ function addHammer(z,i){
  const bar=box(pivot,8,.48,.7,0xff7a9e,0,0,0);sphere(pivot,.82,0xffd76a,4,0,.02,14);sphere(pivot,.24,0xffffff,4.25,.18,-.26,10);
  obstacles.push({kind:'hammer',mesh:pivot,bar,length:8,speed:(i%2===0?1:-1)*(1.15+i*.08),phase:i*1.8,y:1.25,z,x:pivot.position.x});
 }
-function addMover(z,w,h,d,speed,amp,phase=0){
- const mesh=box(world,w,h,d,0xff78a7,0,h/2,z,{metalness:.08});
- const cap=box(world,w*.65,.16,d*.9,0xffc5de,0,h+.02,z);
- obstacles.push({kind:'mover',mesh,cap,width:w,height:h,depth:d,speed,amp,phase,z,x:0,centerX:0});
+function addMover(z,w,h,d,speed,amp,phase=0,kind='mover'){
+ const slime=kind==='slime';
+ const mesh=box(world,w,h,d,slime?0x55f58f:0xff78a7,0,h/2,z,{metalness:.08});
+ const cap=box(world,w*.65,.16,d*.9,slime?0xc0ffd0:0xffc5de,0,h+.02,z);
+ if(slime){mesh.material.transparent=true;mesh.material.opacity=.82;cap.material.transparent=true;cap.material.opacity=.92;}
+ const skew=Math.sin(phase+.8)*.55;
+ obstacles.push({kind,mesh,cap,width:w,height:h,depth:d,speed,amp,phase,z,x:0,centerX:0,travelMin:-8.45+skew,travelMax:7.85+Math.cos(phase+.4)*.55});
 }
 function addRollingBall(z,r,speed,amp,phase=0){
  const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),mat(0xffcc51,.35,.05));mesh.position.set(0,r+.1,z);world.add(mesh);
  const stripe=new THREE.Mesh(new THREE.TorusGeometry(r*.78,.09,6,18),mat(0xff6c9d));stripe.rotation.x=Math.PI/2;mesh.add(stripe);
- obstacles.push({kind:'ball',mesh,r,speed,amp,phase,z,x:0,centerX:0});
+ obstacles.push({kind:'ball',mesh,r,speed,amp,phase,z,x:0,centerX:0,travelMin:-9.05+Math.sin(phase+.2)*.42,travelMax:8.45+Math.cos(phase+.9)*.48});
 }
 function addBarrierSet(z,i){
  const gap=(i%2===0?-4.4:4.4);const width=10.4;
@@ -331,12 +341,35 @@ function distPointSegment(px,pz,x1,z1,x2,z2){
  let t=den?((px-x1)*dx+(pz-z1)*dz)/den:0;t=Math.max(0,Math.min(1,t));
  const x=x1+t*dx,z=z1+t*dz;return Math.hypot(px-x,pz-z);
 }
+function setGhostAppearance(actor,enabled){
+ if(!actor?.group)return;
+ actor.group.traverse(obj=>{
+  if(!obj.isMesh||!obj.material)return;
+  const mats=Array.isArray(obj.material)?obj.material:[obj.material];
+  for(const m of mats){
+   if(!m.userData.__ghostOriginal)m.userData.__ghostOriginal={transparent:m.transparent,opacity:m.opacity,depthWrite:m.depthWrite};
+   const original=m.userData.__ghostOriginal;
+   if(enabled){m.transparent=true;m.opacity=Math.min(original.opacity,.3);m.depthWrite=false;}
+   else{m.transparent=original.transparent;m.opacity=original.opacity;m.depthWrite=original.depthWrite;}
+   m.needsUpdate=true;
+  }
+ });
+}
+function vibrateImpact(strong=false){
+ // Vibration works only on browsers/devices that expose the Vibration API; iOS Safari may ignore it.
+ try{if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function')navigator.vibrate(strong?[70,35,85]:[45,25,55]);}catch{}
+}
+function startSlimeEffect(actor){
+ actor.slimeEffectTimer=3;actor.stunTimer=0;actor.vx=0;actor.vz=0;actor.vy=0;actor.grounded=true;
+ setGhostAppearance(actor,true);
+ if(actor.isPlayer){cameraYaw=0;cameraPitch=0;lookPointer=null;document.body.classList.add('slime-back-mode');joystick.x=0;joystick.y=0;joystick.backHeld=false;toast('スライム状態！ 3秒間、後ろにしか進めない！');}
+}
 function obstacleHit(actor,o){
- if(!actor.group||actor.hitCooldown>0||!actor.alive||!actor.group.visible)return false;
+ if(!actor.group||actor.hitCooldown>0||!actor.alive||!actor.group.visible||(actor.slimeEffectTimer||0)>0)return false;
  const p=actor.group.position, center=o.mesh.position;
  let hit=false,nx=0,nz=0,contactLocalX=0;
  const isRotating=o.kind==='beam'||o.kind==='hammer';
- const isMoving=isRotating||o.kind==='mover'||o.kind==='ball'||o.kind==='blockwall';
+ const isMoving=isRotating||o.kind==='mover'||o.kind==='slime'||o.kind==='ball'||o.kind==='blockwall';
  if(isRotating){
   const angle=o.mesh.rotation.y,dx=p.x-center.x,dz=p.z-center.z;
   contactLocalX=THREE.MathUtils.clamp(dx*Math.cos(angle)-dz*Math.sin(angle),-o.length/2,o.length/2);
@@ -362,6 +395,9 @@ function obstacleHit(actor,o){
   }
  }
  if(!hit)return false;
+ if(actor.isPlayer&&o.kind==='slime'){
+  actor.hitCooldown=.24;startSlimeEffect(actor);vibrateImpact(true);return true;
+ }
  // A rotating paddle or moving block transfers its own momentum to the bean.
  let ovx=o.vx||0,ovz=o.vz||0,rotationalSpeed=0;
  if(isRotating){
@@ -379,7 +415,7 @@ function obstacleHit(actor,o){
  actor.vx=(actor.vx||0)*.18+nx*kick+ovx*.52;
  actor.vz=(actor.vz||0)*.18+nz*kick+ovz*.52;
  actor.vy=Math.max(actor.vy||0,isMoving?7.5:6.1);
- if(actor.isPlayer)toast('吹っ飛ばされた！ しばらく動けない！');
+ if(actor.isPlayer){toast('吹っ飛ばされた！ しばらく動けない！');if(isMoving)vibrateImpact(false);}
  return true;
 }
 function updateObstacles(dt){
@@ -388,15 +424,17 @@ function updateObstacles(dt){
   const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;
   if(o.kind==='beam'||o.kind==='hammer'){
    o.mesh.rotation.y+=o.speed*pressure*dt;
-  }else if(o.kind==='mover'){
+  }else if(o.kind==='mover'||o.kind==='slime'){
    if(o.motionPhase===undefined)o.motionPhase=stageTime*o.speed+o.phase;else o.motionPhase+=o.speed*pressure*dt;
-   o.x=Math.sin(o.motionPhase)*o.amp;
+   const mid=((o.travelMax??o.amp)+(o.travelMin??-o.amp))/2,range=((o.travelMax??o.amp)-(o.travelMin??-o.amp))/2;
+   o.x=mid+Math.sin(o.motionPhase)*range;
    const dx=o.x*Math.cos(o.centerYaw||0),dz=-o.x*Math.sin(o.centerYaw||0);
    o.mesh.position.x=(o.centerX||0)+dx;o.mesh.position.z=(o.centerZ??o.z)+dz;o.z=o.mesh.position.z;
    o.cap.position.x=o.mesh.position.x;o.cap.position.z=o.mesh.position.z;
   }else if(o.kind==='ball'){
    if(o.motionPhase===undefined)o.motionPhase=stageTime*o.speed+o.phase;else o.motionPhase+=o.speed*pressure*dt;
-   o.x=Math.sin(o.motionPhase)*o.amp;
+   const mid=((o.travelMax??o.amp)+(o.travelMin??-o.amp))/2,range=((o.travelMax??o.amp)-(o.travelMin??-o.amp))/2;
+   o.x=mid+Math.sin(o.motionPhase)*range;
    const dx=o.x*Math.cos(o.centerYaw||0),dz=-o.x*Math.sin(o.centerYaw||0);
    o.mesh.position.x=(o.centerX||0)+dx;o.mesh.position.z=(o.centerZ??o.z)+dz;o.z=o.mesh.position.z;
    o.mesh.rotation.x+=dt*o.speed*2*pressure;o.mesh.rotation.z+=dt*o.speed*pressure;
@@ -424,20 +462,28 @@ function touchedCrown(actor){
 function enterSpectatorMode(){
  if(spectatorMode)return;
  spectatorMode=true;spectatorTarget=null;spectatorTargetSwitch=0;document.body.classList.add('spectating');
- subInfoEl.textContent='ゴール！ 他のランナーを観戦中';
+ subInfoEl.textContent='ゴール！ 左側をスワイプして観戦対象を変更';
  const controls=$('#touch-controls');
  controls.style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- toast('ゴール！ 観戦モード');
+ toast('ゴール！ 左側をスワイプして観戦');
+}
+function switchSpectatorTarget(direction=1){
+ const pool=bots.filter(b=>b.alive&&b.group&&b.group.visible&&!b.finished).sort((a,b)=>a.group.position.z-b.group.position.z);
+ const fallback=bots.filter(b=>b.alive&&b.group&&b.group.visible).sort((a,b)=>a.group.position.z-b.group.position.z);
+ const candidates=pool.length?pool:fallback;if(!candidates.length)return;
+ let index=candidates.indexOf(spectatorTarget);if(index<0)index=direction>0?-1:0;
+ spectatorTarget=candidates[(index+direction+candidates.length)%candidates.length];spectatorTargetSwitch=8;
+ toast(`観戦中：Bot ${spectatorTarget.botIndex+1}`);
 }
 function startGame(){
- countdownActive=false;countdownEl.style.display='none';cameraYaw=0;cameraPitch=0;spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;document.body.classList.remove('spectating');
+ countdownActive=false;countdownEl.style.display='none';cameraYaw=0;cameraPitch=0;spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
  pickGameRounds();roundIndex=0;player.alive=true;player.color=0xffe760;player.isPlayer=true;
  bots.forEach(b=>{b.alive=true;b.speed=7.7+Math.random()*1.7;b.phase=Math.random()*15;b.aiTimer=Math.random()*1.1;b.aiThink=Math.random()*.3;b.aiTargetLane=0;b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.5+Math.random()*2.8;b.stunTimer=0;b.bumpCooldown=0;b.hitCooldown=0;});
  hud.style.display='block';hideOverlay();$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
  startRaceStage(chosenRaces[0],false);
 }
 function startRaceStage(stage,isFinal){
- spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;document.body.classList.remove('spectating');
+ spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
  hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
  countdownEl.style.display='none';currentRound=stage;isFinalRace=isFinal;state='race';elapsed=0;stageTime=0;finishers=0;
  buildCourse(stage);
@@ -460,6 +506,9 @@ function startRaceStage(stage,isFinal){
  startCountdown('race');
 }
 function getInput(){
+ if((player.slimeEffectTimer||0)>0){
+  input.x=0;input.y=(joystick.backHeld||keys.has('KeyS')||keys.has('ArrowDown'))?-1:0;input.jump=false;input.dive=false;return;
+ }
  let x=0,y=0;
  if(keys.has('KeyA')||keys.has('ArrowLeft'))x-=1;if(keys.has('KeyD')||keys.has('ArrowRight'))x+=1;
  if(keys.has('KeyW')||keys.has('ArrowUp'))y+=1;if(keys.has('KeyS')||keys.has('ArrowDown'))y-=1;
@@ -467,13 +516,17 @@ function getInput(){
  const len=Math.hypot(x,y);if(len>1){x/=len;y/=len;}
  input.x=x;input.y=y;
 }
-function doJump(){if(countdownActive||(state!=='race'&&state!=='survival'))return;input.jump=true;}
-function doDive(){if(countdownActive||(state!=='race'&&state!=='survival'))return;input.dive=true;}
+function doJump(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0)return;input.jump=true;}
+function doDive(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0)return;input.dive=true;}
 function controlPlayer(dt){
  const a=player,p=player.group;if(!p||a.finished)return;
  a.hitCooldown=Math.max(0,a.hitCooldown-dt);a.bumpCooldown=Math.max(0,(a.bumpCooldown||0)-dt);
  a.jumpLock=Math.max(0,a.jumpLock-dt);
  const oldDiveTimer=a.diveTimer||0;
+ a.slimeEffectTimer=Math.max(0,(a.slimeEffectTimer||0)-dt);
+ if(a.slimeEffectTimer<=0&&a._wasSlimeAffected){a._wasSlimeAffected=false;setGhostAppearance(a,false);document.body.classList.remove('slime-back-mode');joystick.backHeld=false;}
+ const oldSlimeTimer=a.slimeEffectTimer;
+ if(oldSlimeTimer>0)a._wasSlimeAffected=true;
  a.diveTimer=Math.max(0,oldDiveTimer-dt);
  a.diveBurstTimer=Math.max(0,(a.diveBurstTimer||0)-dt);
  a.diveRecovery=Math.max(0,(a.diveRecovery||0)-dt);
@@ -505,7 +558,7 @@ function controlPlayer(dt){
    const wasRecovering=a.diveRecovery>0;
    const faceYaw=a.group.rotation.y,faceX=-Math.sin(faceYaw),faceZ=-Math.cos(faceYaw);
    const facingLen=Math.hypot(faceX,faceZ)||1;
-   const launchSpeed=wasRecovering?12.8:21.5;
+   const launchSpeed=wasRecovering?3.6:23.5;
    a.vx=faceX/facingLen*launchSpeed+a.vx*.12;
    a.vz=faceZ/facingLen*launchSpeed+a.vz*.12;
    a.vy=Math.max(a.vy,5.4);a.diveTimer=.54;a.diveBurstTimer=.31;a.diveRecovery=1.35;a.diveRecoveryPending=true;a.jumpLock=.22;
@@ -536,7 +589,7 @@ function controlPlayer(dt){
   }
   if(!a.finished){for(const o of obstacles)obstacleHit(a,o);}
  }else if(state==='survival'){
-  if(stageBounds.kind==='circle'&&Math.hypot(p.position.x,p.position.z)>14.8){a.grounded=false;}
+  if(stageBounds.kind==='circle'){const r=Math.hypot(p.position.x,p.position.z);if(r>14.4||r<5.82)a.grounded=false;}
   if(stageBounds.kind==='rect'&&(Math.abs(p.position.x)>12.4||Math.abs(p.position.z)>15.2)){a.grounded=false;}
   if(stageBounds.kind==='hex'&&p.position.y<=0&&a.vy<=0&&hasGround(p.position.x,p.position.z,a)){
    p.position.y=0;a.vy=0;a.grounded=true;
@@ -549,7 +602,7 @@ function controlPlayer(dt){
 }
 function hasGround(x,z,actor){
  if(state==='race')return true;
- if(stageBounds.kind==='circle')return Math.hypot(x,z)<=14.4;
+ if(stageBounds.kind==='circle'){const r=Math.hypot(x,z);return r>=5.82&&r<=14.4;}
  if(stageBounds.kind==='rect')return Math.abs(x)<=12&&Math.abs(z)<=15;
  if(stageBounds.kind==='hex')return !!findTile(x,z);
  return true;
@@ -563,7 +616,7 @@ function obstacleRiskAt(x,z,o,extra=1.25,eta=0){
   const dist=distPointSegment(x,z,center.x-dx,center.z-dz,center.x+dx,center.z+dz);
   return THREE.MathUtils.clamp((.98+extra-dist)/(.98+extra),0,1);
  }
- if(o.kind==='ball'||o.kind==='mover'){
+ if(o.kind==='ball'||o.kind==='mover'||o.kind==='slime'){
   const cx=center.x+(o.vx||0)*eta,cz=center.z+(o.vz||0)*eta;
   const radius=o.kind==='ball'?o.r+.72:(o.width||2)/2+.55;
   const depth=o.kind==='ball'?o.r+.65:(o.depth||1)+.55;
@@ -589,9 +642,9 @@ function chooseRaceBotPlan(b,p){
   let danger=0;
   for(const o of obstacles){
    const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-   if(ahead<-.8||ahead>10.5)continue;
+   if(ahead<-.8||ahead>14.5)continue;
    const eta=Math.max(0,ahead/Math.max(3,b.speed));
-   const evalX=courseCenterX(oz+1.05)+lane;
+   const evalX=courseCenterX(oz+.35)+lane;
    danger=Math.max(danger,obstacleRiskAt(evalX,oz+1.05,o,1.05,eta));
   }
   const lanePreference=Math.abs(lane-preferred)*(.07+.1*traits.patience);
@@ -626,7 +679,7 @@ function chooseRaceBotPlan(b,p){
  if(nearCrown&&!b.grounded&&b.aiDiveCooldown<=0&&Math.random()<.55+traits.bravery*.3)b.aiDiveRequested=true;
 }
 function resolveBeanCollisions(actors,dt){
- const list=actors.filter(a=>a&&a.alive&&a.group&&a.group.visible&&!a.finished);
+ const list=actors.filter(a=>a&&a.alive&&a.group&&a.group.visible&&!a.finished&&(a.slimeEffectTimer||0)<=0);
  for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
   const a=list[i],b=list[j],pa=a.group.position,pb=b.group.position;
   if(Math.abs(pa.y-pb.y)>1.2)continue;
@@ -659,14 +712,14 @@ function updateRaceBots(dt){
    if(b.aiThink<=0)chooseRaceBotPlan(b,p);
    const targetX=courseCenterX(p.z)+THREE.MathUtils.clamp(b.aiTargetLane,-9.4,9.4);
    const yaw=courseYawAt(p.z),forwardX=-Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
-   const lateral=THREE.MathUtils.clamp((targetX-p.x)*(1.2+traits.awareness*.65),-5.8,5.8);
+   const lateral=THREE.MathUtils.clamp((targetX-p.x)*(1.75+traits.awareness*.75),-9.2,9.2);
    let targetVx=forwardX*b.speed+rightX*lateral,targetVz=forwardZ*b.speed+rightZ*lateral;
    if(b.diveBurstTimer>0){b.vx*=Math.exp(-.24*dt);b.vz*=Math.exp(-.24*dt);}
    else if(b.diveRecovery>0){targetVx*=.42;targetVz*=.42;b.vx=THREE.MathUtils.damp(b.vx,targetVx,1.15,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,1.15,dt);}
    else{b.vx=THREE.MathUtils.damp(b.vx,targetVx,2.6+traits.reaction,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,2.4+traits.patience*.55,dt);}
    if(b.aiJumpRequested&&b.aiJumpCooldown<=0&&b.grounded){b.vy=7.35+traits.bravery*.7;b.grounded=false;b.aiJumpCooldown=2.5+Math.random()*2.4;b.aiJumpRequested=false;}
    if(b.aiDiveRequested&&b.diveTimer<=0){
-    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),speed=recovering?13.0:20.2;
+    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),speed=recovering?3.9:20.2;
     b.vx=faceX*speed+b.vx*.1;b.vz=faceZ*speed+b.vz*.1;b.vy=Math.max(b.vy,5.1);
     b.diveTimer=.52;b.diveBurstTimer=.3;b.diveRecovery=1.22;b.aiDiveCooldown=3.1+Math.random()*3.2;b.aiDiveRequested=false;
    }
@@ -730,9 +783,12 @@ function startFinalStage(){
 function buildArenaBase(kind){
  newWorld();
  if(kind==='circle'){
-  const disc=new THREE.Mesh(new THREE.CylinderGeometry(14.5,14.5,.9,64),mat(0x5b6fbd,.7));disc.position.y=-.5;world.add(disc);
-  const rim=new THREE.Mesh(new THREE.TorusGeometry(14.2,.22,8,64),mat(0x52f0dc,.35));rim.rotation.x=Math.PI/2;rim.position.y=.02;world.add(rim);
-  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;const x=Math.cos(a)*14.5,z=Math.sin(a)*14.5;const post=box(world,.28,1.7,.28,i%2?0xff83bc:0x58e9ed,x,.4,z);}
+  // A ring-shaped Jump Showdown arena: the inner floor is completely absent.
+  const ringGeo=new THREE.RingGeometry(5.7,14.5,80,1);
+  const ring=new THREE.Mesh(ringGeo,mat(0x5b6fbd,.7));ring.rotation.x=-Math.PI/2;ring.position.y=-.025;world.add(ring);
+  const outerRim=new THREE.Mesh(new THREE.TorusGeometry(14.2,.22,8,64),mat(0x52f0dc,.35));outerRim.rotation.x=Math.PI/2;outerRim.position.y=.02;world.add(outerRim);
+  const innerRim=new THREE.Mesh(new THREE.TorusGeometry(5.72,.16,8,48),mat(0xff6ea7,.35));innerRim.rotation.x=Math.PI/2;innerRim.position.y=.025;world.add(innerRim);
+  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;const x=Math.cos(a)*14.5,z=Math.sin(a)*14.5;box(world,.28,1.7,.28,i%2?0xff83bc:0x58e9ed,x,.4,z);}
  }else if(kind==='rect'){
   box(world,24.4,.9,30.4,0x586cba,0,-.5,0);
   box(world,24,.05,30,0x7088d0,0,-.025,0);
@@ -749,6 +805,10 @@ function buildArenaBase(kind){
  for(let i=0;i<28;i++){const a=Math.random()*Math.PI*2,r=18+Math.random()*10,y=2+Math.random()*8;sphere(world,.25+Math.random()*.3,[0xffffff,0xffd6f0,0xb5f9ff][i%3],Math.cos(a)*r,y,Math.sin(a)*r,8);}
 }
 function startSurvivalStage(stage){
+ // A player who finished the previous qualifier may have been spectating. Finals must always restore controls.
+ spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;
+ document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
+ cameraYaw=0;cameraPitch=0;lookPointer=null;
  hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';countdownEl.style.display='none';
  currentRound=stage;isFinalRace=false;state='survival';elapsed=0;stageTime=0;survivalElimTimer=5.8;obstacles=[];
  const kind=stage.type==='jump'?'circle':stage.type==='hex'?'hex':'rect';stageBounds={kind};
@@ -760,11 +820,13 @@ function startSurvivalStage(stage){
   addBlockWall(15,0);addBlockWall(-15,1);
  }
  const active=allAliveBots();active.forEach(b=>makeBean(b));makeBean(player);
- resetActorForRound(player,0,0);
+ resetActorForRound(player,0,kind==='circle'?8.1:0);
  active.forEach((b,i)=>{
   const angle=i/Math.max(1,active.length)*Math.PI*2;
-  const r=5.2+(i%3)*.9;
-  resetActorForRound(b,Math.cos(angle)*r,Math.sin(angle)*r);
+  const ringAngle=angle+Math.PI/Math.max(1,active.length);
+  const r=kind==='circle'?7.25+(i%4)*.82:5.2+(i%3)*.9;
+  const spawnAngle=kind==='circle'?ringAngle:angle;
+  resetActorForRound(b,Math.cos(spawnAngle)*r,Math.sin(spawnAngle)*r);
   b.aiX=Math.cos(angle+Math.PI/2);b.aiZ=Math.sin(angle+Math.PI/2);b.aiTimer=.1+Math.random()*.35;b.aiSpeed=4.4+Math.random()*1.5;b.jumpNext=.7+Math.random()*2.2;b.aiDiveCooldown=.8+Math.random()*2.8;b.aiDiveRequested=false;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.stunTimer=0;b.bumpCooldown=0;
  });
  hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
@@ -802,7 +864,9 @@ function chooseSurvivalBotPlan(b){
  for(const [dx,dz] of dirs){
   const nx=p.x+dx*step,nz=p.z+dz*step;let score=0;
   if(stageBounds.kind==='circle'){
-   const r=Math.hypot(nx,nz);if(r>12.8)score-=2+(r-12.8)*3;else score+=(12.8-r)*.035;
+   const r=Math.hypot(nx,nz);
+   if(r>12.8)score-=2+(r-12.8)*3;else score+=(12.8-r)*.035;
+   if(r<6.5)score-=18+(6.5-r)*4;
   }else if(stageBounds.kind==='rect'){
    const overX=Math.max(0,Math.abs(nx)-10.7),overZ=Math.max(0,Math.abs(nz)-13.7);score-=overX*4+overZ*4;
    score+=Math.min(10.7-Math.abs(nx),13.7-Math.abs(nz))*.025;
@@ -855,7 +919,7 @@ function updateSurvivalBots(dt){
    else{b.vx=THREE.MathUtils.damp(b.vx,targetVx,2.5+t.reaction,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,2.5+t.reaction,dt);}
    if(b.aiJumpRequested&&b.grounded){b.vy=7.0+(t.bravery||.5)*.8;b.grounded=false;b.jumpNext=2.2+Math.random()*2.4;b.aiJumpRequested=false;}
    if(b.aiDiveRequested&&b.diveTimer<=0){
-    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),launch=recovering?6.8:10.8;
+    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),launch=recovering?2.6:10.8;
     b.vx=faceX*launch+b.vx*.12;b.vz=faceZ*launch+b.vz*.12;b.vy=Math.max(b.vy,4.7);
     b.diveTimer=.46;b.diveBurstTimer=.23;b.diveRecovery=.92;b.aiDiveCooldown=2.6+Math.random()*3.0;b.aiDiveRequested=false;
    }
@@ -989,12 +1053,24 @@ function resetStickHome(){
  stickKnob.style.transform='translate(-50%,-50%)';
 }
 stickZone.addEventListener('pointerdown',e=>{
- if(joystick.active)return;e.preventDefault();joystick.active=true;joystick.id=e.pointerId;
+ e.preventDefault();
+ if(spectatorMode){spectatorSwipeId=e.pointerId;spectatorSwipeStartX=e.clientX;try{stickZone.setPointerCapture(e.pointerId);}catch{}return;}
+ if(joystick.active)return;joystick.active=true;joystick.id=e.pointerId;
  try{stickZone.setPointerCapture(e.pointerId);}catch{}
+ if((player.slimeEffectTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;return;}
  placeStickAt(e.clientX,e.clientY);setStick(e.clientX,e.clientY);
 });
-stickZone.addEventListener('pointermove',e=>{if(joystick.active&&joystick.id===e.pointerId){e.preventDefault();setStick(e.clientX,e.clientY);}});
-function releaseStick(e){if(joystick.active&&(e.pointerId===undefined||joystick.id===e.pointerId)){joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;resetStickHome();}}
+stickZone.addEventListener('pointermove',e=>{
+ if(spectatorMode&&spectatorSwipeId===e.pointerId){e.preventDefault();return;}
+ if(joystick.active&&joystick.id===e.pointerId){e.preventDefault();if((player.slimeEffectTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;}else setStick(e.clientX,e.clientY);}
+});
+function releaseStick(e){
+ if(spectatorSwipeId!==null&&(e.pointerId===undefined||spectatorSwipeId===e.pointerId)){
+  if(e.type==='pointerup'){const dx=e.clientX-spectatorSwipeStartX;if(Math.abs(dx)>24)switchSpectatorTarget(dx<0?1:-1);}
+  spectatorSwipeId=null;return;
+ }
+ if(joystick.active&&(e.pointerId===undefined||joystick.id===e.pointerId)){joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;resetStickHome();}
+}
 stickZone.addEventListener('pointerup',releaseStick);stickZone.addEventListener('pointercancel',releaseStick);stickZone.addEventListener('lostpointercapture',releaseStick);
 lookZone.addEventListener('pointerdown',e=>{
  if(!(state==='race'||state==='survival'))return;
@@ -1003,6 +1079,7 @@ lookZone.addEventListener('pointerdown',e=>{
 });
 lookZone.addEventListener('pointermove',e=>{
  if(lookPointer!==e.pointerId)return;e.preventDefault();
+ if((player.slimeEffectTimer||0)>0)return;
  const dx=e.clientX-lookLastX,dy=e.clientY-lookLastY;lookLastX=e.clientX;lookLastY=e.clientY;
  if(Math.hypot(e.clientX-lookStartX,e.clientY-lookStartY)>10)lookMoved=true;
  cameraYaw-=dx*.0065;cameraYaw=((cameraYaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
@@ -1010,7 +1087,7 @@ lookZone.addEventListener('pointermove',e=>{
 });
 function endLook(e){
  if(lookPointer===null||(e.pointerId!==undefined&&lookPointer!==e.pointerId))return;
- if(!lookMoved&&!countdownActive&&!spectatorMode&& (state==='race'||state==='survival')){if(player.grounded)doJump();else doDive();}
+ if(!lookMoved&&!countdownActive&&!spectatorMode&& (state==='race'||state==='survival')&&(player.slimeEffectTimer||0)<=0){if(player.grounded)doJump();else doDive();}
  lookPointer=null;
 }
 lookZone.addEventListener('pointerup',endLook);lookZone.addEventListener('pointercancel',()=>{lookPointer=null;});lookZone.addEventListener('lostpointercapture',()=>{lookPointer=null;});
