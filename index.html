@@ -57,8 +57,9 @@
   .spectating #stick-zone{display:block!important;opacity:0!important}
 .spectating #stick-base,.spectating #slime-back-label{display:none!important}
 .slime-back-mode #stick-base{display:none!important}
-.slime-back-mode #slime-back-label{display:none}
-.slime-back-mode.stick-active #slime-back-label{display:flex}
+.slime-back-mode #stick-base{display:none!important}
+.slime-back-mode #slime-back-label{display:flex!important;pointer-events:auto}
+.slime-back-mode #stick-knob{display:none!important}
   @media (max-width:520px){#round-card{min-width:0;max-width:48vw;padding:8px 10px}.hud-big{font-size:14px}#subinfo{font-size:10px}.tiny{font-size:9px}.alive-inline{font-size:9px;gap:5px}.alive-inline strong{font-size:11px}#progress-wrap{padding:7px 9px}#progress-label{font-size:10px}.rules{gap:7px}.rule{padding:9px;font-size:11px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -83,10 +84,10 @@
   <div id="overlay"><div id="panel">
     <div class="eyebrow">FALL PARTY RACE</div>
     <h1 class="logo-line">BEAN <span>BATTLE</span></h1>
-    <p>32体のBotと勝ち抜け！ 旧シーズン1のソロ用ラウンド18種を再現。ランダムな予選3回を突破してファイナルへ！</p>
+    <p>31体のBotと勝ち抜け！（自分を含めて32人） 旧シーズン1のソロ用ラウンド18種を再現。ランダムな予選3回を突破してファイナルへ！</p>
     <div class="pill-row"><span class="pill">シーズン1再現</span><span class="pill">ソロ用18ラウンド</span><span class="pill">全4ラウンド</span><span class="pill">チーム戦なし</span></div>
     <div class="rules">
-      <div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div>
+      <div class="rule"><b>📱 スマホ</b>左側の仮想スティックで移動。右側タップでジャンプ（空中ならダイブ）、スワイプで視点操作。落下復帰中は視点固定・後退ボタンのみ。</div>
       <div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div>
       <div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div>
       <div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div>
@@ -146,14 +147,14 @@ const finalRounds=[
 ];
 const QUALIFY=[24,16,8];
 const COLORS=[0xff6688,0x35d6d0,0xffc94e,0x9b7bff,0x79e05b,0xff8c42,0x56a8ff,0xf17dce,0xffe9a5,0x76f1a0,0xd8ecff,0xb4a2ff];
-let bots=Array.from({length:32},(_,i)=>({id:'bot'+i,color:COLORS[i%COLORS.length],alive:true,botIndex:i,phase:Math.random()*10,baseLane:0,finished:false,finishTime:null,speed:5.2+Math.random()*2.45,aiTimer:Math.random()*1.5,aiThink:Math.random()*.3,aiTargetLane:0,aiJumpRequested:false,aiDiveRequested:false,aiDiveCooldown:Math.random()*2.5,aiX:0,aiZ:0,hitCooldown:0,bumpCooldown:0,stunTimer:0,traits:{awareness:.3+Math.random()*.68,patience:.2+Math.random()*.75,bravery:.2+Math.random()*.75,reaction:.16+Math.random()*.55,jumpChance:.25+Math.random()*.7,noise:.12+Math.random()*.38}}));
+let bots=Array.from({length:31},(_,i)=>({id:'bot'+i,color:COLORS[i%COLORS.length],alive:true,botIndex:i,phase:Math.random()*10,baseLane:0,finished:false,finishTime:null,speed:5.2+Math.random()*2.45,aiTimer:Math.random()*1.5,aiThink:Math.random()*.3,aiTargetLane:0,aiJumpRequested:false,aiDiveRequested:false,aiDiveCooldown:Math.random()*2.5,aiX:0,aiZ:0,hitCooldown:0,bumpCooldown:0,stunTimer:0,traits:{awareness:.3+Math.random()*.68,patience:.2+Math.random()*.75,bravery:.2+Math.random()*.75,reaction:.16+Math.random()*.55,jumpChance:.25+Math.random()*.7,noise:.12+Math.random()*.38}}));
 let player={id:'player',color:0xffe760,alive:true,isPlayer:true,finished:false,finishTime:null,speed:9.0,phase:0,hitCooldown:0,bumpCooldown:0};
 let state='menu', roundIndex=0, chosenRaces=[], chosenFinal=null, currentRound=null, isFinalRace=false, isFinalRound=false;
 let spectatorMode=false, crownTarget=null, spectatorTarget=null, spectatorTargetSwitch=0, spectatorSwipeId=null, spectatorSwipeStartX=0;
 let countdownActive=false,countdownRemaining=0,countdownTargetState='race';
 let cameraYaw=0,cameraPitch=0,lookPointer=null,lookLastX=0,lookLastY=0,lookStartX=0,lookStartY=0,lookMoved=false;
 let elapsed=0, stageTime=0, finishTarget=24, finishers=0, survivalElimTimer=6.2, lastHud=0;
-let obstacles=[], tiles=[], tileMap=new Map(), tileGridSpec={originX:-7.2,originZ:-7.2,spacing:1.8,cols:9,rows:9}, racePlatforms=[], seesawPlatforms=[], stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
+let obstacles=[], tiles=[], tileMap=new Map(), tileGridSpec={originX:-7.2,originZ:-7.2,spacing:1.8,cols:9,rows:9}, racePlatforms=[], seesawPlatforms=[], rolloutState=[], doorRows=[], fruitBeltMarkers=[], climbSlime=null, stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
 let logicCurrentTarget=-1,logicPhaseEnd=0,logicNextAt=4.6,logicRound=0,tailRoundTime=38;
 const FRUIT_NAMES=['スイカ','バナナ','ブドウ','リンゴ','オレンジ'];
 const FRUIT_COLORS=[0x51d85d,0xffdf44,0x9b5de5,0xff5757,0xffa43b];
@@ -163,11 +164,11 @@ let cameraLook=new THREE.Vector3(0,0,0), desiredCamera=new THREE.Vector3();
 function mat(color,roughness=.65,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
 function box(parent,w,h,d,color,x,y,z,extra={}){
  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color,extra.roughness??.68,extra.metalness??0));
- mesh.position.set(x,y,z);if(extra.rotationY)mesh.rotation.y=extra.rotationY;parent.add(mesh);return mesh;
+ mesh.position.set(x,y,z);if(extra.rotationX)mesh.rotation.x=extra.rotationX;if(extra.rotationY)mesh.rotation.y=extra.rotationY;if(extra.rotationZ)mesh.rotation.z=extra.rotationZ;parent.add(mesh);return mesh;
 }
 function sphere(parent,r,color,x,y,z,segments=14){const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,Math.max(8,Math.floor(segments*.7))),mat(color,.55));m.position.set(x,y,z);parent.add(m);return m;}
 function addWorld(mesh){world.add(mesh);return mesh;}
-function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();racePlatforms=[];seesawPlatforms=[];worldActors=[];crownTarget=null;}
+function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();racePlatforms=[];seesawPlatforms=[];rolloutState=[];doorRows=[];fruitBeltMarkers=[];climbSlime=null;worldActors=[];crownTarget=null;}
 function makeBean(actor){
  const group=new THREE.Group();
  const visual=new THREE.Group();visual.position.y=1.02;group.add(visual);
@@ -183,12 +184,12 @@ function makeBean(actor){
  const tailMesh=new THREE.Mesh(new THREE.ConeGeometry(.22,.68,10),mat(0xfff0c5,.52));tailMesh.position.set(0,1.15,.63);tailMesh.rotation.x=Math.PI/2;group.add(tailMesh);
  const tailBase=sphere(group,.2,0xfff0c5,0,1.15,.43,10);tailMesh.userData.base=tailBase;
  group.userData.visual=visual;group.userData.footRing=footRing;group.userData.tailMesh=tailMesh;group.userData.tailBase=tailBase;
- actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor.slimeHeadingYaw=actor.group.rotation.y;actor._wasSlimeAffected=false;
+ actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor.slimeHeadingYaw=actor.group.rotation.y;actor._wasSlimeAffected=false;actor.ghostTimer=0;actor.lastSafe=actor.lastSafe||{x:0,z:0,y:0};
  tailMesh.visible=!!actor.hasTail;tailBase.visible=!!actor.hasTail;
  world.add(group);return group;
 }
 function resetActorForRound(actor,x,z){
- actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.slimeHeadingYaw=0;actor.visual.rotation.set(0,0,0);actor.group.visible=true;actor.lastSafe={x,z,y:0};actor.ghostTimer=0;actor.hasTail=!!actor.hasTail;if(actor.group.userData.tailMesh)actor.group.userData.tailMesh.visible=actor.hasTail;if(actor.group.userData.tailBase)actor.group.userData.tailBase.visible=actor.hasTail;setGhostAppearance(actor,false);
+ actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.slimeHeadingYaw=0;actor.visual.rotation.set(0,0,0);actor.group.visible=true;actor.lastSafe={x,z,y:0};actor.ghostTimer=0;actor.aiDoorTargetRow=-1;actor.aiDoorTargetX=undefined;actor.aiToeTargetZ=undefined;actor.aiToeTargetX=undefined;actor.hasTail=!!actor.hasTail;if(actor.group.userData.tailMesh)actor.group.userData.tailMesh.visible=actor.hasTail;if(actor.group.userData.tailBase)actor.group.userData.tailBase.visible=actor.hasTail;setGhostAppearance(actor,false);
 }
 function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 function pickGameRounds(){chosenRaces=shuffle(qualifierRounds).slice(0,3);chosenFinal=finalRounds[Math.floor(Math.random()*finalRounds.length)];}
@@ -202,11 +203,7 @@ function showQualified(survivors,message='予選突破！') {
 function courseCenterX(z){
  const smooth=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t);};
  const rz=z/1.45;
- if(currentRound?.type==='crown'){
-  if(rz>=-36.2)return 0;
-  if(rz>=-42.1)return 10*smooth((-36.2-rz)/5.9);
-  return 10;
- }
+ if(currentRound?.type==='crown')return 0;
  if(currentRound?.type!=='curve')return 0;
  if(rz>=15)return 0;
  if(rz>=7)return 0;
@@ -231,7 +228,7 @@ function currentActors(){return [player,...allAliveBots()];}
 function setOverlay(html){panel.innerHTML=html;overlay.style.display='flex';}
 function hideOverlay(){overlay.style.display='none';}
 function toast(text){toastEl.textContent=text;toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),1200);}
-function showMenu(){document.body.classList.remove('stick-active');state='menu';spectatorMode=false;spectatorTarget=null;document.body.classList.remove('spectating');countdownActive=false;countdownEl.style.display='none';hud.style.display='none';$('#touch-controls').style.display='none';overlay.style.display='flex';setOverlay(`<div class="eyebrow">FALL PARTY RACE</div><h1 class="logo-line">BEAN <span>BATTLE</span></h1><p>32体のBotと勝ち抜け！ 旧シーズン1のソロ用ラウンド18種を再現。ランダムな予選3回を突破してファイナルへ！</p><div class="pill-row"><span class="pill">シーズン1再現</span><span class="pill">ソロ用18ラウンド</span><span class="pill">全4ラウンド</span><span class="pill">チーム戦なし</span></div><div class="rules"><div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div><div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div><div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div><div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div></div><p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p><button id="start-btn" class="main-btn">ゲームスタート！</button>`);
+function showMenu(){document.body.classList.remove('stick-active','slime-back-mode');state='menu';spectatorMode=false;spectatorTarget=null;document.body.classList.remove('spectating');countdownActive=false;countdownEl.style.display='none';hud.style.display='none';$('#touch-controls').style.display='none';overlay.style.display='flex';setOverlay(`<div class="eyebrow">FALL PARTY RACE</div><h1 class="logo-line">BEAN <span>BATTLE</span></h1><p>31体のBotと勝ち抜け！（自分を含めて32人） 旧シーズン1のソロ用ラウンド18種を再現。ランダムな予選3回を突破してファイナルへ！</p><div class="pill-row"><span class="pill">シーズン1再現</span><span class="pill">ソロ用18ラウンド</span><span class="pill">全4ラウンド</span><span class="pill">チーム戦なし</span></div><div class="rules"><div class="rule"><b>📱 スマホ</b>左側の仮想スティックで移動。右側タップでジャンプ（空中ならダイブ）、スワイプで視点操作。落下復帰中は視点固定・後退ボタンのみ。</div><div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div><div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div><div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div></div><p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p><button id="start-btn" class="main-btn">ゲームスタート！</button>`);
  $('#start-btn').addEventListener('click',startGame,{once:true});
 }
 function addRacePlatform(x,z,w,d,color=0x6178bf,opts={}){
@@ -241,22 +238,32 @@ function addRacePlatform(x,z,w,d,color=0x6178bf,opts={}){
   mesh=new THREE.Mesh(new THREE.CircleGeometry(Math.min(w,d)/2,36),mat(color,.72));
   mesh.rotation.x=-Math.PI/2;mesh.rotation.z=rotationY;mesh.position.set(x,topY-.015,z);world.add(mesh);
  }else{
-  mesh=box(world,w,.42,d,color,x,topY-.21,z,{rotationY,roughness:.8});
+  mesh=box(world,w,.42,d,color,x,topY-.21,z,{rotationX:opts.rotationX||0,rotationY,roughness:.8});
  }
  const platform={mesh,x,z,w,d,topY,rotationY,shape,removed:false,kind:opts.kind||'platform',safe:opts.safe??true,collapseAt:null,phase:opts.phase||0};
  racePlatforms.push(platform);return platform;
 }
-function addStageStripe(x,z,w,color=0x9df8f3){box(world,w,.035,.18,color,x,.015,z);}
+function addStageStripe(x,z,w,color=0x9df8f3,y=.015){box(world,w,.035,.18,color,x,y,z);}
+
+const MOUNTAIN_TOP=8.2;
+function mountainGroundY(z){return THREE.MathUtils.clamp((COURSE_START_Z-z)/(COURSE_START_Z-COURSE_FINISH_Z)*MOUNTAIN_TOP,0,MOUNTAIN_TOP);}
+function fruitConveyorGroundY(z){return THREE.MathUtils.clamp((COURSE_START_Z-z)/(COURSE_START_Z-COURSE_FINISH_Z)*3.1,0,3.1);}
+
 function addGoalForCourse(isCrown=false){
  const gx=courseCenterX(COURSE_FINISH_Z),gz=COURSE_FINISH_Z;
- addRacePlatform(gx,gz,18,13,isCrown?0x6f70bd:0x7087ce);
- addStageStripe(gx,gz+3.8,17,0xffe765);
+ let finishY=0;
+ if(stageBounds.kind==='mountain')finishY=mountainGroundY(gz);
+ else if(stageBounds.kind==='fruitConveyor')finishY=fruitConveyorGroundY(gz);
+ else if(stageBounds.kind==='climb')finishY=Math.max(0,...racePlatforms.filter(p=>p.kind==='platform').map(p=>p.topY||0));
+ addRacePlatform(gx,gz,18,13,isCrown?0x6f70bd:0x7087ce,{topY:finishY});
+ // This stripe is the actual finish line used by the gameplay check.
+ addStageStripe(gx,gz,17,0xffe765,finishY+.035);
  if(isCrown){
   const archL=courseSidePoint(gz+.35,-7.6),archR=courseSidePoint(gz+.35,7.6);
-  box(world,.48,3.3,.48,0xffcf4f,archL.x,1.6,archL.z);box(world,.48,3.3,.48,0xffcf4f,archR.x,1.6,archR.z);
-  box(world,15.4,.38,.55,0xffcf4f,gx,3.15,gz+.35);
-  const crown=new THREE.Mesh(new THREE.TorusGeometry(.76,.2,8,20),mat(0xffef75,.3,.45));crown.position.set(gx,3.05,gz+.3);world.add(crown);crown.rotation.x=Math.PI/2;
-  crownTarget=new THREE.Vector3(gx,3.05,gz+.3);
+  box(world,.48,3.3,.48,0xffcf4f,archL.x,finishY+1.6,archL.z);box(world,.48,3.3,.48,0xffcf4f,archR.x,finishY+1.6,archR.z);
+  box(world,15.4,.38,.55,0xffcf4f,gx,finishY+3.15,gz+.35);
+  const crownY=finishY+2.05;const crown=new THREE.Mesh(new THREE.TorusGeometry(.76,.2,8,20),mat(0xffef75,.3,.45));crown.position.set(gx,crownY,gz+.3);world.add(crown);crown.rotation.x=Math.PI/2;
+  crownTarget=new THREE.Vector3(gx,crownY,gz+.3);
  }
 }
 function addTrackSegments(stage,opts={}){
@@ -267,7 +274,7 @@ function addTrackSegments(stage,opts={}){
   let x=(opts.xs?.[i]??(Math.sin(i*.86)*1.7));
   if(stage.type==='crown')x+=courseCenterX(z);
   const w=widths[Math.min(i,widths.length-1)];
-  const p=addRacePlatform(x,z,w,depth,opts.colors?.[i%opts.colors.length]||[0x637bc4,0x708bd2,0x5e77bd][i%3],{rotationY:opts.rotations?.[i]||0});
+  const p=addRacePlatform(x,z,w,depth,opts.colors?.[i%opts.colors.length]||[0x637bc4,0x708bd2,0x5e77bd][i%3],{rotationY:opts.rotations?.[i]||0,topY:opts.topYs?.[i]||0});
   if(opts.seesaw)p.seesaw=true, seesawPlatforms.push({platform:p,phase:i*1.35,amount:.13+(i%2)*.04});
   if(opts.roundDiscs&&i%2===1){
    const disc=new THREE.Mesh(new THREE.CircleGeometry(Math.min(w,depth)*.31,32),mat(0x40e4e1,.45));disc.rotation.x=-Math.PI/2;disc.position.set(x,.02,z);world.add(disc);
@@ -275,12 +282,18 @@ function addTrackSegments(stage,opts={}){
  });
 }
 function addDoorRow(z,correctIndex,rowIndex){
- const centers=[-6.25,0,6.25];
+ const centers=[-8.4,-4.2,0,4.2,8.4], doors=[];
  centers.forEach((x,j)=>{
-  const m=box(world,6.05,3.2,.7,j===correctIndex?0x68d9f0:0xb5b5ea,x,1.6,z);
-  box(m,1.2,.17,.1,0xffe26e,0,.85,-.39);
-  obstacles.push({kind:'door',mesh:m,width:6.05,height:3.2,depth:.7,x,z,isCorrect:j===correctIndex,rowIndex,opened:false});
+  const group=new THREE.Group();group.position.set(x,1.7,z);world.add(group);
+  box(group,4.05,3.25,.38,0x9ba6d7,0,0,0,{roughness:.82});
+  box(group,.18,3.5,.62,0x4c578d,-1.97,0,0);box(group,.18,3.5,.62,0x4c578d,1.97,0,0);
+  box(group,4.18,.18,.62,0x4c578d,0,1.65,0);
+  for(let k=-1;k<=1;k++)box(group,.055,2.9,.04,0xbfc9ed,k*1.0,-.02,-.22);
+  sphere(group,.085,0xffe36a,1.58,-.08,-.23,8);
+  const door={kind:'door',mesh:group,width:4.05,height:3.25,depth:.62,x,z,isCorrect:j===correctIndex,rowIndex,doorIndex:j,opened:false,removed:false};
+  obstacles.push(door);doors.push(door);
  });
+ doorRows.push({rowIndex,z,doors,correctIndex});
 }
 function addRisingGate(z,index){
  const m=box(world,16.8,3.1,.72,index%2?0x64e4df:0xff83b3,0,1.55,z);
@@ -288,41 +301,69 @@ function addRisingGate(z,index){
  obstacles.push({kind:'gate',mesh:m,width:16.8,height:3.1,depth:.72,x:0,z,baseY:1.55,phase:index*.91,speed:1.1+(index%3)*.12});
 }
 function addShortcutHammer(z,index,x=0){
- // Shortcut hammer: an arm and head swing around a horizontal axle, unlike the floor-level spinner bars.
- const pivot=new THREE.Group();pivot.position.set(x,1.45,z);world.add(pivot);
- const arm=box(pivot,.56,.58,4.55,0xff709e,0,0,1.95,{metalness:.08});
- sphere(pivot,.88,0xffd65a,0,.02,4.25,14);sphere(pivot,.22,0xffffff,.16,.18,4.45,10);
- obstacles.push({kind:'shortcutHammer',mesh:pivot,bar:arm,length:4.55,speed:1.45+(index%2)*.22,phase:index*.9,y:1.45,z,x,hitRadius:1.15});
+ // Compact fast hammer rotating around a horizontal axle; a cleanly timed jump can clear it.
+ const pivot=new THREE.Group();pivot.position.set(x,2.15,z);world.add(pivot);
+ const arm=box(pivot,.38,.42,2.75,0xff709e,0,0,1.18,{metalness:.08});
+ sphere(pivot,.57,0xffd65a,0,.02,2.55,14);sphere(pivot,.14,0xffffff,.12,.15,2.67,10);
+ obstacles.push({kind:'shortcutHammer',mesh:pivot,bar:arm,length:2.75,speed:3.15+(index%2)*.62,phase:index*.9,y:2.15,z,x,hitRadius:.82});
 }
 function buildCourse(stage){
  newWorld();stageBounds={kind:'race'};
- // Every course is made from individual islands and bridges: there is no giant floor or perimeter fence.
- addRacePlatform(0,49,21,19,0x6279c5);
  const type=stage.type;
+ if(type==='crown'){
+  // Fall Mountain is a continuous uphill ramp: no gaps and no perimeter fences.
+  stageBounds={kind:'mountain'};
+  const centerZ=(COURSE_START_Z+COURSE_FINISH_Z)/2,angle=Math.atan(MOUNTAIN_TOP/(COURSE_START_Z-COURSE_FINISH_Z));
+  const centerSurface=mountainGroundY(centerZ);
+  const ramp=box(world,19,.84,143,0x6b78c8,0,centerSurface-.42*Math.cos(angle),centerZ,{rotationX:angle,roughness:.8});
+  racePlatforms.push({mesh:ramp,x:0,z:centerZ,w:19,d:143,topY:0,shape:'ramp',removed:false,kind:'mountainRamp',safe:true});
+  addRacePlatform(0,51,19,12,0x667bc5,{topY:0});
+  addGoalForCourse(true);
+  [33,13,-7,-27,-43,-53,-60].forEach((z,i)=>{
+   addRollingBall(z,1.06,1.55+(i%2)*.42,7.2,i*.71);
+   if(i===1||i===4||i===5)addShortcutHammer(z-3,i,(i%3-1)*2.1);
+  });
+  addRotatingBeam(-58,11.5,1.35,.92,0x58efe6,.3);
+  for(const o of obstacles){
+   const z=o.z??o.mesh.position.z, lift=mountainGroundY(z);
+   o.mesh.position.y+=lift;if(typeof o.y==='number')o.y+=lift;
+   if(o.cap)o.cap.position.y+=lift;
+  }
+  return;
+ }
+ if(type==='fruitChute'){
+  // One continuous uphill conveyor. Its motion carries everyone back toward the start.
+  stageBounds={kind:'fruitConveyor'};
+  const centerZ=(COURSE_START_Z+COURSE_FINISH_Z)/2,angle=Math.atan(3.1/(COURSE_START_Z-COURSE_FINISH_Z)),surface=fruitConveyorGroundY(centerZ);
+  const belt=box(world,20,.84,143,0x687fc9,0,surface-.42*Math.cos(angle),centerZ,{rotationX:angle,roughness:.9});
+  racePlatforms.push({mesh:belt,x:0,z:centerZ,w:20,d:143,topY:0,shape:'belt',removed:false,kind:'conveyor',safe:true});
+  addRacePlatform(0,51,20,12,0x687fc9,{topY:0});
+  for(let z=47;z>COURSE_FINISH_Z;z-=5.8){const y=fruitConveyorGroundY(z)+.04;const marker=box(world,19.2,.045,.18,0xffdd73,0,y,z,{rotationX:angle});fruitBeltMarkers.push({mesh:marker,z0:z});}
+  addGoalForCourse(false);
+  [-58,-45,-32,-19,-6,7,20,33,44].forEach((z,i)=>addRollingBall(z,1.35,1.4+(i%3)*.22,8.1,i*Math.PI*.56));
+  return;
+ }
+ if(type==='tipToe')addRacePlatform(0,52,18,7,0x6279c5);else addRacePlatform(0,49,21,19,0x6279c5);
  if(type==='tipToe'){
-  let path=3;const rows=31,cols=7,spacing=2.6,rowStep=3.62,originZ=48;
+  let path=3;const rows=35,cols=7,spacing=2.6,rowStep=3.45,originZ=47;
   for(let r=0;r<rows;r++){
-   if(r>0){const move=Math.random();if(move<.25)path=Math.max(0,path-1);else if(move<.5)path=Math.min(cols-1,path+1);}
+   if(r>0){const move=Math.random();if(move<.3)path=Math.max(0,path-1);else if(move<.6)path=Math.min(cols-1,path+1);}
    const z=originZ-r*rowStep;
-   for(let c=0;c<cols;c++){
-    const x=(c-(cols-1)/2)*spacing;
-    addRacePlatform(x,z,2.42,3.0,c===path?0x6f83d0:0x7789cb,{kind:'tipTile',safe:c===path});
-   }
+   for(let c=0;c<cols;c++)addRacePlatform((c-(cols-1)/2)*spacing,z,2.42,3.0,0x7789cb,{kind:'tipTile',safe:c===path});
   }
  }else if(type==='doorDash'){
   const zs=[39,21,3,-15,-33,-50];
-  zs.forEach((z,i)=>{addRacePlatform(0,z,20,14,0x7185c8);addDoorRow(z-2.1,Math.floor(Math.random()*3),i);});
+  zs.forEach((z,i)=>{addRacePlatform(0,z,21,16,0x7185c8);addDoorRow(z-2.1,Math.floor(Math.random()*5),i);});
  }else if(type==='gateCrash'){
-  const zs=[38,19,0,-19,-38,-55];
-  zs.forEach((z,i)=>{addRacePlatform(0,z,19,14,0x6e83c8);addRisingGate(z-1.9,i);});
+  [38,19,0,-19,-38,-55].forEach((z,i)=>{addRacePlatform(0,z,19,14,0x6e83c8);addRisingGate(z-1.9,i);});
  }else if(type==='seeSaw'){
-  addTrackSegments(stage,{centers:[36,21,6,-9,-24,-39,-53,-63],widths:[18,18,17,17,16,16,17,18],depth:12, xs:[-1,2,-2,2,-2,2,-1,0],rotations:[-.08,.09,-.1,.1,-.09,.08,-.05,0],seesaw:true,colors:[0x5e73bd,0x637bc8,0x708bd2]});
+  addTrackSegments(stage,{centers:[36,21,6,-9,-24,-39,-53,-63],widths:[18,18,17,17,16,16,17,18],depth:12,xs:[-1,2,-2,2,-2,2,-1,0],rotations:[-.08,.09,-.1,.1,-.09,.08,-.05,0],seesaw:true,colors:[0x5e73bd,0x637bc8,0x708bd2]});
  }else if(type==='slime'){
-  addTrackSegments(stage,{centers:[36,22,9,-4,-17,-30,-43,-54,-63],widths:[16,15,14,13,12,12,13,14,16],depth:9.1,xs:[0,1.3,-1.7,1.8,-1.7,1.4,-1,0,0],colors:[0x6d7fc9,0x8a7dc9,0x6d7fc9]});
+  stageBounds={kind:'climb'};
+  addTrackSegments(stage,{centers:[37,24,11,-2,-15,-28,-41,-52,-61],widths:[18,17,16,15,14,13,13,14,16],depth:15.1,xs:[0,1.2,-1.6,1.7,-1.5,1.2,-.8,0,0],topYs:[0,.55,1.1,1.65,2.2,2.75,3.3,3.85,4.4],colors:[0x6d7fc9,0x8a7dc9,0x6d7fc9]});
+  const slimePlane=new THREE.Mesh(new THREE.PlaneGeometry(34,150),new THREE.MeshStandardMaterial({color:0xff43a1,roughness:.5,transparent:true,opacity:.72,side:THREE.DoubleSide}));slimePlane.rotation.x=-Math.PI/2;slimePlane.position.set(0,-4.8,-7);world.add(slimePlane);climbSlime={mesh:slimePlane,baseY:-4.8,riseRate:.14};
  }else if(type==='fallMountain'||type==='crown'){
-  addTrackSegments(stage,{centers:[36,21,6,-9,-24,-37,-47,-55,-62],widths:[18,17,16,15,14,13,12,13,15],depth:9.6,xs:[0,0,0,0,0,0,0,0,0],colors:[0x696fc3,0x5f79c8,0x6979c8]});
- }else if(type==='fruitChute'){
-  addTrackSegments(stage,{centers:[37,22,7,-8,-23,-38,-52,-63],widths:[18,18,17,17,16,16,17,18],depth:15,colors:[0x6b80c8,0x667bc2,0x738bd0]});
+  // handled above
  }else if(type==='dizzy'){
   addTrackSegments(stage,{centers:[36,20,4,-12,-28,-44,-57,-63],widths:[18,17,17,16,16,16,17,18],depth:10.6,roundDiscs:true});
  }else if(type==='whirlygig'){
@@ -330,37 +371,24 @@ function buildCourse(stage){
  }else{
   addTrackSegments(stage,{centers:[36,21,6,-9,-24,-39,-53,-63],widths:[18,17,16,16,15,16,17,18],depth:10.6});
  }
- addGoalForCourse(type==='crown'||type==='fallMountain');
- // Official-round-inspired obstacles are deliberately spread over separated platforms.
+ addGoalForCourse(false);
  if(type==='dizzy'){
   [29,13,-3,-19,-35,-50].forEach((z,i)=>{addRotatingBeam(z,16.5,i%2?-.95:1.08,.72,0x53f2e1,i*.7);if(i%2===0)addMover(z-4,3.5,1.65,1.2,1.2,6.2,i*.8,'mover');});
- }else if(type==='doorDash'){
-  // The correct door in each row is passable; wrong doors stay solid.
  }else if(type==='fruitChute'){
-  [31,14,-3,-20,-37,-52].forEach((z,i)=>{addRollingBall(z,1.35,1.05+(i%3)*.2,8.4,i*Math.PI*.56);});
+  // handled above
  }else if(type==='gateCrash'){
-  // Gate heights oscillate in updateObstacles; the gaps themselves stay open to the sky.
+  // The gate height is animated in updateObstacles.
  }else if(type==='hitParade'){
-  [29,11,-8,-27,-45].forEach((z,i)=>{addMover(z,3.6,2.1,1.2,1.4,7.4,i*.8,'mover');if(i%2===0)addShortcutHammer(z-5,i,(i%3-1)*2.2);});
-  addBarrierSet( -57, 3 );
+  [29,11,-8,-27,-45].forEach((z,i)=>{addMover(z,3.6,2.1,1.2,1.4,7.4,i*.8,'mover');if(i%2===0)addShortcutHammer(z-5,i,(i%3-1)*2.2);});addBarrierSet(-57,3);
  }else if(type==='seeSaw'){
   [28,0,-28].forEach((z,i)=>addRotatingBeam(z,13.5,i%2?-.6:.6,.85,0xffb2ce,i*.5));
  }else if(type==='slime'){
   [28,14,0,-14,-28,-42,-54].forEach((z,i)=>{if(i%2===0)addBarrierSet(z,i);else addMover(z,3.5,2.1,1.3,1.45,6.5,i*.7,'slime');});
-  const slimePlane=new THREE.Mesh(new THREE.PlaneGeometry(34,126),new THREE.MeshStandardMaterial({color:0xff52a7,roughness:.5,transparent:true,opacity:.16,side:THREE.DoubleSide}));slimePlane.rotation.x=-Math.PI/2;slimePlane.position.set(0,-5.5,-7);world.add(slimePlane);
  }else if(type==='whirlygig'){
-  [29,9,-11,-31,-49].forEach((z,i)=>addRotatingBeam(z,18,i%2?-.95:1.08,.85,0x58eee7,i*.9));
-  addShortcutHammer(-42,0,2.5);addShortcutHammer(-8,1,-2.5);
- }else if(type==='crown'){
-  [27,9,-9,-25,-39,-49,-57].forEach((z,i)=>{addRollingBall(z,1.12,1.2+(i%2)*.2,7.6,i*.7);if(i===2||i===5)addShortcutHammer(z-4,i,0);});
-  addRotatingBeam(-58,12,1.12,.78,0x58efe6,.3);
-  for(const o of obstacles){const shift=courseCenterX(o.z??o.mesh.position.z);if(shift){o.mesh.position.x+=shift;if(o.centerX!==undefined)o.centerX+=shift;if(o.x!==undefined)o.x+=shift;if(o.cap)o.cap.position.x+=shift;}}
+  [29,9,-11,-31,-49].forEach((z,i)=>addRotatingBeam(z,18,i%2?-.95:1.08,.85,0x58eee7,i*.9));addShortcutHammer(-42,0,2.5);addShortcutHammer(-8,1,-2.5);
  }
- // Lightweight decorative rails are omitted: platform edges are open and falling is always possible.
- for(let i=0;i<28;i++){
-  const x=(i%2===0?-1:1)*(15+Math.random()*22),z=54-Math.random()*126,h=3+Math.random()*11,w=1.5+Math.random()*4;
-  const building=box(world,w,h,w,[0x5a78c2,0x7d68bd,0x65b9d5,0xff9ecb][i%4],x,h/2-1,z);building.material.transparent=true;building.material.opacity=.42;
- }
+ // Visual dressing outside the playable surface; never a fence or collision wall.
+ for(let i=0;i<24;i++){const x=(i%2===0?-1:1)*(15+Math.random()*22),z=54-Math.random()*126,h=3+Math.random()*11,w=1.5+Math.random()*4;const building=box(world,w,h,w,[0x5a78c2,0x7d68bd,0x65b9d5,0xff9ecb][i%4],x,h/2-1,z);building.material.transparent=true;building.material.opacity=.42;}
 }
 function addRotatingBeam(z,length,speed,y,color=0x5af4e3,phase=0){
  const pivot=new THREE.Group();pivot.position.set(0,y,z);pivot.rotation.y=phase;world.add(pivot);
@@ -424,16 +452,9 @@ function vibrateImpact(strong=false){
 }
 function startSlimeEffect(actor){
  if(!actor?.group)return;
- actor.slimeEffectTimer=3;actor.slimeHeadingYaw=actor.group.rotation.y;actor._wasSlimeAffected=true;
- actor.stunTimer=0;actor.vx=0;actor.vz=0;actor.vy=0;actor.grounded=true;
- actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
- setGhostAppearance(actor,true);
- if(actor.isPlayer){
-  // Lock the camera to the course's forward view while the player can only move backward.
-  cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=true;
-  document.body.classList.add('slime-back-mode');joystick.x=0;joystick.y=0;joystick.backHeld=false;
-  toast('スライム状態！ 3秒間、後ろにしか進めない！');
- }
+ // Moving pink slime obstacles behave exactly like falling: respawn at the last valid platform.
+ respawnFromFall(actor,1.8);
+ if(actor.isPlayer)vibrateImpact(true);
 }
 function obstacleHit(actor,o){
  if(!o||o.removed||!o.mesh||!actor.group||!actor.alive||!actor.group.visible||(actor.slimeEffectTimer||0)>0||(actor.ghostTimer||0)>0)return false;
@@ -448,11 +469,11 @@ function obstacleHit(actor,o){
   if(Math.abs(dx)<(o.width||1)/2+.56&&Math.abs(dz)<(o.depth||1)/2+.62&&p.y+1.9>minY&&p.y+.1<maxY){o.opened=true;o.removed=true;o.mesh.visible=false;return false;}
  }
  if(o.kind==='shortcutHammer'){
-  const ang=o.mesh.rotation.x,hz=center.z+Math.cos(ang)*2.15,hh=center.y+Math.sin(ang)*2.1;
-  const close=Math.abs(p.x-center.x)<1.18&&Math.abs(p.z-hz)<2.5;
-  // A narrowly timed jump clears the swinging arm; an early/late jump still gets clipped.
-  const canClear=p.y>1.02&&Math.abs(Math.sin(ang))<.32;
-  if(close&&!canClear&&p.y+1.9>hh-.7&&p.y+.12<hh+.7){hit=true;nx=Math.sign(p.x-center.x)||1;nz=Math.sign(p.z-hz)||1;}
+  const ang=o.mesh.rotation.x,hz=center.z+Math.cos(ang)*2.55,hh=center.y+Math.sin(ang)*2.55;
+  const close=Math.abs(p.x-center.x)<.92&&Math.abs(p.z-hz)<1.75;
+  // The compact head is higher up and can be cleared only through a precise jump window.
+  const canClear=p.y>1.18&&Math.abs(Math.sin(ang))<.24;
+  if(close&&!canClear&&p.y+1.9>hh-.5&&p.y+.12<hh+.5){hit=true;nx=Math.sign(p.x-center.x)||Math.sign(Math.cos(ang))||1;nz=Math.sign(p.z-hz)||Math.sign(Math.sin(ang))||1;}
  }else if(isRotating){
   const angle=o.mesh.rotation.y,dx=p.x-center.x,dz=p.z-center.z;
   contactLocalX=THREE.MathUtils.clamp(dx*Math.cos(angle)-dz*Math.sin(angle),-o.length/2,o.length/2);
@@ -461,7 +482,7 @@ function obstacleHit(actor,o){
   if(d<.98&&vertical){hit=true;nx=ddx/(d||1);nz=ddz/(d||1);}
  }else if(o.kind==='ball'){
   const dx=p.x-center.x,dz=p.z-center.z,d=Math.hypot(dx,dz);
-  if(d<o.r+.72&&p.y<o.r+1.35){hit=true;nx=dx/(d||1);nz=dz/(d||1);}
+  const floorY=stageBounds.kind==='mountain'?mountainGroundY(p.z):(stageBounds.kind==='fruitConveyor'?fruitConveyorGroundY(p.z):0);if(d<o.r+.72&&p.y<floorY+o.r+1.35){hit=true;nx=dx/(d||1);nz=dz/(d||1);}
  }else{
   const dx=p.x-center.x,dz=p.z-center.z,angle=o.mesh.rotation?.y||0,c=Math.cos(angle),sn=Math.sin(angle),lx=dx*c-dz*sn,lz=dx*sn+dz*c;
   const halfW=(o.width||1)/2+.56,halfD=(o.depth||1)/2+.62,minY=center.y-(o.height||1)/2,maxY=center.y+(o.height||1)/2;
@@ -476,12 +497,31 @@ function obstacleHit(actor,o){
   }
  }
  if(!hit)return false;
+ if(o.kind==='door'){
+  if(o.isCorrect){o.removed=true;o.opened=true;o.mesh.visible=false;return true;}
+  if((actor.hitCooldown||0)>0)return false;
+  actor.hitCooldown=.48;
+  if(actor.isPlayer){actor.vz=Math.max(actor.vz||0,4.2);actor.vy=Math.max(actor.vy||0,1.1);actor.stunTimer=Math.max(actor.stunTimer||0,.2);toast('このドアは開かない！');}
+  else{actor.aiDoorTargetRow=-1;actor.aiThink=0;actor.aiTargetLane=(Math.random()-.5)*16.8;actor.vz=Math.max(actor.vz||0,3.2);}
+  return true;
+ }
  if(o.kind==='slime'){if((actor.slimeEffectTimer||0)<=0){startSlimeEffect(actor);if(actor.isPlayer)vibrateImpact(true);}return true;}
  if(isSolid){
   const n=Math.hypot(nx,nz)||1;nx/=n;nz/=n;const ovx=o.vx||0,ovz=o.vz||0,actorNormal=(actor.vx||0)*nx+(actor.vz||0)*nz,obstacleNormal=ovx*nx+ovz*nz;
   if(o.kind==='blockwall'&&obstacleNormal>0.25){const target=obstacleNormal;if(actorNormal<target){actor.vx=(actor.vx||0)+nx*(target-actorNormal);actor.vz=(actor.vz||0)+nz*(target-actorNormal);}}
   else{const relative=actorNormal-obstacleNormal;if(relative<0){actor.vx=(actor.vx||0)-nx*relative;actor.vz=(actor.vz||0)-nz*relative;}}
   actor.hitCooldown=Math.min(actor.hitCooldown||0,.07);return true;
+ }
+ if(o.kind==='shortcutHammer'){
+  if(actor.hitCooldown>0)return false;
+  const n=Math.hypot(nx,nz)||1;nx/=n;nz/=n;
+  const sweep=Math.sign(o.speed||1)*(Math.cos(o.mesh.rotation.x)||0);
+  actor.hitCooldown=1.0;actor.stunTimer=Math.max(actor.stunTimer||0,.58);
+  actor.vx=(actor.vx||0)*.08+nx*23.5+sweep*2.6;
+  actor.vz=(actor.vz||0)*.08+nz*23.5;
+  actor.vy=Math.max(actor.vy||0,17.8);
+  if(actor.isPlayer){toast('ハンマー直撃！ 大きく吹っ飛んだ！');vibrateImpact(true);}
+  return true;
  }
  if(actor.hitCooldown>0)return false;
  let ovx=o.vx||0,ovz=o.vz||0,rotationalSpeed=0;
@@ -520,12 +560,19 @@ function updateObstacles(dt){
   if(dt>0){o.vx=(o.mesh.position.x-oldX)/dt;o.vz=(o.mesh.position.z-oldZ)/dt;}
  }
  for(const s of seesawPlatforms){if(!s.platform.removed)s.platform.mesh.rotation.z=Math.sin(stageTime*.7+s.phase)*s.amount;}
+ if(climbSlime?.mesh){climbSlime.mesh.position.y=climbSlime.baseY+stageTime*climbSlime.riseRate;}
+ for(const roll of rolloutState){roll.mesh.rotation.x+=roll.speed*dt;for(const h of roll.holes){h.z=h.z0+Math.sin(stageTime*h.speed+h.phase)*1.9;h.mesh.position.z=h.z;h.mesh.position.y=-roll.radius+Math.sqrt(Math.max(0,roll.radius*roll.radius-(h.z-roll.z)**2))+.03;}}
+ if(currentRound?.type==='fruitChute')updateFruitConveyorLines();
  for(const p of racePlatforms){if(p.kind==='tipTile'&&p.collapseAt!==null&&!p.removed&&stageTime>=p.collapseAt){p.removed=true;world.remove(p.mesh);}}
+}
+function updateFruitConveyorLines(){
+ const minZ=COURSE_FINISH_Z+2.5,maxZ=COURSE_START_Z+3.5,span=maxZ-minZ,speed=4.2;
+ for(const marker of fruitBeltMarkers){let z=minZ+((((marker.z0-minZ)+stageTime*speed)%span)+span)%span;marker.mesh.position.z=z;marker.mesh.position.y=fruitConveyorGroundY(z)+.04;}
 }
 function updateBlockWalls(dt){
  if(currentRound?.type!=='block'&&currentRound?.type!=='rollout')return;
  for(const o of obstacles){
-  if(o.kind==='wallblock'&&o.rollout){const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;o.mesh.position.x=o.originX+Math.sin(stageTime*o.speed+o.phase)*3.2;o.mesh.position.z=o.originZ+Math.cos(stageTime*o.speed+o.phase)*2.0;o.x=o.mesh.position.x;o.z=o.mesh.position.z;o.vx=(o.mesh.position.x-oldX)/Math.max(dt,.001);o.vz=(o.mesh.position.z-oldZ)/Math.max(dt,.001);continue;}if(o.kind!=='blockwall'||!o.wall)continue;
+  if(o.kind==='wallblock'&&o.rollout){const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;o.mesh.position.x=o.originX+Math.sin(stageTime*o.speed+o.phase)*2.7;o.mesh.position.z=o.originZ+Math.cos(stageTime*o.speed+o.phase)*.45;o.x=o.mesh.position.x;o.z=o.mesh.position.z;const roll=rolloutState.reduce((best,r)=>!best||Math.abs(r.z-o.mesh.position.z)<Math.abs(best.z-o.mesh.position.z)?r:best,null);if(roll){const surface=-roll.radius+Math.sqrt(Math.max(0,roll.radius*roll.radius-(o.mesh.position.z-roll.z)**2));o.mesh.position.y=surface+(o.height||2)/2;}o.vx=(o.mesh.position.x-oldX)/Math.max(dt,.001);o.vz=(o.mesh.position.z-oldZ)/Math.max(dt,.001);continue;}if(o.kind!=='blockwall'||!o.wall)continue;
   const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;
   o.mesh.position.z-=o.speed*dt;o.z=o.mesh.position.z;
   if(o.mesh.position.z<-17){o.mesh.position.z=17;o.z=17;const gap=Math.random()<.5?-4.7:4.7;o.mesh.position.x=Math.sign(o.mesh.position.x)*(Math.abs(o.mesh.position.x)>6?Math.abs(o.mesh.position.x):6)+gap*.5;o.vx=0;o.vz=0;}
@@ -573,12 +620,12 @@ function startRaceStage(stage,isFinal){
  active.forEach((b,i)=>{
   const col=i%cols,row=Math.floor(i/cols);const x=(col-(Math.min(cols,active.length-row*cols)-1)/2)*2.2;
   resetActorForRound(b,Math.max(-9.3,Math.min(9.3,x)),50-row*2.45);
-  b.baseLane=x;b.speed=7.7+Math.random()*1.7;b.aiTargetLane=x;b.aiThink=Math.random()*(b.traits?.reaction||.35);b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.4+Math.random()*2.6;b.aiJumpCooldown=.4+Math.random()*1.8;b.bumpCooldown=0;
+  b.baseLane=x;b.speed=7.7+Math.random()*1.7;b.aiTargetLane=x;b.aiDoorTargetRow=-1;b.aiDoorTargetX=undefined;b.aiToeTargetZ=undefined;b.aiToeTargetX=undefined;b.aiThink=Math.random()*(b.traits?.reaction||.35);b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.4+Math.random()*2.6;b.aiJumpCooldown=.4+Math.random()*1.8;b.bumpCooldown=0;b.aiDoorTargetRow=-1;b.aiDoorTargetX=undefined;b.aiToeTargetZ=undefined;b.aiToeTargetX=undefined;
  });
  resetActorForRound(player,courseCenterX(54.5),50.5);
  if(isFinal){player.speed=8.65;active.forEach(b=>b.speed=8.0+Math.random()*2.0);finishTarget=1;}
  else {player.speed=9.0;finishTarget=QUALIFY[roundIndex];}
- stageBounds={kind:'race'};
+ if(stage.type==='crown')stageBounds={kind:'mountain'};else if(stage.type==='fruitChute')stageBounds={kind:'fruitConveyor'};else if(stage.type==='slime')stageBounds={kind:'climb'};else stageBounds={kind:'race'};
  updateHud(true);progressLabel.textContent=isFinal?'クラウンへ！':'ゴールまで';
  const kicker=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;
  stageKickerEl.textContent=kicker;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
@@ -587,7 +634,7 @@ function startRaceStage(stage,isFinal){
 }
 function getInput(){
  if((player.slimeEffectTimer||0)>0){
-  input.x=0;input.y=(joystick.backHeld||keys.has('KeyS')||keys.has('ArrowDown'))?-1:0;input.jump=false;input.dive=false;return;
+  input.x=0;input.y=(joystick.backHeld||keys.has('KeyS')||keys.has('ArrowDown'))?-1:0;input.jump=false;input.dive=false;cameraYaw=0;cameraPitch=0;return;
  }
  let x=0,y=0;
  if(keys.has('KeyA')||keys.has('ArrowLeft'))x-=1;if(keys.has('KeyD')||keys.has('ArrowRight'))x+=1;
@@ -599,15 +646,18 @@ function getInput(){
 function doJump(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0)return;input.jump=true;}
 function doDive(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0)return;input.dive=true;}
 function respawnFromFall(actor,ghostSeconds=1.7){
- if(!actor?.group)return;
+ if(!actor?.group||!actor.alive)return;
  const safe=actor.lastSafe||{x:0,z:50.5,y:0};
  actor.group.position.set(safe.x,safe.y??0,safe.z);
- actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.stunTimer=0;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
- actor.ghostTimer=ghostSeconds;setGhostAppearance(actor,true);
- if(actor.isPlayer)toast('足場に復帰！ しばらく幽霊状態');
+ actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.stunTimer=0;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.jumpLock=0;
+ actor.ghostTimer=ghostSeconds;actor.slimeEffectTimer=ghostSeconds;actor.slimeHeadingYaw=0;actor._wasSlimeAffected=true;
+ if(actor.isPlayer){cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=true;document.body.classList.add('slime-back-mode');joystick.x=0;joystick.y=0;joystick.backHeld=false;toast('足場に復帰！ 幽霊中は後ろにしか進めない');}
+ setGhostAppearance(actor,true);
+ if(actor.aiDoorTargetRow!==undefined)actor.aiDoorTargetRow=-1;
 }
+
 function updateGhost(actor,dt){
- if((actor.ghostTimer||0)>0){actor.ghostTimer=Math.max(0,actor.ghostTimer-dt);if(actor.ghostTimer<=0)setGhostAppearance(actor,false);}
+ if((actor.ghostTimer||0)>0){actor.ghostTimer=Math.max(0,actor.ghostTimer-dt);if(actor.ghostTimer<=0&&!(actor.slimeEffectTimer>0))setGhostAppearance(actor,false);}
 }
 function controlPlayer(dt){
  const a=player,p=player.group;if(!p||a.finished)return;
@@ -630,15 +680,21 @@ function controlPlayer(dt){
  }
  input.jump=false;input.dive=false;
  a.vy-=22*dt;p.position.x+=a.vx*dt;p.position.z+=a.vz*dt;p.position.y+=a.vy*dt;
+ if(currentRound?.type==='tipToe')touchRacePlatform(p.position.x,p.position.z,a);
+ if(currentRound?.type==='fruitChute'&&a.grounded&&p.position.z<COURSE_START_Z&&p.position.z>COURSE_FINISH_Z)p.position.z+=2.25*dt;
  const groundY=groundAt(p.position.x,p.position.z,p.position.y);
- if(groundY!==null&&p.position.y<=groundY&&a.vy<=0){p.position.y=groundY;a.vy=0;a.grounded=true;a.lastSafe={x:p.position.x,z:p.position.z,y:groundY};}else a.grounded=false;
+ if(groundY!==null&&p.position.y<=groundY&&a.vy<=0){p.position.y=groundY;a.vy=0;a.grounded=true;
+  const safePlatform=state==='race'?racePlatforms.filter(q=>!q.removed&&q.kind==='tipTile'&&q.safe&&Math.abs(p.position.x-q.x)<=q.w/2&&Math.abs(p.position.z-q.z)<=q.d/2).sort((u,v)=>Math.abs(p.position.z-u.z)-Math.abs(p.position.z-v.z))[0]:null;
+  if(currentRound?.type!=='tipToe'||safePlatform)a.lastSafe={x:p.position.x,z:p.position.z,y:groundY};
+ }else a.grounded=false;
  if(a.diveRecoveryPending&&a.diveTimer<=0&&a.grounded&&a.stunTimer<=0){if(a.diveRecovery<=0)a.diveRecovery=.28;a.diveRecoveryPending=false;}
  if(currentRound?.type==='tipToe'&&a.grounded)touchRacePlatform(p.position.x,p.position.z,a);
- if(currentRound?.type==='perfectMatch'&&a.grounded)touchTileAt(p.position.x,p.position.z,p.position.y);
+ if((currentRound?.type==='perfectMatch'||currentRound?.type==='hex')&&a.grounded)touchTileAt(p.position.x,p.position.z,p.position.y);
  if(a.stunTimer>0){a.visual.rotation.x=1.32;a.visual.rotation.z=Math.sign(a.vx||1)*.32;}else if(a.diveTimer>0){a.visual.rotation.x=-.95;a.visual.rotation.z=-a.vx*.035;}else{a.visual.rotation.x=THREE.MathUtils.damp(a.visual.rotation.x,0,9,dt);a.visual.rotation.z=THREE.MathUtils.damp(a.visual.rotation.z,-a.vx*.025,7,dt);}
  if(Math.hypot(a.vx,a.vz)>.22)a.group.rotation.y=THREE.MathUtils.damp(a.group.rotation.y,Math.atan2(-a.vx,-a.vz),7,dt);
  if(state==='race'){
-  if(p.position.y<-3.4)respawnFromFall(a,1.8);
+  if(currentRound?.type==='slime'&&climbSlime&&p.position.y<=climbSlime.mesh.position.y+.12){eliminateActor(a,true);return;}
+  if(currentRound?.type!=='slime'&&p.position.y<-3.4)respawnFromFall(a,1.8);
   if(currentRound?.type==='crown'){
    if(!a.finished&&touchedCrown(a)){a.finished=true;a.finishTime=stageTime;a.vx=0;a.vz=0;toast('クラウンにタッチ！');}
    if(!a.finished&&p.position.z<=COURSE_FINISH_Z+.35){p.position.z=COURSE_FINISH_Z+.35;a.vz=Math.max(0,a.vz);}
@@ -647,37 +703,65 @@ function controlPlayer(dt){
  }else if(state==='survival'){
   // Hex-A-Gone has three playable layers: falling to a lower tile is not elimination.
   const fallLimit=currentRound?.type==='hex'?-6.45:(currentRound?.mode==='tail'?-3.4:-1.45);
-  if(p.position.y<fallLimit){if(currentRound?.mode==='tail')respawnFromFall(a,1.4);else eliminateActor(a,true);}
+  if(p.position.y<fallLimit)eliminateActor(a,true);
   if(state==='survival'&&currentRound?.mode==='tail')updateTailTagForActor(a);
   if(state==='survival'&&(a.ghostTimer||0)<=0){for(const o of obstacles)obstacleHit(a,o);}
  }
 }
+function groundOnSlopeAndDecks(x,z,actorY,baseY,width){
+ if(Math.abs(x)>width||z>COURSE_START_Z+8||z<COURSE_FINISH_Z-7)return null;
+ let best=baseY;
+ for(const p of racePlatforms){
+  if(p.removed)continue;
+  const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),sn=Math.sin(p.rotationY||0),lx=dx*c-dz*sn,lz=dx*sn+dz*c;
+  const inside=p.shape==='circle'?Math.hypot(lx,lz)<=Math.min(p.w,p.d)/2:Math.abs(lx)<=p.w/2&&Math.abs(lz)<=p.d/2;
+  if(inside&&p.topY<=actorY+.75&&p.topY>best)best=p.topY;
+ }
+ return best;
+}
 function groundAt(x,z,actorY=0){
  if(state==='race'){
+  if(stageBounds.kind==='mountain')return groundOnSlopeAndDecks(x,z,actorY,mountainGroundY(z),9.5);
+  if(stageBounds.kind==='fruitConveyor')return groundOnSlopeAndDecks(x,z,actorY,fruitConveyorGroundY(z),9.95);
   let best=null;
-  for(const p of racePlatforms){if(p.removed)continue;const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),s=Math.sin(p.rotationY||0),lx=dx*c-dz*s,lz=dx*s+dz*c;
+  for(const p of racePlatforms){if(p.removed||(p.kind==='tipTile'&&!p.safe))continue;
+   const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),sn=Math.sin(p.rotationY||0),lx=dx*c-dz*sn,lz=dx*sn+dz*c;
    const inside=p.shape==='circle'?Math.hypot(lx,lz)<=Math.min(p.w,p.d)/2:Math.abs(lx)<=p.w/2&&Math.abs(lz)<=p.d/2;
    if(inside&&p.topY<=actorY+.75&&(best===null||p.topY>best))best=p.topY;
   }
   return best;
  }
- if(stageBounds.kind==='circle')return Math.hypot(x,z)<=14.4?0:null;
+ if(stageBounds.kind==='circle')return Math.hypot(x,z)<=(stageBounds.radius||14.4)?0:null;
  if(stageBounds.kind==='rect')return Math.abs(x)<=12&&Math.abs(z)<=15?0:null;
- if(stageBounds.kind==='hex'||stageBounds.kind==='logic'){
-  const tile=findTile(x,z,actorY);return tile?tile.topY:null;
+ if(stageBounds.kind==='rollout'){
+  if(Math.abs(x)>12.8)return null;
+  for(const roll of rolloutState){
+   const dz=z-roll.z;if(Math.abs(dz)>roll.radius)continue;
+   const surface=-roll.radius+Math.sqrt(Math.max(0,roll.radius*roll.radius-dz*dz));
+   let inHole=false;
+   for(const h of roll.holes){if(Math.abs(x-h.x)<h.w/2&&Math.abs(z-h.z)<h.d/2){inHole=true;break;}}
+   if(!inHole)return surface;
+  }
+  return null;
  }
+ if(stageBounds.kind==='hex'||stageBounds.kind==='logic'){const tile=findTile(x,z,actorY);return tile?tile.topY:null;}
  return null;
 }
 function hasGround(x,z,actor){return groundAt(x,z,actor?.group?.position?.y??0)!==null;}
 function obstacleRiskAt(x,z,o,extra=1.25,eta=0){
  if(!o?.mesh)return 0;
  const center=o.mesh.position;
+ if(o.kind==='shortcutHammer'){
+  const ang=o.mesh.rotation.x+(o.speed||0)*eta, hx=center.x, hz=center.z+Math.cos(ang)*2.55, hy=center.y+Math.sin(ang)*2.55;
+  const d=Math.hypot(x-hx,z-hz);return THREE.MathUtils.clamp((1.65+extra-d)/(1.65+extra),0,1);
+ }
  if(o.kind==='beam'||o.kind==='hammer'){
   const angle=o.mesh.rotation.y+(o.speed||0)*eta;
   const dx=Math.cos(angle)*o.length/2,dz=-Math.sin(angle)*o.length/2;
   const dist=distPointSegment(x,z,center.x-dx,center.z-dz,center.x+dx,center.z+dz);
   return THREE.MathUtils.clamp((.98+extra-dist)/(.98+extra),0,1);
  }
+ if(o.kind==='door'&&o.removed)return 0;
  if(o.kind==='ball'||o.kind==='mover'||o.kind==='slime'){
   const cx=center.x+(o.vx||0)*eta,cz=center.z+(o.vz||0)*eta;
   const radius=o.kind==='ball'?o.r+.72:(o.width||2)/2+.55;
@@ -694,54 +778,72 @@ function obstacleRiskAt(x,z,o,extra=1.25,eta=0){
  return THREE.MathUtils.clamp((extra-d)/extra,0,1);
 }
 function chooseRaceBotPlan(b,p){
- const traits=b.traits||{awareness:.5,patience:.5,bravery:.5,reaction:.3,noise:.25,jumpChance:.5};
+ const traits=b.traits||{awareness:.65,patience:.55,bravery:.55,reaction:.5,noise:.2,jumpChance:.62};
  const nearCrown=currentRound?.type==='crown'&&p.z<-34;
- const preferred=nearCrown?THREE.MathUtils.clamp(Math.sin(stageTime*.8+b.phase)*.35,-.45,.45):THREE.MathUtils.clamp(b.baseLane+Math.sin(stageTime*.36+b.phase)*1.15,-9.2,9.2);
- const lanes=[preferred,0,-9,-6.5,-4,-1.5,1.5,4,6.5,9,THREE.MathUtils.clamp(b.aiTargetLane??preferred,-9.3,9.3)];
+ let preferred=nearCrown?THREE.MathUtils.clamp(Math.sin(stageTime*.8+b.phase)*.28,-.4,.4):THREE.MathUtils.clamp(b.baseLane+Math.sin(stageTime*.36+b.phase)*.9,-9.2,9.2);
+ if(currentRound?.type==='doorDash'){
+  const rows=doorRows.filter(r=>r.z<p.z+.2).sort((a,b)=>b.z-a.z);
+  const row=rows.find(r=>p.z-r.z<19);
+  if(row){
+   if(b.aiDoorTargetRow!==row.rowIndex||b.aiDoorTargetX===undefined){b.aiDoorTargetRow=row.rowIndex;const candidates=row.doors;const d=candidates[Math.floor(Math.random()*candidates.length)];b.aiDoorTargetX=d.mesh.position.x;}
+   preferred=THREE.MathUtils.clamp(b.aiDoorTargetX-courseCenterX(row.z),-9.3,9.3);
+  }
+ }
+ if(currentRound?.type==='tipToe'){
+  const rows=[...new Set(racePlatforms.filter(q=>q.kind==='tipTile'&&!q.removed).map(q=>q.z))].sort((a,b)=>b-a);
+  const nextZ=rows.find(z=>z<p.z-.55);
+  if(nextZ!==undefined){
+   const known=racePlatforms.filter(q=>q.kind==='tipTile'&&q.revealed&&!q.removed&&q.z>=nextZ+3.0&&q.z<p.z+.3).sort((a,b)=>Math.abs(a.z-(p.z-3.4))-Math.abs(b.z-(p.z-3.4)))[0];
+   if(b.aiToeTargetZ!==nextZ||b.aiToeTargetX===undefined){
+    const options=racePlatforms.filter(q=>q.kind==='tipTile'&&q.z===nextZ&&!q.removed);
+    if(options.length){let pick;
+     if(known){options.sort((a,c)=>Math.abs(a.x-known.x)-Math.abs(c.x-known.x));const adjacent=options.filter(q=>Math.abs(q.x-known.x)<=2.7);pick=adjacent.length?adjacent[Math.floor(Math.random()*adjacent.length)]:options[Math.floor(Math.random()*options.length)];}
+     else pick=options[Math.floor(Math.random()*options.length)];
+     b.aiToeTargetZ=nextZ;b.aiToeTargetX=pick?.x??0;
+    }
+   }
+   preferred=THREE.MathUtils.clamp((b.aiToeTargetX??0)-courseCenterX(nextZ),-8.6,8.6);
+  }
+ }
+ const lanes=[preferred,0,-9,-7,-5,-3,-1,1,3,5,7,9,THREE.MathUtils.clamp(b.aiTargetLane??preferred,-9.3,9.3)];
  let bestLane=preferred,bestScore=-Infinity;
  for(const laneRaw of lanes){
-  const lane=THREE.MathUtils.clamp(laneRaw,-9.4,9.4);
-  let danger=0;
-  for(const o of obstacles){
-   const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-   if(ahead<-.8||ahead>17.5)continue;
-   const eta=Math.max(0,ahead/Math.max(3,b.speed));
-   const evalX=courseCenterX(oz+.35)+lane;
-   danger=Math.max(danger,obstacleRiskAt(evalX,oz+1.05,o,1.05,eta));
+  const lane=THREE.MathUtils.clamp(laneRaw,-9.4,9.4);let danger=0;
+  for(const o of obstacles){if(o.removed||!o.mesh?.visible)continue;const oz=o.mesh.position.z??o.z??0,ahead=p.z-oz;if(ahead<-.8||ahead>20)continue;
+   const eta=Math.max(0,ahead/Math.max(3,b.speed));const evalX=courseCenterX(oz+.35)+lane;
+   const chosenDoorAttempt=o.kind==='door'&&currentRound?.type==='doorDash'&&b.aiDoorTargetX!==undefined&&Math.abs(evalX-b.aiDoorTargetX)<.45&&Math.abs(evalX-o.mesh.position.x)<(o.width||4)/2-.18;
+   const risk=chosenDoorAttempt?0:obstacleRiskAt(evalX,oz+.8,o,1.25,eta);
+   // Wall-like obstacles deserve a much heavier penalty; a door is ignored only for the randomly chosen attempt.
+   danger=Math.max(danger,risk*(['barrier','wallblock','blockwall','door','gate'].includes(o.kind)?1.4:1));
   }
-  const lanePreference=Math.abs(lane-preferred)*(.07+.1*traits.patience);
-  const randomBias=(Math.random()-.5)*traits.noise;
+  let support=0;
+  const targetX=courseCenterX(p.z)+lane;
+  if(currentRound?.type!=='tipToe'){
+   if(groundAt(targetX,p.z-2.2,p.y)===null)support+=8.5;
+   if(groundAt(targetX,p.z-5.0,p.y)===null)support+=3.5;
+   if(currentRound?.type!=='crown'&&groundAt(targetX,p.z+1.6,p.y)===null)support+=.8;
+  }
+  const lanePreference=Math.abs(lane-preferred)*(.055+.08*traits.patience),randomBias=(Math.random()-.5)*traits.noise;
   const centerPenalty=nearCrown?Math.abs(lane)*.24:0;
-  const score=-danger*(1.2+traits.awareness*3.3)-lanePreference-centerPenalty+randomBias;
+  const score=-danger*(2.0+traits.awareness*4.4)-lanePreference-centerPenalty-support+randomBias;
   if(score>bestScore){bestScore=score;bestLane=lane;}
  }
- b.aiTargetLane=bestLane;
- b.aiThink=.18+traits.reaction*(.48+(1-traits.awareness)*.4);
- b.aiJumpRequested=false;b.aiDiveRequested=false;
+ b.aiTargetLane=bestLane;b.aiThink=.14+traits.reaction*(.32+(1-traits.awareness)*.27);b.aiJumpRequested=false;b.aiDiveRequested=false;
  let jumpRisk=0;
- for(const o of obstacles){
-  const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-  if(ahead<.3||ahead>6.5)continue;
-  const risk=obstacleRiskAt(p.x,oz+.8,o,1.25,Math.max(0,ahead/Math.max(3,b.speed)));
-  jumpRisk=Math.max(jumpRisk,risk);
-  const jumpable=['beam','hammer','barrier','mover','slime','ball'].includes(o.kind);
-  const chance=THREE.MathUtils.clamp(traits.jumpChance*(.62+traits.awareness*.48),.28,.94);
-  if(jumpable&&risk>.2&&ahead<5.3&&Math.random()<chance){b.aiJumpRequested=true;break;}
+ for(const o of obstacles){if(o.removed||!o.mesh?.visible)continue;const oz=o.mesh.position.z??o.z??0,ahead=p.z-oz;if(ahead<.25||ahead>7.2)continue;
+  const risk=obstacleRiskAt(p.x,oz+.7,o,1.35,Math.max(0,ahead/Math.max(3,b.speed)));jumpRisk=Math.max(jumpRisk,risk);
+  const jumpable=['beam','hammer','shortcutHammer','barrier','mover','slime','ball','gate'].includes(o.kind);
+  const chance=THREE.MathUtils.clamp(traits.jumpChance*(.76+traits.awareness*.4),.5,.97);
+  if(jumpable&&risk>.23&&ahead<5.8&&Math.random()<chance){b.aiJumpRequested=true;break;}
  }
- // Not every bean reacts perfectly: they sometimes jump too early or ignore a hazard.
- if(currentRound?.type==='crown'&&p.z<-39.2&&b.grounded&&b.aiJumpCooldown<=0&&crownTarget){
-  const d=Math.hypot(p.x-crownTarget.x,p.z-crownTarget.z);
-  if(d<4.7&&Math.random()<.56+traits.awareness*.34)b.aiJumpRequested=true;
+ if(currentRound?.type==='crown'&&p.z<-39.2&&b.grounded&&b.aiJumpCooldown<=0&&crownTarget){const d=Math.hypot(p.x-crownTarget.x,p.z-crownTarget.z);if(d<4.7&&Math.random()<.7+traits.awareness*.25)b.aiJumpRequested=true;}
+ if(b.aiDiveCooldown<=0&&!b.diveTimer&&Math.random()<(b.grounded?.075:.22)){
+  if(!b.grounded&&jumpRisk>.12&&Math.random()<.56+traits.awareness*.37)b.aiDiveRequested=true;
+  else if(jumpRisk<.22&&Math.random()<.4+traits.bravery*.4)b.aiDiveRequested=true;
+  else if(jumpRisk>.3&&jumpRisk<.8&&Math.random()<.25+traits.bravery*.35)b.aiDiveRequested=true;
  }
- // Dive in clear gaps to gain distance, or dive after a jump to clear a low obstacle.
- if(b.aiDiveCooldown<=0&&!b.diveTimer&&Math.random()<(b.grounded ? .065 : (.16+traits.bravery*.2))){
-  if(!b.grounded&&jumpRisk>.12&&Math.random()<.48+traits.awareness*.34)b.aiDiveRequested=true;
-  else if(jumpRisk<.22&&Math.random()<.48+traits.bravery*.3)b.aiDiveRequested=true;
-  else if(jumpRisk>.3&&jumpRisk<.75&&Math.random()<.18+traits.bravery*.2)b.aiDiveRequested=true;
- }
- if(nearCrown&&!b.grounded&&b.aiDiveCooldown<=0&&Math.random()<.55+traits.bravery*.3)b.aiDiveRequested=true;
- // Bots jump at platform gaps so the segmented official-style courses remain traversable.
- if(b.grounded&&groundAt(p.x,p.z-3.45,p.y)===null&&Math.random()<.9)b.aiJumpRequested=true;
+ // Every bot checks support ahead. Gaps are treated as real hazards rather than guessed shortcuts.
+ if(b.grounded&&groundAt(p.x+b.vx*.16,p.z-2.4,p.y)===null&&currentRound?.type!=='tipToe'&&Math.random()<.95)b.aiJumpRequested=true;
 }
 function resolveBeanCollisions(actors,dt){
  const list=actors.filter(a=>a&&a.alive&&a.group&&a.group.visible&&!a.finished&&(a.slimeEffectTimer||0)<=0&&(a.ghostTimer||0)<=0);
@@ -778,7 +880,7 @@ function updateRaceBots(dt){
   else{
    if(b.aiThink<=0)chooseRaceBotPlan(b,p);
    let targetX=courseCenterX(p.z)+THREE.MathUtils.clamp(b.aiTargetLane,-9.4,9.4);
-   if(currentRound?.type==='tipToe'){const safeAhead=racePlatforms.filter(q=>q.kind==='tipTile'&&q.safe&&!q.removed&&q.z<p.z-.4).sort((q1,q2)=>Math.abs(q1.z-(p.z-4.2))-Math.abs(q2.z-(p.z-4.2)))[0];if(safeAhead)targetX=safeAhead.x;}
+   if(currentRound?.type==='tipToe'&&b.aiToeTargetX!==undefined){targetX=b.aiToeTargetX;}
    else {const nearby=racePlatforms.filter(q=>!q.removed).sort((q1,q2)=>Math.abs(q1.z-p.z)-Math.abs(q2.z-p.z))[0];if(nearby){const limit=Math.max(0,nearby.w/2-1.0);targetX=nearby.x+THREE.MathUtils.clamp(b.aiTargetLane,-limit,limit);}}
    const yaw=courseYawAt(p.z),forwardX=-Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
    const lateral=THREE.MathUtils.clamp((targetX-p.x)*(1.75+traits.awareness*.75),-9.2,9.2);
@@ -793,10 +895,13 @@ function updateRaceBots(dt){
     b.diveTimer=.52;b.diveBurstTimer=.3;b.diveRecovery=1.22;b.aiDiveCooldown=3.1+Math.random()*3.2;b.aiDiveRequested=false;
    }
   }
-  p.x+=b.vx*dt;p.z+=b.vz*dt;
+  p.x+=b.vx*dt;p.z+=b.vz*dt;if(currentRound?.type==='fruitChute'&&b.grounded&&p.z<COURSE_START_Z&&p.z>COURSE_FINISH_Z)p.z+=1.75*dt;
   b.vy-=22*dt;p.y+=b.vy*dt;
+  if(currentRound?.type==='tipToe')touchRacePlatform(p.x,p.z,b);
   const groundY=groundAt(p.x,p.z,p.y);if(groundY!==null&&p.y<=groundY&&b.vy<=0){p.y=groundY;b.vy=0;b.grounded=true;b.lastSafe={x:p.x,z:p.z,y:groundY};}else b.grounded=false;
-  if(p.y<-3.4)respawnFromFall(b,1.8);
+  if(currentRound?.type==='slime'&&climbSlime&&p.y<=climbSlime.mesh.position.y+.12){eliminateActor(b,true);continue;}
+  else if(currentRound?.type!=='slime'&&p.y<-3.4)respawnFromFall(b,1.8);
+  if(!b.alive)continue;
   if((b.ghostTimer||0)<=0)for(const o of obstacles)obstacleHit(b,o);
   if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
   b.visual.rotation.x=b.stunTimer>0?1.2:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
@@ -832,26 +937,47 @@ function startFinalStage(){roundIndex=3;isFinalRound=true;startSelectedRound(cho
 function buildArenaBase(kind){
  newWorld();
  if(kind==='circle'){
-  const disk=new THREE.Mesh(new THREE.CircleGeometry(14.4,72),mat(0x6277bd,.72));disk.rotation.x=-Math.PI/2;disk.position.y=-.015;world.add(disk);
-  const trim=new THREE.Mesh(new THREE.TorusGeometry(14.25,.09,6,72),mat(0x56eee3,.4));trim.rotation.x=Math.PI/2;trim.position.y=.02;world.add(trim);
+  const radius=stageBounds.radius||14.4;
+  const disk=new THREE.Mesh(new THREE.CircleGeometry(radius,72),mat(0x6277bd,.72));disk.rotation.x=-Math.PI/2;disk.position.y=-.015;world.add(disk);
+  const trim=new THREE.Mesh(new THREE.TorusGeometry(radius-.15,.09,6,72),mat(0x56eee3,.4));trim.rotation.x=Math.PI/2;trim.position.y=.02;world.add(trim);
  }else if(kind==='rect'){
-  box(world,24,.42,30,0x6579c0,0,-.21,0);
-  for(let x=-9;x<=9;x+=3){box(world,.09,.025,29,0x8fe9f0,x,.012,0);}
+  box(world,24,.42,30,0x6579c0,0,-.21,0);for(let x=-9;x<=9;x+=3)box(world,.09,.025,29,0x8fe9f0,x,.012,0);
+ }else if(kind==='rollout'){
+  // Three connected rolling drums with moving holes. The space below them is lethal slime.
+  const radius=5.35, centers=[-10.8,0,10.8];
+  centers.forEach((z,i)=>{
+   const group=new THREE.Group();group.position.set(0,-radius,z);world.add(group);
+   const shell=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,25.6,48,1,true),mat([0x60d7d7,0x878bff,0xff7eb3][i],.7));shell.rotation.z=Math.PI/2;group.add(shell);
+   const bandMat=mat(0xe8f6ff,.5);
+   for(let b=0;b<9;b++){const stripe=new THREE.Mesh(new THREE.TorusGeometry(radius-.04,.055,5,48),bandMat);stripe.rotation.y=Math.PI/2;stripe.position.x=(b-4)*2.6;group.add(stripe);}
+   for(let r=0;r<16;r++){const a=r*Math.PI*2/16;box(group,25.55,.055,.085,r%2?0xc4edf1:0xefffff,0,(radius-.015)*Math.cos(a),(radius-.015)*Math.sin(a),{rotationX:a,roughness:.45});}
+   const holes=[];
+   for(let j=0;j<2;j++){
+    const h={x:(j===0?-4.9:4.9)+(i-1)*.55,z,z0:z,w:2.15,d:1.65,phase:i*1.7+j*Math.PI,speed:.78+(i%2)*.16,mesh:null};
+    const patch=box(world,h.w,.08,h.d,0x1d2a62,h.x,.04,z);h.mesh=patch;holes.push(h);
+   }
+   const roll={mesh:group,z,radius,speed:(i%2?-.72:.82),phase:i*1.1,holes};rolloutState.push(roll);
+   const wallZ=z+(i%2?1.2:-1.2),surface=-radius+Math.sqrt(Math.max(0,radius*radius-(wallZ-z)**2)),gap=i%2?3.1:-3.1;
+   for(const side of [-1,1]){
+    const wx=(side<0?-6.3:6.3)+gap,wm=box(world,8.2,2.05,.7,side<0?0xff7cae:0x67eee7,wx,surface+1.025,wallZ);
+    obstacles.push({kind:'wallblock',mesh:wm,width:8.2,height:2.05,depth:.7,x:wx,z:wallZ,wall:true,rollout:true,originX:wx,originZ:wallZ,phase:i*1.25+(side>0?Math.PI:0),speed:.72+(i%2)*.18});
+   }
+  });
+  // Decorative lower slime under the rotating floor.
+  const slime=new THREE.Mesh(new THREE.PlaneGeometry(32,38),new THREE.MeshStandardMaterial({color:0xff4fa3,transparent:true,opacity:.76,side:THREE.DoubleSide}));slime.rotation.x=-Math.PI/2;slime.position.set(0,-2.25,0);world.add(slime);
  }else if(kind==='hex'){
   tileGridSpec={originX:-9,originZ:-9,spacing:1.8,cols:11,rows:11};
   for(let layer=0;layer<3;layer++)for(let iz=0;iz<11;iz++)for(let ix=0;ix<11;ix++){
    const x=tileGridSpec.originX+ix*tileGridSpec.spacing,z=tileGridSpec.originZ+iz*tileGridSpec.spacing,topY=-layer*2.55;
    const mesh=box(world,1.68,.46,1.68,[0x56bfe4,0x62dfdc,0x7c9bff][(ix+iz+layer)%3],x,topY-.23,z);
-   const tile={ix,iz,x,z,w:1.68,d:1.68,topY,mesh,touched:false,expire:0,removed:false,fruitIndex:-1,kind:'hex'};tiles.push(tile);
-   const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
+   const tile={ix,iz,x,z,w:1.68,d:1.68,topY,mesh,touched:false,expire:0,removed:false,fruitIndex:-1,kind:'hex'};tiles.push(tile);const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
   }
  }else if(kind==='logic'){
   tileGridSpec={originX:-8,originZ:-8,spacing:4,cols:5,rows:5};
   for(let iz=0;iz<5;iz++)for(let ix=0;ix<5;ix++){
    const x=tileGridSpec.originX+ix*4,z=tileGridSpec.originZ+iz*4,fruitIndex=Math.floor(Math.random()*FRUIT_NAMES.length);
    const mesh=box(world,3.62,.38,3.62,FRUIT_COLORS[fruitIndex],x,-.19,z);
-   const tile={ix,iz,x,z,w:3.62,d:3.62,topY:0,mesh,touched:false,expire:0,removed:false,fruitIndex,kind:'logic'};tiles.push(tile);
-   const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
+   const tile={ix,iz,x,z,w:3.62,d:3.62,topY:0,mesh,touched:false,expire:0,removed:false,fruitIndex,kind:'logic'};tiles.push(tile);const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
   }
  }
  for(let i=0;i<24;i++){const a=Math.random()*Math.PI*2,r=17+Math.random()*8,y=2+Math.random()*8;sphere(world,.2+Math.random()*.22,[0xffffff,0xffd6f0,0xb5f9ff][i%3],Math.cos(a)*r,y,Math.sin(a)*r,8);}
@@ -861,23 +987,23 @@ function startSurvivalStage(stage,isFinal=false){
  document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;cameraYaw=0;cameraPitch=0;lookPointer=null;
  hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';countdownEl.style.display='none';
  currentRound=stage;isFinalRace=false;isFinalRound=isFinal;state='survival';elapsed=0;stageTime=0;survivalElimTimer=5.8;obstacles=[];logicCurrentTarget=-1;logicPhaseEnd=0;logicNextAt=4.6;logicRound=0;if(!isFinal)finishTarget=QUALIFY[Math.min(roundIndex,2)];
- let kind='circle';if(stage.type==='block')kind='rect';else if(stage.type==='hex')kind='hex';else if(stage.type==='perfectMatch')kind='logic';
- stageBounds={kind};buildArenaBase(kind);
+ let kind='circle';if(stage.type==='block')kind='rect';else if(stage.type==='hex')kind='hex';else if(stage.type==='perfectMatch')kind='logic';else if(stage.type==='rollout')kind='rollout';
+ stageBounds=stage.type==='jumpClub'?{kind:'circle',radius:18.4}:{kind};buildArenaBase(kind);
  if(stage.type==='jump'){
   addRotatingBeam(0,27,1.12,.82,0xff6ea7,.4);addRotatingBeam(0,27,-.74,2.45,0x61f6ee,1.45);
  }else if(stage.type==='jumpClub'){
-  addRotatingBeam(0,25,1.08,.76,0x5af4e3,.7);
+  stageBounds={kind:'circle',radius:18.4};addRotatingBeam(0,23.0,1.08,.76,0x5af4e3,.7);
  }else if(stage.type==='block'){
   addBlockWall(15,0);addBlockWall(-15,1);
  }else if(stage.type==='rollout'){
-  for(let i=0;i<5;i++){const angle=i*Math.PI*2/5;const x=Math.cos(angle)*7.6,z=Math.sin(angle)*7.6;const mesh=box(world,6.3,1.7,1.5,[0x67e2df,0xff83b7,0x8e91ff][i%3],x,.85,z,{rotationY:angle});obstacles.push({kind:'wallblock',mesh,width:6.3,height:1.7,depth:1.5,x,z,rollout:true,originX:x,originZ:z,phase:i*1.25,speed:.75+(i%2)*.25});}
+  // Rolling drum geometry and holes were created by buildArenaBase('rollout').
  }else if(stage.type==='royalFumble'||stage.type==='tailTag'){
   // Open circular arena. There are no walls to trap a bean at the edge.
   if(kind!=='circle')buildArenaBase('circle');stageBounds={kind:'circle'};
  }
  const active=allAliveBots();active.forEach(b=>makeBean(b));makeBean(player);
- resetActorForRound(player,0,kind==='circle'?0:0);
- active.forEach((b,i)=>{const angle=i/Math.max(1,active.length)*Math.PI*2,r=stage.type==='hex'?7.7:stage.type==='perfectMatch'?7.7:9.3;resetActorForRound(b,Math.cos(angle)*r,Math.sin(angle)*r);b.aiX=Math.cos(angle+Math.PI/2);b.aiZ=Math.sin(angle+Math.PI/2);b.aiTimer=.1+Math.random()*.35;b.aiSpeed=4.4+Math.random()*1.5;b.jumpNext=.7+Math.random()*2.2;b.aiDiveCooldown=.8+Math.random()*2.8;b.aiDiveRequested=false;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.stunTimer=0;b.bumpCooldown=0;});
+ resetActorForRound(player,0,0);
+ active.forEach((b,i)=>{const angle=i/Math.max(1,active.length)*Math.PI*2,r=stage.type==='hex'?7.7:stage.type==='perfectMatch'?7.7:9.3;const startX=stage.type==='rollout'?-11.5+(i/Math.max(1,active.length-1))*23:Math.cos(angle)*r;const startZ=stage.type==='rollout'?((i%2)*1.0-.5):Math.sin(angle)*r;resetActorForRound(b,startX,startZ);b.aiX=Math.cos(angle+Math.PI/2);b.aiZ=Math.sin(angle+Math.PI/2);b.aiTimer=.1+Math.random()*.35;b.aiSpeed=4.4+Math.random()*1.5;b.jumpNext=.7+Math.random()*2.2;b.aiDiveCooldown=.8+Math.random()*2.8;b.aiDiveRequested=false;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.stunTimer=0;b.bumpCooldown=0;});
  if(stage.type==='tailTag'){
   const crew=[player,...active];const initial=shuffle(crew).slice(0,Math.min(crew.length,Math.max(finishTarget,Math.ceil(crew.length*.7))));crew.forEach(a=>setActorTail(a,initial.includes(a)));
   tailRoundTime=38;
@@ -919,15 +1045,19 @@ function touchTileAt(x,z,actorY=0){
   if(tile.fruitIndex===logicCurrentTarget)return;
   tile.touched=true;tile.expire=stageTime+.58;tile.mesh.material.color.setHex(0xff4f73);return;
  }
- if(tile.kind==='hex'){tile.touched=true;tile.expire=stageTime+1.45;tile.mesh.material.color.setHex(0xffbe5b);}
+ if(tile.kind==='hex'){tile.touched=true;tile.expire=stageTime+1.05;tile.mesh.material.color.setHex(0xffbe5b);}
 }
 function touchRacePlatform(x,z,actor){
- const p=racePlatforms.find(p=>{if(p.removed||p.kind!=='tipTile')return false;const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),s=Math.sin(p.rotationY||0),lx=dx*c-dz*s,lz=dx*s+dz*c;return Math.abs(lx)<=p.w/2&&Math.abs(lz)<=p.d/2;});
- if(p&&!p.safe&&p.collapseAt===null){p.collapseAt=stageTime+.68;p.mesh.material.color.setHex(0xff6d8c);}
+ const y=actor?.group?.position?.y??0;
+ const p=racePlatforms.find(q=>{if(q.removed||q.kind!=='tipTile')return false;const dx=x-q.x,dz=z-q.z,c=Math.cos(q.rotationY||0),sn=Math.sin(q.rotationY||0),lx=dx*c-dz*sn,lz=dx*sn+dz*c;return Math.abs(lx)<=q.w/2&&Math.abs(lz)<=q.d/2&&y<=q.topY+.76&&(actor?.vy??0)<=.15;});
+ if(!p)return;
+ if(p.safe){p.revealed=true;return;}
+ p.removed=true;world.remove(p.mesh);
+ if(actor){actor.aiToeTargetZ=undefined;actor.aiToeTargetX=undefined;}
 }
 function updateTiles(dt){
  for(const t of tiles){if(t.removed)continue;if(t.kind==='logic'&&logicCurrentTarget<0&&stageTime<logicNextAt){/* keep fruit colors visible during memory phase */}
-  if(t.touched){const remaining=t.expire-stageTime;if(t.kind==='hex'){t.mesh.position.y=t.topY-.23-Math.max(0,(1.45-remaining))*.22;if(remaining<.55)t.mesh.material.color.setHex(0xff5c79);}else if(t.kind==='logic'){t.mesh.material.color.setHex(0xff5c79);}
+  if(t.touched){const remaining=t.expire-stageTime;if(t.kind==='hex'){t.mesh.position.y=t.topY-.23-Math.max(0,(1.05-remaining))*.32;if(remaining<.42)t.mesh.material.color.setHex(0xff5c79);}else if(t.kind==='logic'){t.mesh.material.color.setHex(0xff5c79);}
    if(remaining<=0){t.removed=true;world.remove(t.mesh);}
   }
  }
@@ -948,7 +1078,7 @@ function beginLogicRound(){
 function chooseSurvivalBotPlan(b){
  const p=b.group.position,t=b.traits||{awareness:.5,patience:.4,bravery:.5,noise:.2,jumpChance:.5,reaction:.3};
  const hex=stageBounds.kind==='hex',tiled=hex||stageBounds.kind==='logic';
- const step=hex?1.58:stageBounds.kind==='logic'?3.0:2.25;
+ const step=hex?1.24:stageBounds.kind==='logic'?2.75:2.25;
  if(currentRound?.mode==='tail'){
   const crew=[player,...allAliveBots()].filter(a=>a!==b&&a.alive&&a.group?.visible&&(a.ghostTimer||0)<=0);
   const targets=crew.filter(a=>b.hasTail?!a.hasTail:a.hasTail);
@@ -964,21 +1094,26 @@ function chooseSurvivalBotPlan(b){
  for(const [dx,dz] of dirs){
   const nx=p.x+dx*step,nz=p.z+dz*step;let score=0;
   if(stageBounds.kind==='circle'){
-   const r=Math.hypot(nx,nz);
-   if(r>12.8)score-=2+(r-12.8)*3;else score+=(12.8-r)*.035;
+   const r=Math.hypot(nx,nz),limit=(stageBounds.radius||14.4)-1.1;
+   if(r>limit)score-=2+(r-limit)*3;else score+=(limit-r)*.035;
   }else if(stageBounds.kind==='rect'){
    const overX=Math.max(0,Math.abs(nx)-10.7),overZ=Math.max(0,Math.abs(nz)-13.7);score-=overX*4+overZ*4;
    score+=Math.min(10.7-Math.abs(nx),13.7-Math.abs(nz))*.025;
+  }else if(stageBounds.kind==='rollout'){
+   const nextGround=groundAt(nx,nz,p.y);
+   if(nextGround===null)score-=32;
+   else if(nextGround< -1.0)score-=9+Math.abs(nextGround)*2;
+   else score+=2.8;
   }else if(tiled){
    const tile=findTile(nx,nz,p.y);
-   if(!tile)score-=15;
-   else if(tile.touched)score-=6+Math.max(0,1.2-(tile.expire-stageTime))*2;
-   else score+=2.2;
+   if(!tile)score-=28;
+   else if(tile.touched)score-=13+Math.max(0,1.0-(tile.expire-stageTime))*4;
+   else score+=5.0;
    if(stageBounds.kind==='logic'&&logicCurrentTarget>=0&&tile&&tile.fruitIndex!==logicCurrentTarget)score-=3.5;
   }
   for(const o of obstacles){
    const danger=obstacleRiskAt(nx,nz,o,hex?1.5:2.0,0);
-   if(danger>.02)score-=danger*(1.4+t.awareness*3.4);
+   if(danger>.02)score-=danger*(2.1+t.awareness*4.6);
   }
   let crowd=0;
   for(const other of others){const op=other.group.position,d=Math.hypot(nx-op.x,nz-op.z);if(d<1.8)crowd+=(1.8-d)*.38;}
@@ -991,10 +1126,11 @@ function chooseSurvivalBotPlan(b){
  const len=Math.hypot(best[0],best[1])||1;b.aiX=best[0]/len;b.aiZ=best[1]/len;
  b.aiTimer=.2+(1-t.awareness)*.48+t.reaction*.25;
  b.aiJumpRequested=false;b.aiDiveRequested=false;
- if(b.grounded&&b.jumpNext<=0&&Math.random()<t.jumpChance){
-  const nearbyDanger=obstacles.some(o=>['beam','hammer','barrier','mover','slime','ball'].includes(o.kind)&&obstacleRiskAt(p.x+b.aiX*1.4,p.z+b.aiZ*1.4,o,1.35,.12)>.32);
-  if(nearbyDanger&&Math.random()<THREE.MathUtils.clamp(.68+t.awareness*.24,.55,.94))b.aiJumpRequested=true;
-  else if(tiled&&Math.random()<.15)b.aiJumpRequested=true;
+ if(b.grounded&&b.jumpNext<=0&&Math.random()<THREE.MathUtils.clamp(t.jumpChance*(.85+(t.awareness||.5)*.25),.45,.97)){
+  const nearbyDanger=obstacles.some(o=>['beam','hammer','shortcutHammer','barrier','mover','slime','ball','blockwall'].includes(o.kind)&&obstacleRiskAt(p.x+b.aiX*1.4,p.z+b.aiZ*1.4,o,1.35,.12)>.32);
+  if(nearbyDanger&&Math.random()<THREE.MathUtils.clamp(.84+t.awareness*.15,.78,.99))b.aiJumpRequested=true;
+  else if(hex&&Math.random()<.62)b.aiJumpRequested=true;
+  else if(tiled&&Math.random()<.3)b.aiJumpRequested=true;
  }
  const forwardRisk=obstacles.reduce((max,o)=>Math.max(max,obstacleRiskAt(p.x+b.aiX*1.5,p.z+b.aiZ*1.5,o,tiled?1.3:1.7,.18)),0);
  if((b.aiDiveCooldown||0)<=0&&!b.diveTimer){
@@ -1027,7 +1163,7 @@ function updateSurvivalBots(dt){
     b.diveTimer=.46;b.diveBurstTimer=.23;b.diveRecovery=.92;b.aiDiveCooldown=2.6+Math.random()*3.0;b.aiDiveRequested=false;
    }
   }
-  p.x+=b.vx*dt;p.z+=b.vz*dt;
+  p.x+=b.vx*dt;p.z+=b.vz*dt;if(currentRound?.type==='fruitChute'&&b.grounded&&p.z<COURSE_START_Z&&p.z>COURSE_FINISH_Z)p.z+=1.75*dt;
   b.vy-=22*dt;p.y+=b.vy*dt;
   const groundY=groundAt(p.x,p.z,p.y);if(groundY!==null&&p.y<=groundY&&b.vy<=0){p.y=groundY;b.vy=0;b.grounded=true;b.lastSafe={x:p.x,z:p.z,y:groundY};}else b.grounded=false;
   if(stageBounds.kind==='hex'&&b.grounded)touchTileAt(p.x,p.z,p.y);if(stageBounds.kind==='logic'&&b.grounded)touchTileAt(p.x,p.z,p.y);
@@ -1036,7 +1172,7 @@ function updateSurvivalBots(dt){
   if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
   b.visual.rotation.x=b.stunTimer>0?1.25:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
   const fallLimit=currentRound?.type==='hex'?-6.45:(currentRound?.mode==='tail'?-3.4:-1.45);
-  if(p.y<fallLimit){if(currentRound?.mode==='tail')respawnFromFall(b,1.4);else eliminateActor(b,true);}
+  if(p.y<fallLimit){eliminateActor(b,true);continue;}
  }
  resolveBeanCollisions([player,...allAliveBots()],dt);
 }
@@ -1088,14 +1224,13 @@ function eliminateActor(actor,byFall){
 }
 function finishFinal(won,message){
  if(state==='result'||state==='menu')return;
- document.body.classList.remove('stick-active');state='result';hud.style.display='none';$('#touch-controls').style.display='none';
- const finalName=currentRound?.name||'ファイナル';
- setOverlay(`<div class="eyebrow">${won?'CROWN WINNER':'GAME OVER'}</div><h1 class="logo-line">${won?'YOU <span>WIN!</span>':'ONE MORE <span>TRY!</span>'}</h1><h2>${message}</h2><p>${finalName}での戦いはここまで！<br>${won?'おめでとう！ 次のゲームでは別のラウンド構成が選ばれるよ。':'もう一度挑戦して、今度こそクラウンをつかもう。'}</p><div class="pill-row"><span class="pill">シーズン1ソロ18種</span><span class="pill">Bot 32体</span><span class="pill">ファイナル：${finalName}</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
+ document.body.classList.remove('stick-active','slime-back-mode');state='result';hud.style.display='none';$('#touch-controls').style.display='none';
+ setOverlay(`<div class="eyebrow">${won?'CROWN WINNER':'GAME OVER'}</div><h1 class="logo-line">${won?'YOU <span>WIN!</span>':'ONE MORE <span>TRY!</span>'}</h1><h2>${won?'優勝！':'今回はここまで！'}</h2><p>ファイナル終了！<br>${won?'おめでとう！ 32人の頂点に立った！':'最後までよく頑張った！ 次のゲームでリベンジしよう。'}</p><div class="pill-row"><span class="pill">シーズン1ソロ18種</span><span class="pill">参加者32人</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
  $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
 }
 function finishEliminated(title,desc){
  document.body.classList.remove('stick-active');hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">ELIMINATED</div><h2>${title}</h2><p>${desc}</p><div class="pill-row"><span class="pill">挑戦ラウンド：${roundIndex+1} / 4</span><span class="pill">Botは毎回32体</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
+ setOverlay(`<div class="eyebrow">ELIMINATED</div><h2>${title}</h2><p>${desc}</p><div class="pill-row"><span class="pill">挑戦ラウンド：${roundIndex+1} / 4</span><span class="pill">参加者は自分を含めて32人</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
  $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
 }
 function updateHud(force=false){
@@ -1125,6 +1260,7 @@ function updateCamera(dt){
   if(spectatorTarget?.group)followed=spectatorTarget.group.position;
  }
  const p=followed;
+ if((player.slimeEffectTimer||0)>0){cameraYaw=0;cameraPitch=0;}
  const angle=cameraYaw;
  if(state==='race'){
   desiredCamera.set(p.x+Math.sin(angle)*9.5,Math.max(5.7,p.y+6.8+cameraPitch*6),p.z+Math.cos(angle)*9.5);
@@ -1190,6 +1326,7 @@ function resetStickHome(){
 stickZone.addEventListener('pointerdown',e=>{
  e.preventDefault();
  if(spectatorMode){spectatorSwipeId=e.pointerId;spectatorSwipeStartX=e.clientX;try{stickZone.setPointerCapture(e.pointerId);}catch{}return;}
+ if((player.slimeEffectTimer||0)>0&&!e.target.closest?.('#slime-back-label'))return;
  if(joystick.active)return;joystick.active=true;joystick.id=e.pointerId;document.body.classList.add('stick-active');
  try{stickZone.setPointerCapture(e.pointerId);}catch{}
  if((player.slimeEffectTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;return;}
