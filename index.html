@@ -2,1325 +2,1413 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#122047">
-<title>Bean Battle - Fall Race</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Lossless Video Cutter - 劣化なし動画カット</title>
 <style>
-  :root{color-scheme:dark;--ink:#f8fbff;--panel:rgba(12,22,53,.86);--cyan:#45e5f5;--pink:#ff5caa;--yellow:#ffe66b}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none;-webkit-user-drag:none}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#75cfff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);touch-action:none;user-select:none}
-  #game{position:fixed;inset:0;overflow:hidden}
-  canvas{display:block;width:100%;height:100%;touch-action:none}
-  #hud{position:absolute;inset:0;pointer-events:none;display:none}
-  .hud-card{position:absolute;top:calc(env(safe-area-inset-top) + 12px);padding:10px 14px;border:1px solid rgba(255,255,255,.2);border-radius:15px;background:rgba(11,20,49,.68);backdrop-filter:blur(8px);box-shadow:0 8px 24px #08122c26;max-width:50vw}
-  #round-card{left:12px;min-width:155px;max-width:48vw}
-  .alive-inline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;padding-top:6px;border-top:1px solid #ffffff24;font-size:11px;color:#d7e8ff}
-  .alive-inline strong{font-size:13px;color:#fff4a5;font-weight:1000;white-space:nowrap}
-  .tiny{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a9d9ff;font-weight:800}
-  .hud-big{font-size:17px;font-weight:900;line-height:1.2;margin-top:3px}
-  #subinfo{font-size:12px;color:#d4eaff;margin-top:4px}
-  #progress-wrap{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);width:min(32vw,260px);padding:9px 12px;border-radius:15px;background:rgba(11,20,49,.68);border:1px solid #ffffff2b}
-  #progress-label{font-size:11px;font-weight:800;text-align:center;margin-bottom:5px;color:#dff8ff}
-  #progress-track{height:8px;border-radius:99px;background:#ffffff30;overflow:hidden}
-  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#43e8e6,#fff176);border-radius:99px;transition:width .12s}
-  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#08143035,#08143025);}
-  #panel{width:min(570px,100%);max-height:88vh;overflow:auto;text-align:center;padding:clamp(22px,5vw,36px);border:1px solid #ffffff40;border-radius:26px;background:linear-gradient(145deg,rgba(14,27,67,.94),rgba(33,30,82,.92));box-shadow:0 24px 80px #08102b66;backdrop-filter:blur(14px)}
-  .logo-line{font-size:clamp(30px,7vw,56px);font-weight:1000;line-height:.98;letter-spacing:-.055em;text-shadow:0 5px 0 #15265b;margin:0 0 12px}
-  .logo-line span{color:var(--yellow)}
-  .eyebrow{display:inline-block;border:1px solid #ffffff38;border-radius:99px;padding:6px 11px;font-size:11px;font-weight:900;letter-spacing:.12em;color:#9cefff;margin-bottom:14px}
-  #panel h2{font-size:clamp(23px,5vw,33px);line-height:1.1;margin:3px 0 10px}
-  #panel p{color:#dce9ff;line-height:1.65;margin:8px 0 16px;font-size:14px}
-  .rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:18px 0;text-align:left}
-  .rule{padding:11px;border-radius:13px;background:#ffffff0c;border:1px solid #ffffff19;font-size:12px;color:#dce9ff;line-height:1.5}
-  .rule b{display:block;color:#fff;font-size:13px;margin-bottom:3px}
-  button{font:inherit;border:0;cursor:pointer;touch-action:none;user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none}
-  .main-btn{width:100%;padding:15px 20px;border-radius:15px;font-size:17px;font-weight:1000;color:#171f45;background:linear-gradient(135deg,#fff27a,#ffbd62);box-shadow:0 5px 0 #b77636;transition:transform .12s,filter .12s;margin-top:5px}
-  .main-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b77636}
-  .secondary{background:#ffffff16;color:#fff;box-shadow:none;border:1px solid #ffffff2e;margin-top:12px}
-  .pill-row{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:13px 0 18px}
-  .pill{padding:7px 10px;border-radius:99px;background:#ffffff12;border:1px solid #ffffff20;color:#eff7ff;font-size:12px;font-weight:800}
-  #touch-controls{display:none;position:absolute;inset:0;pointer-events:none}
-  #look-zone{position:absolute;right:0;top:0;width:50%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
-  #stick-zone{position:absolute;left:0;top:0;width:50%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
-  #stick-base{display:none;position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;background:#0e184a48;border:2px solid #ffffff67;box-shadow:inset 0 0 20px #ffffff10;pointer-events:none;touch-action:none}
-  #stick-knob{position:absolute;width:57px;height:57px;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(145deg,#ffffffde,#a9d5ffb8);border:2px solid #fff;box-shadow:0 5px 15px #09153673;pointer-events:none}
-  #slime-back-label{display:none;position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:#ff4fa355;border:3px solid #ffd0e6;color:#fff;font-size:28px;font-weight:1000;text-shadow:0 2px 5px #183c3b;pointer-events:none}
-  #slime-back-label span{font-size:11px;letter-spacing:.08em}
-  .touch-btn{position:absolute;right:max(22px,env(safe-area-inset-right));width:76px;height:76px;border-radius:50%;font-weight:1000;font-size:14px;color:#121b44;border:3px solid #ffffffc7;box-shadow:0 6px 0 #20275d99,0 8px 18px #0915364d;pointer-events:auto;touch-action:none;z-index:3}
-  #jump-btn{bottom:max(30px,env(safe-area-inset-bottom));background:linear-gradient(135deg,#fff27a,#ffc261)}
-  #dive-btn{bottom:calc(max(30px,env(safe-area-inset-bottom)) + 88px);right:max(31px,env(safe-area-inset-right));width:64px;height:64px;background:linear-gradient(135deg,#77fff4,#56b5ff);font-size:12px}
-  #toast{position:absolute;left:50%;top:35%;transform:translate(-50%,-50%) scale(.9);opacity:0;padding:12px 18px;background:#101a3ee8;border:1px solid #ffffff3b;border-radius:14px;font-weight:900;text-align:center;pointer-events:none;transition:opacity .2s,transform .2s;max-width:85vw}
-  #countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:5;font-size:clamp(84px,25vw,180px);font-weight:1000;line-height:1;color:#fff9b5;text-shadow:0 7px 0 #5b3f9b,0 14px 35px #101a3ecc;letter-spacing:-.06em}
-  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  @media (pointer:coarse){#touch-controls{display:block}#progress-wrap{top:calc(env(safe-area-inset-top) + 82px);width:min(45vw,220px)}#round-card,#alive-card{top:calc(env(safe-area-inset-top) + 10px)}}
-  .stick-active #stick-base{display:block}
-  .spectating #stick-zone{display:block!important;opacity:0!important}
-.spectating #stick-base,.spectating #slime-back-label{display:none!important}
-.slime-back-mode #stick-base{display:none!important}
-.slime-back-mode #slime-back-label{display:none}
-.slime-back-mode.stick-active #slime-back-label{display:flex}
-.ghost-back-mode #stick-base{display:none!important}
-.ghost-back-mode #slime-back-label{display:flex!important;pointer-events:none}
-.ghost-back-mode #jump-btn,.ghost-back-mode #dive-btn{display:none!important}
-  @media (max-width:520px){#round-card{min-width:0;max-width:48vw;padding:8px 10px}.hud-big{font-size:14px}#subinfo{font-size:10px}.tiny{font-size:9px}.alive-inline{font-size:9px;gap:5px}.alive-inline strong{font-size:11px}#progress-wrap{padding:7px 9px}#progress-label{font-size:10px}.rules{gap:7px}.rule{padding:9px;font-size:11px}}
+  :root{color-scheme:dark;--bg:#0a0d14;--panel:#111722;--panel2:#151e2c;--line:#273448;--text:#edf3fc;--muted:#9aa9bd;--cyan:#62e4dc;--blue:#759bff;--danger:#ff8c9e;--ok:#78e0a0;--radius:18px}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1000px 550px at 15% -10%,#142544 0,transparent 60%),radial-gradient(900px 500px at 100% 0,#1a1739 0,transparent 55%),var(--bg);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);line-height:1.55;min-height:100vh}
+  .wrap{width:min(1080px,100%);margin:auto;padding:28px 18px 48px}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+  .logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#071018;font-size:25px;font-weight:900;box-shadow:0 8px 32px #62e4dc20}
+  h1{margin:0;font-size:clamp(22px,4vw,32px);letter-spacing:-.03em;line-height:1.2}
+  .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .panel{background:linear-gradient(180deg,#141b27f2,#101621f5);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin:16px 0;box-shadow:0 12px 32px #00000016}
+  .section-title{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800;margin:0 0 14px}
+  .step{display:inline-grid;place-items:center;flex:none;width:27px;height:27px;border-radius:9px;background:#21354b;color:var(--cyan);font-size:13px}
+  .dropzone{border:1.5px dashed #476078;border-radius:16px;padding:26px 16px;text-align:center;background:#0b121e;transition:.18s;cursor:pointer}
+  .dropzone.drag{border-color:var(--cyan);background:#10272b}
+  .dropzone strong{display:block;font-size:16px;margin-bottom:5px}
+  .dropzone p{margin:0;color:var(--muted);font-size:13px}
+  .file-icon{font-size:30px;margin-bottom:7px}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .file-meta{margin-top:13px;display:none;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);background:#0c121c;border-radius:12px;padding:11px 13px}
+  .file-name{font-size:14px;overflow-wrap:anywhere;min-width:0}
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+  .tag{display:inline-flex;align-items:center;gap:5px;border:1px solid #2c3e51;color:#c2d2e7;background:#152232;border-radius:999px;padding:3px 9px;font-size:11px;white-space:nowrap}
+  .tag.ok{border-color:#24543f;color:#9ce8b9;background:#10251c}
+  .tag.warn{border-color:#6b5130;color:#ffd49b;background:#2a2013}
+  .grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:16px;align-items:start}
+  .preview-shell{background:#05080d;border:1px solid #283548;border-radius:14px;overflow:hidden;position:relative;aspect-ratio:16/9;display:grid;place-items:center;min-height:180px}
+  video{width:100%;height:100%;object-fit:contain;background:#05080d;max-height:440px}
+  #previewImage{width:100%;height:100%;object-fit:contain;background:#05080d;max-height:440px}
+  .preview-empty{padding:20px;color:#72839a;text-align:center;font-size:13px}
+  .preview-footer{display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:10px;flex-wrap:wrap}
+  .preview-time{font-variant-numeric:tabular-nums;font-weight:750;color:var(--cyan)}
+  .controls{display:grid;gap:14px}
+  .label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:#cfdaea}
+  .segmented{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  button,select,input{font:inherit}
+  button{cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
+  button:active{transform:translateY(1px)}
+  .choice{border:1px solid #33435a;background:#0d1420;color:#c3d0e1;border-radius:12px;padding:11px 10px;font-weight:750;font-size:13px}
+  .choice.active{border-color:#4b9d9a;background:#143034;color:#b2fff5;box-shadow:inset 0 0 0 1px #62e4dc18}
+  .fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,.7fr);gap:10px}
+  input[type=number],select{width:100%;min-width:0;border:1px solid #344258;border-radius:11px;background:#090f18;color:var(--text);padding:11px 12px;outline:none}
+  input[type=number]:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #62e4dc18}
+  .fps-box{display:none;border:1px solid #314253;border-radius:12px;background:#0d141e;padding:10px 12px}
+  .fps-box.show{display:block}
+  .fps-inner{display:flex;gap:12px;align-items:center}
+  .fps-inner input{max-width:130px}
+  .summary{background:#0b131e;border:1px solid #26374c;border-radius:12px;padding:12px 13px;font-size:13px}
+  .summary strong{color:var(--cyan)}
+  .summary .error{color:var(--danger)}
+  .action{display:flex;gap:10px;flex-wrap:wrap}
+  .primary{flex:1;min-width:180px;background:linear-gradient(105deg,#62e4dc,#80a1ff);color:#07121b;border:0;border-radius:12px;padding:13px 16px;font-weight:900}
+  .secondary{background:#1a2637;color:#e1eafa;border:1px solid #35445b;border-radius:12px;padding:12px 14px;font-weight:700}
+  button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .progress-wrap{margin-top:14px;display:none}
+  .progress-head{display:flex;justify-content:space-between;gap:12px;color:#c7d4e6;font-size:12px;margin-bottom:7px}
+  .progress-track{height:10px;border-radius:999px;background:#070b12;border:1px solid #273448;overflow:hidden}
+  .progress-fill{height:100%;width:0%;border-radius:inherit;background:linear-gradient(90deg,var(--cyan),var(--blue));transition:width .14s linear;position:relative}
+  .progress-fill.indeterminate{width:38%;background:linear-gradient(90deg,#62e4dc55,#62e4dc,#759bff);animation:sweep 1.2s ease-in-out infinite alternate}
+  @keyframes sweep{from{transform:translateX(-8%)}to{transform:translateX(175%)}}
+  .notice{border-left:3px solid #d6a55a;background:#211b13;color:#e8d2ac;border-radius:0 10px 10px 0;padding:11px 13px;font-size:12px;margin-top:13px}
+  .privacy{border-left-color:#4ab89e;background:#0e201d;color:#b1e9dc}
+  .result{display:none;margin-top:14px;padding:13px;border:1px solid #2c6348;background:#10251b;border-radius:12px;overflow-wrap:anywhere}
+  .result a{color:#a5f0bf;font-weight:800}
+  .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#63748b;margin-right:5px}
+  .status-dot.active{background:var(--cyan);box-shadow:0 0 10px #62e4dc66}
+  footer{color:#78869a;font-size:11px;text-align:center;margin-top:25px}
+  [hidden]{display:none!important}
+  @media(max-width:760px){.wrap{padding:20px 12px 32px}.panel{padding:15px}.grid{grid-template-columns:1fr}.preview-shell{min-height:0}.preview-footer{align-items:flex-start}.fields{grid-template-columns:minmax(0,1fr) minmax(105px,.75fr)}}
+
+  /* Full-screen, no-page-scroll workspace */
+  html,body{width:100%;height:100%;min-height:0;overflow:hidden;overscroll-behavior:none}
+  body{min-height:0}
+  .wrap{width:100%;max-width:none;height:100vh;height:100dvh;margin:0;padding:max(7px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));display:grid;grid-template-rows:auto minmax(0,1.12fr) minmax(0,1fr) auto;gap:8px;overflow:hidden}
+  .app-header{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;margin:0;min-height:40px}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0}
+  .brand-copy{min-width:0}
+  .logo{width:34px;height:34px;min-width:34px;border-radius:11px;font-size:18px}
+  h1{font-size:clamp(15px,2.2vw,21px);letter-spacing:-.025em;white-space:nowrap}
+  .sub{font-size:10px;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .header-file-area{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;max-width:55%;margin-left:auto}
+  #fileMeta{display:none!important}
+  #dropzone{display:flex;align-items:center;justify-content:center;gap:6px;flex:none;width:auto;max-width:180px;padding:8px 11px;border-style:solid;border-radius:11px;text-align:center;font-size:12px;white-space:nowrap}
+  #dropzone .file-icon{display:none}
+  #dropzone strong{display:inline;font-size:12px;margin:0}
+  #dropzone p{display:none}
+  .file-meta{margin:0;max-width:min(270px,30vw);min-width:0;padding:6px 8px;gap:7px;border-radius:10px}
+  .file-name{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+  .file-meta .tag{font-size:9px;padding:2px 6px}
+  .file-info{white-space:nowrap}
+  .panel{margin:0;padding:clamp(8px,1.35vh,13px);min-height:0;border-radius:14px;overflow:hidden;box-shadow:0 7px 20px #00000012}
+  .preview-panel{display:flex;flex-direction:column;gap:0}
+  .section-title{font-size:13px;margin:0 0 7px;gap:7px;line-height:1.2}
+  .step{width:21px;height:21px;border-radius:7px;font-size:11px}
+  .preview-shell{flex:1 1 0;min-height:0;max-height:100%;width:100%;aspect-ratio:auto;border-radius:10px}
+  .preview-shell.empty-pick{cursor:pointer}
+  .preview-shell.drag{outline:2px dashed var(--cyan);outline-offset:-6px;background:#10272b}
+  .preview-shell.drag::after{content:"ここにドロップして動画を差し替え";position:absolute;inset:12px;display:grid;place-items:center;background:#07121be8;border:1px solid #62e4dc99;border-radius:10px;color:#b2fff5;font-size:clamp(12px,2vw,18px);font-weight:800;pointer-events:none;text-align:center}
+  .preview-shell > video,.preview-shell > #previewImage{display:block;width:100%;height:100%;max-width:100%;max-height:100%;min-width:0;min-height:0;object-fit:contain;object-position:center;background:#05080d}
+  .preview-footer{padding-top:5px;gap:8px;align-items:center;flex-wrap:nowrap;min-height:22px}
+  .preview-footer .small{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .preview-time{font-size:12px;flex:none}
+  #previewNote{display:none!important}
+  .settings-panel{display:flex;flex-direction:column;min-height:0}
+  .settings-layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:12px;flex:1;min-height:0}
+  .settings-left,.settings-right{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+  .control-block{min-width:0}
+  .label{font-size:11px;margin-bottom:5px}
+  .segmented{gap:6px}
+  .choice{padding:8px 7px;border-radius:9px;font-size:11px;line-height:1.25}
+  .fields{grid-template-columns:minmax(0,1fr) minmax(105px,.8fr);gap:7px}
+  input[type=number],select{padding:8px 9px;border-radius:9px;font-size:12px;min-height:35px}
+  .fps-box{padding:8px;border-radius:9px}
+  .fps-inner{gap:7px}
+  .fps-inner input{max-width:110px}
+  .fps-box .small{font-size:10px}
+  .summary{padding:8px 9px;border-radius:9px;font-size:11px;line-height:1.35;min-height:0}
+  .summary strong{font-size:11px}
+  .save-settings{border:1px solid var(--line);background:#0d141e;border-radius:10px;padding:9px;min-width:0}
+  .save-settings h3{font-size:11px;margin:0 0 6px;color:#cfdaea}
+  .save-settings select{width:100%}
+  .save-settings .small{display:none}
+  .action{gap:7px}
+  .primary{min-width:0;border-radius:10px;padding:10px 12px;font-size:13px}
+  .secondary{border-radius:9px;padding:8px 10px;font-size:11px}
+  .progress-wrap{margin-top:7px;flex:none}
+  .progress-head{font-size:10px;margin-bottom:4px}
+  .progress-track{height:6px}
+  .progress-detail{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .result{margin-top:6px;padding:7px 9px;border-radius:9px;font-size:11px;max-height:72px;overflow:auto;flex:none}
+  .result button{font-size:11px;padding:6px 8px;margin-top:5px}
+  .result a{font-size:11px}
+  .bottom-actions{display:flex;align-items:center;gap:8px;min-height:44px}
+  .history-button{flex:none;width:40px;min-width:38px;height:40px;padding:7px 8px;display:grid;place-items:center;font-size:20px;line-height:1}
+  #cutButton{flex:1;min-width:0;height:44px;padding:8px 12px;border-radius:12px;font-size:14px}
+  .info-button{width:42px;height:42px;flex:none;border:1px solid #40516a;border-radius:50%;background:#152032;color:#dce9fb;font-weight:800;font-size:19px;display:grid;place-items:center;padding:0}
+  .info-overlay{position:fixed;z-index:1000;inset:0;background:#03060bd9;display:flex;align-items:center;justify-content:center;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom));}
+  .info-dialog{width:min(560px,100%);max-height:min(82dvh,720px);overflow:auto;background:#111a27;border:1px solid #34445b;border-radius:18px;padding:17px;box-shadow:0 22px 70px #0009}
+  .info-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .info-head h2{font-size:16px;margin:0}
+  .info-close{width:32px;height:32px;border:1px solid #35445b;border-radius:50%;background:#1a2637;color:#edf3fc;font-size:18px}
+  .info-dialog .notice{margin:9px 0;font-size:12px}
+  .info-dialog p{font-size:12px;color:#bdcbe0;margin:8px 0}
+  .info-dialog ul{padding-left:18px;margin:8px 0;color:#bdcbe0;font-size:12px}
+  .info-dialog li{margin:5px 0}
+  [hidden]{display:none!important}
+  @media(max-width:600px){
+    .wrap{grid-template-rows:auto minmax(0,1.04fr) minmax(0,1fr) auto;gap:6px}
+    .app-header{gap:5px;min-height:34px}
+    .brand{gap:6px}
+    .logo{width:29px;height:29px;min-width:29px;font-size:16px;border-radius:9px}
+    h1{font-size:14px}
+    .sub{display:none}
+    .header-file-area{max-width:55%;gap:5px}
+    #dropzone{padding:7px 8px;font-size:10px;max-width:140px}
+    #dropzone strong{font-size:10px}
+    .file-meta{max-width:35vw;padding:5px 6px}
+    .file-name{max-width:25vw;font-size:10px}
+    .file-meta .tag{display:none}
+    .settings-layout{grid-template-columns:minmax(0,1fr) minmax(0,.82fr);gap:7px}
+    .settings-left,.settings-right{gap:7px}
+    .panel{padding:8px}
+    .section-title{font-size:12px;margin-bottom:6px}
+    .choice{font-size:10px;padding:8px 4px}
+    .save-settings{padding:7px}
+    .save-settings h3{font-size:10px}
+    .summary{font-size:10px;padding:7px}
+    .bottom-actions{gap:6px;min-height:40px}
+    #cutButton{height:40px;font-size:13px}
+    .history-button{width:36px;min-width:34px;height:38px;padding:6px}
+    .info-button{height:38px;width:38px;font-size:17px}
+  }
+  @media(max-height:650px){
+    .wrap{grid-template-rows:auto minmax(0,.82fr) minmax(0,1.18fr) auto;gap:5px;padding-top:max(4px,env(safe-area-inset-top));padding-bottom:max(4px,env(safe-area-inset-bottom))}
+    .app-header{min-height:29px}
+    .logo{width:27px;height:27px;min-width:27px}
+    .panel{padding:6px}
+    .section-title{margin-bottom:4px}
+    .settings-layout{gap:6px}
+    .settings-left,.settings-right{gap:5px}
+    .choice{padding:6px 4px}
+    .fields input,.fields select{min-height:30px;padding:5px 7px}
+    .save-settings{padding:6px}
+    #cutButton{height:36px}
+    .info-button{height:34px;width:34px}
+  }
+  @media(max-width:380px){.file-info{display:none}.settings-layout{grid-template-columns:minmax(0,1fr) minmax(0,.78fr)}.file-name{max-width:22vw}}
+  .length-slider-wrap{margin-top:5px;min-width:0}
+  #amountSlider{display:block;width:100%;height:20px;margin:0;padding:0;background:transparent;accent-color:var(--cyan);cursor:pointer;touch-action:pan-y}
+  #amountSlider:disabled{opacity:.42;cursor:not-allowed}
+  .slider-labels{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:9px;line-height:1.1;margin-top:-1px}
+  .quicklook-overlay{position:fixed;z-index:1200;inset:0;background:#03060bf0;display:flex;align-items:center;justify-content:center;padding:14px;padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .quicklook-dialog{width:min(900px,100%);max-height:92dvh;overflow:auto;background:#111a27;border:1px solid #34445b;border-radius:16px;padding:12px;box-shadow:0 22px 70px #0009}
+  .quicklook-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:14px}
+  .quicklook-dialog video{display:block;width:100%;height:auto;max-height:68dvh;aspect-ratio:16/9;background:#05080d;object-fit:contain;border:1px solid #283548;border-radius:10px}
+  .quicklook-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .quicklook-download{color:#a5f0bf;font-size:12px;font-weight:800}
+  .result button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  @media(max-height:650px){#amountSlider{height:17px}.slider-labels{font-size:8px}.length-slider-wrap{margin-top:2px}}
+
 </style>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 </head>
 <body>
-<div id="game">
-  <div id="hud">
-    <div id="round-card" class="hud-card">
-      <div class="tiny" id="stage-kicker">ROUND 1 / 4</div>
-      <div class="hud-big" id="stage-name">スライム・ラン</div>
-      <div id="subinfo">ゴールまで走れ！</div>
-      <div class="alive-inline"><span id="alive-caption">レース中</span><strong id="alive-number">32 人</strong></div>
+<div class="wrap">
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">✂</div>
+      <div class="brand-copy">
+        <h1>劣化なし動画カット</h1>
+        <p class="sub">再エンコードなしで切り抜き</p>
+      </div>
     </div>
-    <div id="progress-wrap"><div id="progress-label">ゴールまで</div><div id="progress-track"><div id="progress-fill"></div></div></div>
+    <div class="header-file-area">
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="動画ファイルを選ぶ">
+        <span aria-hidden="true">＋</span><strong>動画を選択</strong>
+        <input id="fileInput" type="file" accept="video/*,.mp4,.mov,.mkv,.webm,.avi,.m4v,.wmv,.flv,.mpeg,.mpg,.ts,.mts,.m2ts,.3gp,.ogv,.vob" hidden>
+      </div>
+      <div id="fileMeta" class="file-meta">
+        <div style="min-width:0"><div id="fileName" class="file-name"></div><div id="fileInfo" class="muted small file-info"></div></div>
+        <span id="fileStatus" class="tag"><span class="status-dot"></span>準備中</span>
+      </div>
     </div>
-  <div id="touch-controls">
-    <div id="look-zone" aria-label="視点操作"></div>
-    <div id="stick-zone" aria-label="移動操作"><div id="stick-base"><div id="stick-knob"></div></div><div id="slime-back-label">↓<span>後ろに進む</span></div></div>
+  </header>
+
+  <section class="panel preview-panel" id="previewPanel">
+    <h2 class="section-title"><span class="step">1</span>プレビュー</h2>
+    <div class="preview-shell empty-pick" id="previewShell" role="button" tabindex="0" aria-label="タップして動画を選択。動画をドラッグ＆ドロップすると差し替え">
+      <video id="previewVideo" controls playsinline hidden></video>
+      <img id="previewImage" alt="切り抜き位置のプレビュー" hidden>
+      <div id="previewEmpty" class="preview-empty">タップして動画を選択<br>または動画をドラッグ＆ドロップ</div>
+    </div>
+    <div class="preview-footer">
+      <span id="previewMeaning" class="muted small">プレビュー位置：未選択</span>
+      <span id="previewTime" class="preview-time">00:00:00.000</span>
+    </div>
+    <div id="previewNote" class="muted small" style="margin-top:7px">フレーム単位の位置はFPSを基に計算するよ。</div>
+  </section>
+
+  <section class="panel settings-panel" id="settingsPanel">
+    <h2 class="section-title"><span class="step">2</span>設定</h2>
+    <div class="settings-layout">
+      <div class="settings-left">
+        <div class="control-block">
+          <span class="label">切り出す方向</span>
+          <div class="segmented">
+            <button type="button" id="fromStart" class="choice active" aria-pressed="true">◀ 最初から</button>
+            <button type="button" id="fromEnd" class="choice" aria-pressed="false">最後から ▶</button>
+          </div>
+        </div>
+        <div class="control-block">
+          <label class="label" for="amount">切り出す長さ</label>
+          <div class="fields">
+            <input id="amount" type="number" min="1" step="1" value="10" inputmode="decimal" aria-label="切り出す長さ">
+            <select id="unit" aria-label="長さの単位">
+              <option value="frames">フレーム</option>
+              <option value="seconds" selected>秒</option>
+              <option value="minutes">分</option>
+              <option value="hours">時間</option>
+            </select>
+          </div>
+          <div class="length-slider-wrap">
+            <input id="amountSlider" type="range" min="1" max="19" step="0.1" value="10" aria-label="切り出す長さを調整">
+            <div class="slider-labels"><span>1</span><span id="sliderMaxLabel">19 秒</span></div>
+          </div>
+        </div>
+        <div id="fpsBox" class="fps-box">
+          <label class="label" for="fpsInput">フレームレート（FPS）</label>
+          <div class="fps-inner"><input id="fpsInput" type="number" min="0.001" max="1000" step="any" value="30" inputmode="decimal"><span id="fpsStatus" class="muted small">未解析（仮に30 FPS）</span></div>
+          <div class="muted small" style="margin-top:5px">自動判定が合わない場合のみ修正してね。</div>
+        </div>
+        <div id="cutSummary" class="summary">動画を選ぶと、切り抜く範囲を表示するよ。</div>
+      </div>
+      <div class="settings-right">
+        <div class="save-settings">
+          <h3>保存などの設定</h3>
+          <select id="outputMode" aria-label="保存方法">
+            <option value="download">通常ダウンロード</option>
+            <option value="share">共有</option>
+            <option value="quicklook">クイックルック</option>
+          </select>
+        </div>
+        <div id="progressWrap" class="progress-wrap" aria-live="polite">
+          <div class="progress-head"><span id="progressLabel">準備中…</span><strong id="progressPercent">0%</strong></div>
+          <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+          <div id="progressDetail" class="muted small progress-detail" style="margin-top:5px"></div>
+        </div>
+        <div id="result" class="result" role="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="bottom-actions">
+    <button id="undoButton" class="secondary history-button" type="button" aria-label="1つ戻る" title="1つ戻る" disabled>↩︎</button>
+    <button id="redoButton" class="secondary history-button" type="button" aria-label="1つやり直す" title="1つやり直す" disabled>↪︎</button>
+    <button id="cutButton" class="primary" type="button" disabled>✂ 切り抜く</button>
+    <button id="infoButton" class="info-button" type="button" aria-label="使い方と注意事項">i</button>
   </div>
-  <div id="countdown"></div>
-  <div id="toast"></div>
-  <div id="overlay"><div id="panel">
-    <div class="eyebrow">FALL PARTY RACE</div>
-    <h1 class="logo-line">BEAN <span>BATTLE</span></h1>
-    <p>自分を含む32人で勝ち抜け！ 旧シーズン1のソロ用ラウンドを再現。ランダムな予選3回を突破してファイナルへ！</p>
-    <div class="pill-row"><span class="pill">シーズン1再現</span><span class="pill">ソロ用18ラウンド</span><span class="pill">全4ラウンド</span><span class="pill">チーム戦なし</span></div>
-    <div class="rules">
-      <div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div>
-      <div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div>
-      <div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div>
-      <div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div>
-    </div>
-    <p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p>
-    <button id="start-btn" class="main-btn">ゲームスタート！</button>
-  </div></div>
 </div>
-<script>
 
-const $ = (s)=>document.querySelector(s);
-const gameEl=$('#game'), overlay=$('#overlay'), panel=$('#panel'), hud=$('#hud');
-const stageNameEl=$('#stage-name'), stageKickerEl=$('#stage-kicker'), subInfoEl=$('#subinfo');
-const aliveNumberEl=$('#alive-number'), progressFill=$('#progress-fill'), progressLabel=$('#progress-label');
-const toastEl=$('#toast');
-const countdownEl=$('#countdown');
+<div id="infoOverlay" class="info-overlay" hidden>
+  <section class="info-dialog" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="info-head"><h2 id="infoTitle">使い方・注意事項</h2><button id="infoClose" class="info-close" type="button" aria-label="閉じる">×</button></div>
+    <p>動画を選び、最初から／最後からと切り出す長さを指定して「切り抜く」を押してね。設定はこのブラウザのローカルストレージに保存され、次回も引き継がれるよ。</p>
+    <div class="notice privacy">動画ファイルは外部サーバーへアップロードせず、このブラウザ内で処理するよ。ただし初回は処理エンジン（約31MB）をネットから読み込む必要があるよ。</div>
+    <div class="notice">再エンコードしないので映像・音声を再圧縮しない一方、キーフレームの位置によっては切り出し開始位置が指定位置からずれる場合があるよ。完全なフレーム精度は保証できない仕様なんだ。</div>
+    <p><strong>保存などの設定</strong></p>
+    <ul>
+      <li><strong>通常ダウンロード：</strong>切り抜いたファイルをダウンロードする。</li>
+      <li><strong>共有：</strong>処理完了後に表示される共有ボタンをタップすると、ブラウザが対応していれば端末の共有シートが開くよ。共有APIが使えない開き方では、保存リンクを使ってね。</li>
+      <li><strong>クイックルック：</strong>処理完了後にこの画面上で動画プレビューが開くよ。単体のHTMLからAppleのネイティブQuick Lookを直接呼び出すことはできないため、ブラウザ内のプレビューとして動作するよ。</li>
+    </ul>
+    <p>共有・プレビューはブラウザやファイル形式によって使えないことがあるよ。大きいファイルはメモリ不足で処理できない場合があるよ。</p>
+  </section>
+</div>
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x7ed4ff);
-scene.fog=new THREE.Fog(0x7ed4ff,48,145);
-const camera=new THREE.PerspectiveCamera(63,window.innerWidth/window.innerHeight,.1,350);
-camera.position.set(0,8,12);
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled=false;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-gameEl.prepend(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xeaf9ff,0x5c6597,2.0));
-const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-15,28,18);scene.add(sun);
-const fillLight=new THREE.DirectionalLight(0xffc9ef,.75);fillLight.position.set(18,10,-25);scene.add(fillLight);
-let world=new THREE.Group();scene.add(world);
-const clock=new THREE.Clock();
-const COURSE_START_Z=54.5, COURSE_FINISH_Z=-68.7;
+<div id="quicklookOverlay" class="quicklook-overlay" hidden>
+  <section class="quicklook-dialog" role="dialog" aria-modal="true" aria-labelledby="quicklookTitle">
+    <div class="quicklook-head">
+      <strong id="quicklookTitle">クイックルック</strong>
+      <button id="quicklookClose" class="info-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <video id="quicklookVideo" controls playsinline preload="metadata"></video>
+    <div class="quicklook-footer">
+      <span id="quicklookFileInfo" class="muted small"></span>
+      <a id="quicklookDownload" class="quicklook-download" href="#" download>ファイルを保存</a>
+    </div>
+  </section>
+</div>
 
-const qualifierRounds=[
- {id:'dizzy',name:'ぐるぐるファイト',desc:'回転する円盤と障害物を越えてゴール！',type:'dizzy',mode:'race'},
- {id:'doorDash',name:'ドアダッシュ',desc:'本物のドアを見つけて突破しよう！',type:'doorDash',mode:'race'},
- {id:'fruitChute',name:'フルーツパニック',desc:'転がってくる巨大なフルーツを避けて登ろう！',type:'fruitChute',mode:'race'},
- {id:'gateCrash',name:'ゲートクラッシュ',desc:'上下するゲートを見極めて進もう！',type:'gateCrash',mode:'race'},
- {id:'hitParade',name:'ヒットパレード',desc:'振り子や動く障害物を避けてゴール！',type:'hitParade',mode:'race'},
- {id:'seeSaw',name:'シーソーゲーム',desc:'傾く足場を渡ってゴールを目指そう！',type:'seeSaw',mode:'race'},
- {id:'slime',name:'スライム・クライム',desc:'細い足場と障害物を突破して上を目指そう！',type:'slime',mode:'race'},
- {id:'whirlygig',name:'スピンレース',desc:'巨大な回転羽根とハンマーをくぐり抜けよう！',type:'whirlygig',mode:'race'},
- {id:'tipToe',name:'ヒヤヒヤロード',desc:'正しいタイルの道を見つけてゴール！',type:'tipToe',mode:'race'},
- {id:'block',name:'ブロックパーティー',desc:'迫ってくる壁を避けて足場に残ろう！',type:'block',mode:'survival'},
- {id:'jumpClub',name:'ジャンプクラブ',desc:'回転するバーを跳び越えて生き残ろう！',type:'jumpClub',mode:'survival'},
- {id:'rollout',name:'ロールアウト',desc:'動く足場と障害物から落ちないように！',type:'rollout',mode:'survival'},
- {id:'perfectMatch',name:'パーフェクトマッチ',desc:'フルーツを覚えて正しいタイルに乗ろう！',type:'perfectMatch',mode:'survival'},
- {id:'tailTag',name:'しっぽオニ',desc:'終了時にしっぽを持っていれば勝ち抜け！',type:'tailTag',mode:'tail'}
-];
-const finalRounds=[
- {id:'fallMountain',name:'クラウンマウンテン',desc:'頂上のクラウンに誰よりも早く触れ！',type:'crown',mode:'race'},
- {id:'hex',name:'止まるなキケン',desc:'踏んだタイルが消える！ 最後まで生き残れ！',type:'hex',mode:'survival'},
- {id:'jumpShowdown',name:'ジャンプ・ショーダウン',desc:'上下の回転バーを避けて最後まで生き残れ！',type:'jump',mode:'survival'},
- {id:'royalFumble',name:'ロイヤルファンブル',desc:'終了した瞬間にしっぽを持っていれば優勝！',type:'royalFumble',mode:'tail'}
-];
-const QUALIFY=[24,16,8];
-const COLORS=[0xff6688,0x35d6d0,0xffc94e,0x9b7bff,0x79e05b,0xff8c42,0x56a8ff,0xf17dce,0xffe9a5,0x76f1a0,0xd8ecff,0xb4a2ff];
-let bots=Array.from({length:31},(_,i)=>({id:'bot'+i,color:COLORS[i%COLORS.length],alive:true,botIndex:i,phase:Math.random()*10,baseLane:0,finished:false,finishTime:null,speed:5.2+Math.random()*2.45,aiTimer:Math.random()*1.5,aiThink:Math.random()*.3,aiTargetLane:0,aiJumpRequested:false,aiDiveRequested:false,aiDiveCooldown:Math.random()*2.5,aiX:0,aiZ:0,hitCooldown:0,bumpCooldown:0,stunTimer:0,traits:{awareness:.3+Math.random()*.68,patience:.2+Math.random()*.75,bravery:.2+Math.random()*.75,reaction:.16+Math.random()*.55,jumpChance:.25+Math.random()*.7,noise:.12+Math.random()*.38}}));
-let player={id:'player',color:0xffe760,alive:true,isPlayer:true,finished:false,finishTime:null,speed:9.0,phase:0,hitCooldown:0,bumpCooldown:0};
-let state='menu', roundIndex=0, chosenRaces=[], chosenFinal=null, currentRound=null, isFinalRace=false, isFinalRound=false;
-let spectatorMode=false, crownTarget=null, spectatorTarget=null, spectatorTargetSwitch=0, spectatorSwipeId=null, spectatorSwipeStartX=0;
-let countdownActive=false,countdownRemaining=0,countdownTargetState='race';
-let cameraYaw=0,cameraPitch=0,lookPointer=null,lookLastX=0,lookLastY=0,lookStartX=0,lookStartY=0,lookMoved=false;
-let elapsed=0, stageTime=0, finishTarget=24, finishers=0, survivalElimTimer=6.2, lastHud=0;
-let obstacles=[], tiles=[], tileMap=new Map(), tileGridSpec={originX:-7.2,originZ:-7.2,spacing:1.8,cols:9,rows:9}, racePlatforms=[], seesawPlatforms=[], rolloutDrums=[], stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
-let logicCurrentTarget=-1,logicPhaseEnd=0,logicNextAt=4.6,logicRound=0,tailRoundTime=38;
-const FRUIT_NAMES=['スイカ','バナナ','ブドウ','リンゴ','オレンジ'];
-const FRUIT_COLORS=[0x51d85d,0xffdf44,0x9b5de5,0xff5757,0xffa43b];
-let joystick={active:false,id:null,x:0,y:0,backHeld:false};
-let cameraLook=new THREE.Vector3(0,0,0), desiredCamera=new THREE.Vector3();
+<script type="module">
+import { FFmpeg } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
 
-function mat(color,roughness=.65,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
-function box(parent,w,h,d,color,x,y,z,extra={}){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color,extra.roughness??.68,extra.metalness??0));
- mesh.position.set(x,y,z);if(extra.rotationY)mesh.rotation.y=extra.rotationY;parent.add(mesh);return mesh;
+const $ = (id) => document.getElementById(id);
+const els = {
+  dropzone:$('dropzone'), fileInput:$('fileInput'), fileMeta:$('fileMeta'), fileName:$('fileName'), fileInfo:$('fileInfo'), fileStatus:$('fileStatus'),
+  progressWrap:$('progressWrap'), progressLabel:$('progressLabel'), progressPercent:$('progressPercent'), progressFill:$('progressFill'), progressDetail:$('progressDetail'),
+  video:$('previewVideo'), image:$('previewImage'), previewShell:$('previewShell'), previewEmpty:$('previewEmpty'), previewMeaning:$('previewMeaning'), previewTime:$('previewTime'), previewNote:$('previewNote'),
+  fromStart:$('fromStart'), fromEnd:$('fromEnd'), amount:$('amount'), unit:$('unit'), fpsBox:$('fpsBox'), fpsInput:$('fpsInput'), fpsStatus:$('fpsStatus'),
+  cutSummary:$('cutSummary'), cutButton:$('cutButton'), undoButton:$('undoButton'), redoButton:$('redoButton'), result:$('result'),
+  amountSlider:$('amountSlider'), sliderMaxLabel:$('sliderMaxLabel'),
+  outputMode:$('outputMode'), infoButton:$('infoButton'), infoOverlay:$('infoOverlay'), infoClose:$('infoClose'),
+  quicklookOverlay:$('quicklookOverlay'), quicklookVideo:$('quicklookVideo'), quicklookTitle:$('quicklookTitle'),
+  quicklookFileInfo:$('quicklookFileInfo'), quicklookDownload:$('quicklookDownload'), quicklookClose:$('quicklookClose')
+};
+
+let ffmpeg = null;
+let engineLoaded = false;
+let currentFile = null;
+let currentInputName = '';
+let currentExt = 'mp4';
+let sourceDuration = NaN;
+let parsedFPS = NaN;
+let selectedSide = 'start';
+let nativePreviewAvailable = false;
+let nativePreviewFailed = false;
+let userChangedFPS = false;
+let busy = false;
+let operation = '';
+let previewTimer = null;
+let previewTicket = 0;
+let pendingPreview = null;
+let previewPumpRunning = false;
+let currentObjectURL = null;
+let previewObjectURL = null;
+let currentOutputURL = null;
+let currentCut = null;
+let discoveredVideo = false;
+let currentOutputBlob = null;
+let currentOutputName = '';
+let outputViewerWindow = null;
+const SETTINGS_KEY = 'losslessVideoCutterSettingsV1';
+let settingsHistory = [];
+let historyCursor = -1;
+let applyingHistory = false;
+
+function fmtTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+  const ms = Math.floor((seconds - Math.floor(seconds)) * 1000 + 1e-4);
+  const whole = Math.floor(seconds);
+  const h = Math.floor(whole / 3600);
+  const m = Math.floor((whole % 3600) / 60);
+  const s = whole % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
 }
-function sphere(parent,r,color,x,y,z,segments=14){const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,Math.max(8,Math.floor(segments*.7))),mat(color,.55));m.position.set(x,y,z);parent.add(m);return m;}
-function addWorld(mesh){world.add(mesh);return mesh;}
-function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();racePlatforms=[];seesawPlatforms=[];rolloutDrums=[];worldActors=[];crownTarget=null;}
-function makeBean(actor){
- const group=new THREE.Group(),visual=new THREE.Group();visual.position.y=1.02;group.add(visual);
- const body=new THREE.Mesh(new THREE.CapsuleGeometry(.54,.68,5,12),mat(actor.color,.5,.02));visual.add(body);
- const belly=new THREE.Mesh(new THREE.SphereGeometry(.32,14,10),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.8,transparent:true,opacity:.12}));belly.position.set(0,-.15,-.43);belly.scale.set(1,.8,.25);visual.add(belly);
- for(const ex of [-.16,.16]){const eye=sphere(visual,.105,0xffffff,ex,.15,-.473,12);eye.scale.set(.82,1.05,.5);const pupil=sphere(visual,.052,0x17203d,ex+.012,.145,-.518,10);pupil.scale.set(.8,1,.45);sphere(visual,.018,0xffffff,ex-.012,.17,-.54,8);}
- const footRing=new THREE.Mesh(new THREE.TorusGeometry(.42,.055,6,20),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.38}));footRing.rotation.x=Math.PI/2;footRing.position.y=.06;group.add(footRing);
- const tailMesh=new THREE.Mesh(new THREE.SphereGeometry(.23,12,9),mat(0xffdf62,.55));tailMesh.position.set(0,.78,.66);tailMesh.visible=false;group.add(tailMesh);
- group.userData.visual=visual;group.userData.footRing=footRing;group.userData.tailMesh=tailMesh;
- actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.stunPending=false;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor.slimeHeadingYaw=group.rotation.y;actor._wasSlimeAffected=false;actor.ghostTimer=0;
- world.add(group);return group;
+function humanSize(bytes) {
+  if (!Number.isFinite(bytes)) return '';
+  const units = ['B','KB','MB','GB']; let n = bytes, i = 0;
+  while (n >= 1024 && i < units.length-1) { n /= 1024; i++; }
+  return `${n.toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
 }
-function resetActorForRound(actor,x,z){
- actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.stunPending=false;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.slimeHeadingYaw=0;actor.visual.rotation.set(0,0,0);actor.group.visible=true;actor.lastSafe={x,z,y:0};actor.ghostTimer=0;actor.hasTail=!!actor.hasTail;if(actor.group.userData.tailMesh)actor.group.userData.tailMesh.visible=actor.hasTail;setGhostAppearance(actor,false);
+function setProgress(percent, label, detail = '', indeterminate = false) {
+  els.progressWrap.style.display = 'block';
+  els.progressLabel.textContent = label;
+  els.progressDetail.textContent = detail;
+  els.progressPercent.textContent = indeterminate ? '処理中' : `${Math.max(0,Math.min(100,Math.round(percent)))}%`;
+  els.progressFill.classList.toggle('indeterminate', indeterminate);
+  if (indeterminate) els.progressFill.style.width = '';
+  else els.progressFill.style.width = `${Math.max(0,Math.min(100,percent))}%`;
 }
-function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
-function pickGameRounds(){chosenRaces=shuffle(qualifierRounds).slice(0,3);chosenFinal=finalRounds[Math.floor(Math.random()*finalRounds.length)];}
-function startSelectedRound(stage,isFinal=false){if(stage.mode==='race')startRaceStage(stage,isFinal);else startSurvivalStage(stage,isFinal);}
-function advanceToNextRound(){roundIndex++;if(roundIndex<3)startSelectedRound(chosenRaces[roundIndex],false);else startFinalStage();}
-function showQualified(survivors,message='予選突破！') {
- const place=survivors.indexOf(player)+1;const last=roundIndex===2;state='between';hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">${last?'FINAL QUALIFIED':'QUALIFIED!'}</div><h2>${message}</h2><p>${currentRound.name}を突破！<br>通過人数：<b>${survivors.length}人</b>${place>0?` ／ あなたは ${place}位` : ''}</p><div class="pill-row"><span class="pill">残り ${survivors.length} 人</span><span class="pill">${last?'次はファイナル！':'次のラウンドへ'}</span></div><button id="continue-btn" class="main-btn">${last?'ファイナルへ！':'次のラウンドへ'}</button>`);
- $('#continue-btn').addEventListener('click',advanceToNextRound,{once:true});
+function finishProgress(label, detail = '') {
+  setProgress(100, label, detail, false);
 }
-function courseCenterX(z){
- const smooth=t=>{t=THREE.MathUtils.clamp(t,0,1);return t*t*(3-2*t);};
- const rz=z/1.45;
- if(currentRound?.type==='crown'){
-  if(rz>=-36.2)return 0;
-  if(rz>=-42.1)return 10*smooth((-36.2-rz)/5.9);
-  return 10;
- }
- if(currentRound?.type!=='curve')return 0;
- if(rz>=15)return 0;
- if(rz>=7)return 0;
- if(rz>=1)return 7*smooth((7-rz)/6);
- if(rz>=-11)return 7;
- if(rz>=-17)return 7-12*smooth((-11-rz)/6);
- if(rz>=-29)return -5;
- if(rz>=-35)return -5+5*smooth((-29-rz)/6);
- return 0;
+function setFileStatus(text, kind = '') {
+  els.fileStatus.className = `tag${kind ? ' '+kind : ''}`;
+  els.fileStatus.innerHTML = `<span class="status-dot ${kind === 'ok' ? 'active' : ''}"></span>${text}`;
 }
-function courseSlope(z){return (courseCenterX(z+.15)-courseCenterX(z-.15))/.3;}
-function courseYawAt(z){return Math.atan(courseSlope(z));}
-function courseSidePoint(z,lateral){const yaw=courseYawAt(z);return {x:courseCenterX(z)+lateral*Math.cos(yaw),z:z-lateral*Math.sin(yaw),yaw};}
-function startCountdown(targetState){
- countdownTargetState=targetState;countdownActive=true;countdownRemaining=3.6;
- // Every round starts with a neutral forward view, but look input stays active during countdown.
- cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=false;
- countdownEl.textContent='3';countdownEl.style.display='flex';input.jump=false;input.dive=false;
+function extFromName(name) {
+  const match = String(name).match(/\.([a-zA-Z0-9]+)$/);
+  const ext = match ? match[1].toLowerCase() : 'mp4';
+  return /^[a-z0-9]{1,8}$/.test(ext) ? ext : 'mp4';
 }
-function allAliveBots(){return bots.filter(b=>b.alive);}
-function currentActors(){return [player,...allAliveBots()];}
-function setOverlay(html){panel.innerHTML=html;overlay.style.display='flex';}
-function hideOverlay(){overlay.style.display='none';}
-function toast(text){toastEl.textContent=text;toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),1200);}
-function showMenu(){document.body.classList.remove('stick-active');state='menu';spectatorMode=false;spectatorTarget=null;document.body.classList.remove('spectating');countdownActive=false;countdownEl.style.display='none';hud.style.display='none';$('#touch-controls').style.display='none';overlay.style.display='flex';setOverlay(`<div class="eyebrow">FALL PARTY RACE</div><h1 class="logo-line">BEAN <span>BATTLE</span></h1><p>自分を含む32人で勝ち抜け！ 旧シーズン1のソロ用ラウンドを再現。ランダムな予選3回を突破してファイナルへ！</p><div class="pill-row"><span class="pill">シーズン1再現</span><span class="pill">ソロ用18ラウンド</span><span class="pill">全4ラウンド</span><span class="pill">チーム戦なし</span></div><div class="rules"><div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div><div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div><div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div><div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div></div><p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p><button id="start-btn" class="main-btn">ゲームスタート！</button>`);
- $('#start-btn').addEventListener('click',startGame,{once:true});
+function durationFromLogs(logText) {
+  const match = logText.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/i);
+  if (!match) return NaN;
+  return Number(match[1])*3600 + Number(match[2])*60 + Number(match[3]);
 }
-function courseSlopeXFor(type=currentRound?.type){if(type==='crown')return .095;if(type==='fruitChute')return .15;if(type==='slime')return .12;return 0;}
-function courseElevationAt(z,type=currentRound?.type){return Math.max(0,(49-z)*Math.sin(courseSlopeXFor(type)));}
-function addRacePlatform(x,z,w,d,color=0x6178bf,opts={}){
- const topY=opts.topY??0,rotationY=opts.rotationY??0,rotationX=opts.rotationX??0,shape=opts.shape||'box';
- let mesh;
- if(shape==='circle'){
-  mesh=new THREE.Mesh(new THREE.CircleGeometry(Math.min(w,d)/2,36),mat(color,.72));
-  mesh.rotation.x=-Math.PI/2;mesh.rotation.z=rotationY;mesh.position.set(x,topY-.015,z);world.add(mesh);
- }else{
-  mesh=box(world,w,.42,d,color,x,topY-.21,z,{rotationY,roughness:.8});mesh.rotation.x=rotationX;
- }
- const platform={mesh,x,z,w,d,topY,rotationY,rotationX,shape,removed:false,kind:opts.kind||'platform',safe:opts.safe??true,collapseAt:null,phase:opts.phase||0};
- racePlatforms.push(platform);return platform;
-}
-function addStageStripe(x,z,w,color=0x9df8f3){box(world,w,.035,.18,color,x,.015,z);}
-function addGoalForCourse(isCrown=false){
- const gx=courseCenterX(COURSE_FINISH_Z),gz=COURSE_FINISH_Z,slopeX=courseSlopeXFor(currentRound?.type),goalY=courseElevationAt(gz);
- addRacePlatform(gx,gz,18,15,isCrown?0x6f70bd:0x7087ce,{topY:goalY,rotationX:slopeX,kind:'goal'});
- const line=box(world,17.5,.09,.22,0xffed60,gx,goalY+.045,gz);line.rotation.x=slopeX;
- if(isCrown){
-  const archL=courseSidePoint(gz+.25,-7.6),archR=courseSidePoint(gz+.25,7.6),archY=courseElevationAt(gz+.25)+1.55;
-  box(world,.48,3.3,.48,0xffcf4f,archL.x,archY,archL.z);box(world,.48,3.3,.48,0xffcf4f,archR.x,archY,archR.z);
-  const cross=box(world,15.4,.38,.55,0xffcf4f,gx,courseElevationAt(gz+.25)+3.15,gz+.25);cross.rotation.x=slopeX;
-  const crown=new THREE.Mesh(new THREE.TorusGeometry(.76,.2,8,20),mat(0xffef75,.3,.45));crown.position.set(gx,courseElevationAt(gz+.25)+3.05,gz+.3);world.add(crown);crown.rotation.x=Math.PI/2;
-  crownTarget=new THREE.Vector3(gx,courseElevationAt(gz+.25)+3.05,gz+.3);
- }
-}
-function addTrackSegments(stage,opts={}){
- const centers=opts.centers||[35,20,5,-10,-25,-40,-54,-63];
- const widths=opts.widths||[17,16,15,15,14,14,15,16];
- const depth=opts.depth||10.2,slopeX=opts.slopeX??0;
- centers.forEach((z,i)=>{
-  let x=(opts.xs?.[i]??(Math.sin(i*.86)*1.7));
-  if(stage.type==='crown')x+=courseCenterX(z);
-  const w=widths[Math.min(i,widths.length-1)],topY=opts.topYs?.[i]??courseElevationAt(z,stage.type);
-  const p=addRacePlatform(x,z,w,depth,opts.colors?.[i%opts.colors.length]||[0x637bc4,0x708bd2,0x5e77bd][i%3],{rotationY:opts.rotations?.[i]||0,rotationX:slopeX,topY,kind:opts.conveyor?'conveyor':'platform'});
-  if(opts.seesaw)p.seesaw=true, seesawPlatforms.push({platform:p,phase:i*1.35,amount:.13+(i%2)*.04});
-  if(opts.roundDiscs&&i%2===1){
-   const disc=new THREE.Mesh(new THREE.CircleGeometry(Math.min(w,depth)*.31,32),mat(0x40e4e1,.45));disc.rotation.x=-Math.PI/2;disc.position.set(x,topY+.03,z);world.add(disc);
+function fpsFromLogs(logText) {
+  const lines = logText.split('\n').filter(line => /\bVideo:/i.test(line));
+  for (const line of lines) {
+    let match = line.match(/\b([\d]+(?:\.[\d]+)?)\s*fps\b/i);
+    if (match && Number(match[1]) > 0 && Number(match[1]) < 1000) return Number(match[1]);
   }
-  if(opts.conveyor){
-   const tread=box(world,w-.55,.055,.15,i%2?0xe8f7ff:0xffd45e,x,topY+.035,z);tread.rotation.x=slopeX;
+  for (const line of lines) {
+    const match = line.match(/,\s*([\d]+(?:\.[\d]+)?)\s*tbr\b/i);
+    if (match && Number(match[1]) > 0 && Number(match[1]) < 1000) return Number(match[1]);
   }
- });
- if(opts.conveyor){
-  const railYs=[...centers];
-  for(const side of [-1,1])for(const z of railYs){const y=courseElevationAt(z,stage.type);const rail=box(world,.3,.52,depth*.94,0xffb35c,side*9.35,y+.22,z);rail.rotation.x=slopeX;}
- }
+  return NaN;
 }
-function addDoorRow(z,correctIndex,rowIndex){
- const centers=[-6.15,0,6.15];
- centers.forEach((x,j)=>{
-  const g=new THREE.Group();g.position.set(x,0,z);world.add(g);
-  const frame=mat(0xf6f0ff,.65),panel=mat(0xf3f2ff,.55),stripe=mat(0xf174ab,.6),trim=mat(0x4b3d79,.6);
-  box(g,.24,3.25,.35,trim,-2.63,1.62,0);box(g,.24,3.25,.35,trim,2.63,1.62,0);box(g,5.5,.26,.38,trim,0,3.12,0);
-  const left=box(g,2.48,2.78,.28,panel,-1.25,1.54,-.04),right=box(g,2.48,2.78,.28,panel,1.25,1.54,-.04);
-  for(let k=0;k<4;k++){const xx=-2.15+k*1.43;box(g,.34,2.54,.035,stripe,xx,1.54,-.205);}
-  box(g,.12,.9,.06,frame,-.08,1.5,-.23);box(g,.12,.9,.06,frame,.08,1.5,-.23);
-  obstacles.push({kind:'door',mesh:g,width:5.25,height:3.12,depth:.58,x,z,isCorrect:j===correctIndex,rowIndex,opened:false,panels:[left,right]});
- });
+function activeFPS() {
+  const n = Number(els.fpsInput.value);
+  return Number.isFinite(n) && n > 0 ? n : (Number.isFinite(parsedFPS) && parsedFPS > 0 ? parsedFPS : 30);
 }
-function addRisingGate(z,index){
- const centers=[-6.25,0,6.25];
- centers.forEach((x,lane)=>{
-  const m=box(world,4.45,3.1,.78,lane===1?0x64e4df:0xff83b3,x,1.55,z);
-  for(let k=-1;k<=1;k++)box(m,.22,2.7,.045,0xf7f3ff,k*.9,0,.405);
-  box(m,4.05,.18,.12,0xffe76b,0,.78,-.42);
-  obstacles.push({kind:'gate',mesh:m,width:4.45,height:3.1,depth:.78,x,z,baseY:1.55,phase:index*.91+lane*1.9,speed:1.1+(index%3)*.12,lane});
- });
+function unitSeconds() {
+  const unit = els.unit.value;
+  if (unit === 'frames') return 1 / activeFPS();
+  if (unit === 'minutes') return 60;
+  if (unit === 'hours') return 3600;
+  return 1;
 }
-function addShortcutHammer(z,index,x=0){
- // Compact, fast horizontal-axis shortcut hammer: deliberately far stronger than an ordinary bar.
- const pivot=new THREE.Group();pivot.position.set(x,2.15,z);world.add(pivot);
- const arm=box(pivot,.34,.38,2.95,0xff709e,0,0,1.43,{metalness:.08});
- sphere(pivot,.56,0xffd65a,0,.02,2.95,14);sphere(pivot,.14,0xffffff,.12,.12,3.08,10);
- obstacles.push({kind:'shortcutHammer',mesh:pivot,bar:arm,length:3.05,speed:3.15+(index%2)*.42,phase:index*.9,y:2.15,z,x,hitRadius:.78,reach:3.0});
-}
-function buildCourse(stage){
- newWorld();stageBounds={kind:'race'};
- const type=stage.type,slopeX=courseSlopeXFor(type),slopeType=['crown','fruitChute','slime'].includes(type);
- // A start pad is always open-sided. Inclined finals/ramp rounds share the same continuous slope.
- addRacePlatform(0,type==='tipToe'?57:49,21,type==='tipToe'?7:19,0x6279c5,{topY:courseElevationAt(type==='tipToe'?57:49,type),rotationX:slopeX});
- if(type==='tipToe'){
-  let path=3;const rows=31,cols=7,spacing=2.6,rowStep=3.62,originZ=48;
-  for(let r=0;r<rows;r++){
-   if(r>0){const move=Math.random();if(move<.25)path=Math.max(0,path-1);else if(move<.5)path=Math.min(cols-1,path+1);}
-   const z=originZ-r*rowStep;
-   for(let c=0;c<cols;c++){
-    const x=(c-(cols-1)/2)*spacing;
-    addRacePlatform(x,z,2.42,3.0,c===path?0x6f83d0:0x7789cb,{kind:'tipTile',safe:c===path});
-   }
+function getCutInfo() {
+  const count = Number(els.amount.value);
+  const unit = els.unit.value;
+  const validCount = els.amount.value.trim() !== '' && Number.isFinite(count) && count > 0;
+  const validDuration = Number.isFinite(sourceDuration) && sourceDuration > 0;
+  const fps = activeFPS();
+  const cutDuration = validCount ? (unit === 'frames' ? count / fps : count * unitSeconds()) : NaN;
+  const tooLong = validDuration && Number.isFinite(cutDuration) && cutDuration > sourceDuration + 0.0001;
+  let start = NaN, end = NaN, preview = NaN;
+  if (validDuration && Number.isFinite(cutDuration)) {
+    if (selectedSide === 'start') {
+      start = 0;
+      end = Math.min(sourceDuration, cutDuration);
+      preview = Math.max(0, Math.min(sourceDuration - Math.min(1/fps, sourceDuration), cutDuration - 1/fps));
+    } else {
+      end = sourceDuration;
+      start = Math.max(0, sourceDuration - cutDuration);
+      preview = start;
+    }
+    preview = Math.max(0, Math.min(preview, Math.max(0, sourceDuration - 0.001)));
   }
- }else if(type==='doorDash'){
-  const zs=[39,21,3,-15,-33,-51,-63];
-  zs.forEach((z,i)=>{addRacePlatform(0,z,20,18,0x7185c8);addDoorRow(z-2.1,Math.floor(Math.random()*3),i);});
- }else if(type==='gateCrash'){
-  const zs=[39,21,3,-15,-33,-51,-63];
-  zs.forEach((z,i)=>{addRacePlatform(0,z,20,18,0x6e83c8);addRisingGate(z-1.9,i);});
- }else if(type==='seeSaw'){
-  addTrackSegments(stage,{centers:[36,21,6,-9,-24,-39,-53,-63],widths:[18,18,17,17,16,16,17,18],depth:12,xs:[-1,2,-2,2,-2,2,-1,0],rotations:[-.08,.09,-.1,.1,-.09,.08,-.05,0],seesaw:true,colors:[0x5e73bd,0x637bc8,0x708bd2]});
- }else if(type==='slime'){
-  const centers=Array.from({length:36},(_,i)=>45-i*3.05);
-  addTrackSegments(stage,{centers,widths:centers.map((_,i)=>i<6?16:i<25?13:15),depth:3.4,slopeX,conveyor:false,xs:centers.map((_,i)=>i<11?Math.sin(i*.8)*1.2:0),colors:[0x5c90e3,0x6a85d4,0x547dc5]});
-  const slimePlane=new THREE.Mesh(new THREE.PlaneGeometry(38,145),new THREE.MeshStandardMaterial({color:0xff52a7,roughness:.4,transparent:true,opacity:.9,side:THREE.DoubleSide}));slimePlane.rotation.x=-Math.PI/2;slimePlane.position.set(0,-5.2,-7);world.add(slimePlane);world.userData.risingSlimePlane=slimePlane;
- }else if(type==='crown'){
-  const centers=Array.from({length:36},(_,i)=>45-i*3.05);
-  addTrackSegments(stage,{centers,widths:centers.map((_,i)=>i<10?18:i<27?14:16),depth:3.45,slopeX,colors:[0x696fc3,0x5f79c8,0x6979c8]});
- }else if(type==='fruitChute'){
-  const centers=Array.from({length:36},(_,i)=>45-i*3.05);
-  // Conveyor belt with visible transverse treads, coloured side rails and a continuous uphill deck.
-  addTrackSegments(stage,{centers,widths:centers.map(()=>19),depth:3.4,slopeX,conveyor:true,colors:[0x6b80c8,0x647bc8,0x738bd0]});
- }else if(type==='dizzy'){
-  addTrackSegments(stage,{centers:[36,20,4,-12,-28,-44,-57,-63],widths:[18,17,17,16,16,16,17,18],depth:10.6,roundDiscs:true});
- }else if(type==='whirlygig'){
-  addTrackSegments(stage,{centers:[36,21,6,-9,-24,-39,-53,-63],widths:[18,17,16,16,15,16,17,18],depth:11});
- }else{
-  addTrackSegments(stage,{centers:[36,21,6,-9,-24,-39,-53,-63],widths:[18,17,16,16,15,16,17,18],depth:10.6});
- }
- addGoalForCourse(type==='crown');
- if(type==='dizzy'){
-  [29,13,-3,-19,-35,-50].forEach((z,i)=>{addRotatingBeam(z,16.5,i%2?-.95:1.08,.72,0x53f2e1,i*.7);if(i%2===0)addMover(z-4,3.5,1.65,1.2,1.2,6.2,i*.8,'mover');});
- }else if(type==='doorDash'){
-  // Each row rolls a fresh independent random answer; all three doors look identical.
- }else if(type==='fruitChute'){
-  for(let i=0;i<13;i++){const z=-63+i*8.4;const lanes=[-6.6,-3.3,0,3.3,6.6];const ball=addRollingBall(z,1.0+(i%3)*.14,7.5+(i%4)*1.15,0,i*.7,true);ball.laneX=lanes[i%lanes.length];ball.mesh.position.x=ball.laneX;ball.mesh.position.y=courseElevationAt(z,type)+ball.r+.12;}
- }else if(type==='gateCrash'){
-  [-45,-9,27].forEach((z,i)=>addMover(z,2.6,1.25,1.25,1.05,6.7,i*.8,'mover'));
- }else if(type==='hitParade'){
-  [29,11,-8,-27,-45].forEach((z,i)=>{addMover(z,3.6,2.1,1.2,1.4,7.4,i*.8,'mover');if(i%2===0)addShortcutHammer(z-5,i,(i%3-1)*2.2);});
-  addBarrierSet(-57,3);
- }else if(type==='seeSaw'){
-  [28,0,-28].forEach((z,i)=>addRotatingBeam(z,13.5,i%2?-.6:.6,.85,0xffb2ce,i*.5));
- }else if(type==='slime'){
-  [28,14,0,-14,-28,-42,-54].forEach((z,i)=>{if(i%2===0)addBarrierSet(z,i);else addMover(z,3.5,2.1,1.3,1.45,6.5,i*.7,'slime');});
-  for(let i=0;i<7;i++)addShortcutHammer(23-i*15,i,i%2===0?-3.8:3.8);
- }else if(type==='whirlygig'){
-  [29,9,-11,-31,-49].forEach((z,i)=>addRotatingBeam(z,18,i%2?-.95:1.08,.85,0x58eee7,i*.9));
-  addShortcutHammer(-42,0,2.5);addShortcutHammer(-8,1,-2.5);
- }else if(type==='crown'){
-  [27,9,-9,-25,-39,-49,-57].forEach((z,i)=>{addRollingBall(z,1.12,1.2+(i%2)*.2,7.6,i*.7);if(i===2||i===5)addShortcutHammer(z-4,i,0);});
-  addRotatingBeam(-58,12,1.12,.78,0x58efe6,.3);
-  for(const o of obstacles){const shift=courseCenterX(o.z??o.mesh.position.z);if(shift){o.mesh.position.x+=shift;if(o.centerX!==undefined)o.centerX+=shift;if(o.x!==undefined)o.x+=shift;if(o.cap)o.cap.position.x+=shift;}}
- }
- // Raise obstacle bases with the same continuous incline as the course.
- if(slopeType){for(const o of obstacles){const z=o.mesh?.position.z??o.z??0,base=courseElevationAt(z,type);if(base){o.mesh.position.y+=base;if(o.cap)o.cap.position.y+=base;if(typeof o.y==='number')o.y+=base;if(typeof o.baseY==='number')o.baseY+=base;}}}
- // Open sides: no perimeter fences. Decorative scenery stays outside the playable area.
- for(let i=0;i<28;i++){
-  const x=(i%2===0?-1:1)*(15+Math.random()*22),z=54-Math.random()*126,h=3+Math.random()*11,w=1.5+Math.random()*4;
-  const building=box(world,w,h,w,[0x5a78c2,0x7d68bd,0x65b9d5,0xff9ecb][i%4],x,h/2-1,z);building.material.transparent=true;building.material.opacity=.42;
- }
+  return {count, unit, fps, cutDuration, start, end, preview, validCount, validDuration, tooLong};
 }
-function addRotatingBeam(z,length,speed,y,color=0x5af4e3,phase=0){
- const pivot=new THREE.Group();pivot.position.set(0,y,z);pivot.rotation.y=phase;world.add(pivot);
- const bar=box(pivot,length,.42,.78,color,0,0,0,{metalness:.1});
- const end1=sphere(pivot,.48,0xffe66b,-length/2,0,0,12),end2=sphere(pivot,.48,0xffe66b,length/2,0,0,12);
- obstacles.push({kind:'beam',mesh:pivot,bar,length,speed,phase,y,z,x:0});
+function unitText(unit) {
+  return ({frames:'フレーム',seconds:'秒',minutes:'分',hours:'時間'})[unit] || unit;
 }
-function addHammer(z,i){addShortcutHammer(z,i,(i%2===0?-5:5));}
-function addMover(z,w,h,d,speed,amp,phase=0,kind='mover'){
- const slime=kind==='slime';
- const mesh=box(world,w,h,d,slime?0xff4fa3:0x58cfe8,0,h/2,z,{metalness:.08});
- const cap=box(world,w*.65,.16,d*.9,slime?0xffb7d8:0xb8f5ff,0,h+.02,z);
- if(slime){mesh.material.transparent=true;mesh.material.opacity=.86;cap.material.transparent=true;cap.material.opacity=.94;}
- const skew=Math.sin(phase+.8)*.55;
- obstacles.push({kind,mesh,cap,width:w,height:h,depth:d,speed,amp,phase,z,x:0,centerX:0,travelMin:-8.45+skew,travelMax:7.85+Math.cos(phase+.4)*.55});
+function currentDurationInSelectedUnit() {
+  if (!Number.isFinite(sourceDuration) || sourceDuration <= 0) return NaN;
+  const secondsPerUnit = unitSeconds();
+  if (!Number.isFinite(secondsPerUnit) || secondsPerUnit <= 0) return NaN;
+  const units = sourceDuration / secondsPerUnit;
+  return els.unit.value === 'frames' ? Math.floor(units + 1e-7) : units;
 }
-function addRollingBall(z,r,speed,amp,phase=0,rollingDownhill=false){
- const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),mat(0xffcc51,.35,.05));mesh.position.set(0,r+.1,z);world.add(mesh);
- const stripe=new THREE.Mesh(new THREE.TorusGeometry(r*.78,.09,6,18),mat(0xff6c9d));stripe.rotation.x=Math.PI/2;mesh.add(stripe);
- const obstacle={kind:'ball',mesh,r,speed,amp,phase,z,x:0,centerX:0,travelMin:-9.05+Math.sin(phase+.2)*.42,travelMax:8.45+Math.cos(phase+.9)*.48,rollingDownhill};obstacles.push(obstacle);return obstacle;
+function formatSliderValue(value) {
+  if (!Number.isFinite(value) || value < 0) value = 0;
+  const unit = els.unit.value;
+  const shown = unit === 'frames'
+    ? String(Math.floor(value + 1e-7))
+    : new Intl.NumberFormat('ja-JP', { maximumFractionDigits: 2 }).format(value);
+  return `${shown} ${unitText(unit)}`;
 }
-function addBarrierSet(z,i){
- const gap=(i%2===0?-4.4:4.4);const width=10.4;
- for(const side of [-1,1]){
-  const center=gap+side*(width/2+.5);
-  const m=box(world,width,.9,.7,0x8b8bff,center,.45,z);
-  obstacles.push({kind:'barrier',mesh:m,width,height:.9,depth:.7,x:center,z});
- }
-}
-function addWallGate(z,i){
- const gap=(i%2===0?-5.4:5.4);const width=11.2;
- for(const side of [-1,1]){
-  const center=gap+side*(width/2);
-  const m=box(world,width,3.1,1.05,0x72d7f7,center,1.55,z);
-  box(m,1,1,1,0xffffff,0,0,0); // small decorative center highlight inside the gate block
-  obstacles.push({kind:'wallblock',mesh:m,width,height:3.1,depth:1.05,x:center,z});
- }
-}
-function distPointSegment(px,pz,x1,z1,x2,z2){
- const dx=x2-x1,dz=z2-z1,den=dx*dx+dz*dz;
- let t=den?((px-x1)*dx+(pz-z1)*dz)/den:0;t=Math.max(0,Math.min(1,t));
- const x=x1+t*dx,z=z1+t*dz;return Math.hypot(px-x,pz-z);
-}
-function setGhostAppearance(actor,enabled){
- if(!actor?.group)return;
- actor.group.traverse(obj=>{
-  if(!obj.isMesh||!obj.material)return;
-  const mats=Array.isArray(obj.material)?obj.material:[obj.material];
-  for(const m of mats){
-   if(!m.userData.__ghostOriginal)m.userData.__ghostOriginal={transparent:m.transparent,opacity:m.opacity,depthWrite:m.depthWrite};
-   const original=m.userData.__ghostOriginal;
-   if(enabled){m.transparent=true;m.opacity=Math.min(original.opacity,.3);m.depthWrite=false;}
-   else{m.transparent=original.transparent;m.opacity=original.opacity;m.depthWrite=original.depthWrite;}
-   m.needsUpdate=true;
+function syncAmountSlider(recenter = true) {
+  const rawAmount = Number(els.amount.value);
+  const amount = Number.isFinite(rawAmount) && rawAmount >= 1 ? rawAmount : 1;
+  const durationUnits = currentDurationInSelectedUnit();
+  let max;
+  // The slider starts at 1. Keep the chosen value centered when the right edge expands.
+  const centeredMax = Math.max(2, amount * 2);
+  if (Number.isFinite(durationUnits) && durationUnits > 0) {
+    max = Math.max(1, Math.min(durationUnits, centeredMax));
+  } else {
+    max = centeredMax;
   }
- });
-}
-function vibrateImpact(strong=false){
- // Vibration works only on browsers/devices that expose the Vibration API; iOS Safari may ignore it.
- try{if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function')navigator.vibrate(strong?[70,35,85]:[45,25,55]);}catch{}
-}
-function startSlimeEffect(actor){
- if(!actor?.group)return;
- actor.slimeEffectTimer=3;actor.slimeHeadingYaw=actor.group.rotation.y;actor._wasSlimeAffected=true;
- actor.stunTimer=0;actor.vx=0;actor.vz=0;actor.vy=0;actor.grounded=true;
- actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
- setGhostAppearance(actor,true);
- if(actor.isPlayer){
-  // Lock the camera to the course's forward view while the player can only move backward.
-  cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=true;
-  document.body.classList.add('slime-back-mode');joystick.x=0;joystick.y=0;joystick.backHeld=false;
-  toast('スライム状態！ 3秒間、後ろにしか進めない！');
- }
-}
-function obstacleHit(actor,o){
- if(!o||o.removed||!o.mesh||!actor.group||!actor.alive||!actor.group.visible||(actor.slimeEffectTimer||0)>0||(actor.ghostTimer||0)>0)return false;
- const p=actor.group.position,center=o.mesh.position;
- let hit=false,nx=0,nz=0,contactLocalX=0;
- const isRotating=o.kind==='beam'||o.kind==='hammer';
- const isSolid=['wallblock','barrier','blockwall','door','gate','rolloutWall'].includes(o.kind);
- const isMoving=isRotating||o.kind==='shortcutHammer'||o.kind==='mover'||o.kind==='slime'||o.kind==='ball'||o.kind==='blockwall';
- if(o.kind==='door'&&o.isCorrect&&!o.opened){
-  const dx=p.x-center.x,dz=p.z-center.z;
-  const minY=center.y-(o.height||1)/2,maxY=center.y+(o.height||1)/2;
-  if(Math.abs(dx)<(o.width||1)/2+.56&&Math.abs(dz)<(o.depth||1)/2+.62&&p.y+1.9>minY&&p.y+.1<maxY){o.opened=true;o.removed=true;o.mesh.visible=false;return false;}
- }
- if(o.kind==='shortcutHammer'){
-  const reach=o.reach||3.0,ang=o.mesh.rotation.x,hz=center.z+Math.cos(ang)*reach,hh=center.y+Math.sin(ang)*reach;
-  const close=Math.abs(p.x-center.x)<.88&&Math.abs(p.z-hz)<1.12;
-  // The raised head/arm has a narrow jump window; poor timing causes an extreme launch.
-  const canClear=p.y>1.3&&Math.abs(Math.sin(ang))<.17;
-  if(close&&!canClear&&p.y+1.8>hh-.55&&p.y+.12<hh+.55){hit=true;nx=Math.sign(p.x-center.x)||Math.sign((p.x-center.x)*.2)||1;nz=Math.sign(p.z-hz)||Math.sign(Math.cos(ang))||1;}
- }else if(isRotating){
-  const angle=o.mesh.rotation.y,dx=p.x-center.x,dz=p.z-center.z;
-  contactLocalX=THREE.MathUtils.clamp(dx*Math.cos(angle)-dz*Math.sin(angle),-o.length/2,o.length/2);
-  const nearestX=center.x+Math.cos(angle)*contactLocalX,nearestZ=center.z-Math.sin(angle)*contactLocalX;
-  const ddx=p.x-nearestX,ddz=p.z-nearestZ,d=Math.hypot(ddx,ddz),vertical=(p.y+1.9>(o.y??center.y)-.28&&p.y+.12<(o.y??center.y)+.28);
-  if(d<.98&&vertical){hit=true;nx=ddx/(d||1);nz=ddz/(d||1);}
- }else if(o.kind==='ball'){
-  const dx=p.x-center.x,dz=p.z-center.z,d=Math.hypot(dx,dz);
-  if(d<o.r+.72&&p.y<o.r+1.35){hit=true;nx=dx/(d||1);nz=dz/(d||1);}
- }else{
-  const dx=p.x-center.x,dz=p.z-center.z,angle=o.mesh.rotation?.y||0,c=Math.cos(angle),sn=Math.sin(angle),lx=dx*c-dz*sn,lz=dx*sn+dz*c;
-  const halfW=(o.width||1)/2+.56,halfD=(o.depth||1)/2+.62,minY=center.y-(o.height||1)/2,maxY=center.y+(o.height||1)/2;
-  const vertical=(p.y+1.9>minY&&p.y+.1<maxY+.12);
-  if(Math.abs(lx)<halfW&&Math.abs(lz)<halfD&&vertical){
-   hit=true;
-   if(isSolid){
-    const penX=halfW-Math.abs(lx),penZ=halfD-Math.abs(lz),localVx=(actor.vx||0)*c-(actor.vz||0)*sn,localVz=(actor.vx||0)*sn+(actor.vz||0)*c;
-    if(penX<penZ){const sign=Math.abs(lx)>.025?Math.sign(lx):(localVx>0?-1:1),targetLX=sign*(halfW+.035),delta=targetLX-lx;p.x+=delta*c;p.z-=delta*sn;nx=sign*c;nz=-sign*sn;}
-    else{let sign;if(Math.abs(lz)>.025)sign=Math.sign(lz);else if(o.kind==='blockwall'&&Math.hypot(o.vx||0,o.vz||0)>.15)sign=Math.sign((o.vx||0)*sn+(o.vz||0)*c)||1;else sign=localVz>0?-1:1;const targetLZ=sign*(halfD+.035),delta=targetLZ-lz;p.x+=delta*sn;p.z+=delta*c;nx=sign*sn;nz=sign*c;}
-   }else{const px=halfW-Math.abs(lx),pz=halfD-Math.abs(lz);if(px<pz){nx=Math.sign(lx||-(actor.vx||1))*c;nz=-Math.sign(lx||-(actor.vx||1))*sn;}else{nx=Math.sign(lz||-(actor.vz||1))*sn;nz=Math.sign(lz||-(actor.vz||1))*c;}}
+  if (els.unit.value === 'frames') {
+    max = Math.max(1, Math.floor(max));
+    els.amountSlider.step = '1';
+  } else {
+    els.amountSlider.step = '0.1';
   }
- }
- if(!hit)return false;
- if(o.kind==='slime'){respawnFromFall(actor,1.8);if(actor.isPlayer)vibrateImpact(true);return true;}
- if(o.kind==='door'&&!o.opened&&!o.isCorrect&&actor.id!=='player'){actor.doorFailedRows??={};actor.doorFailedRows[o.rowIndex]??=[];if(!actor.doorFailedRows[o.rowIndex].includes(o.x))actor.doorFailedRows[o.rowIndex].push(o.x);}
- if(isSolid){
-  const n=Math.hypot(nx,nz)||1;nx/=n;nz/=n;const ovx=o.vx||0,ovz=o.vz||0,actorNormal=(actor.vx||0)*nx+(actor.vz||0)*nz,obstacleNormal=ovx*nx+ovz*nz;
-  if(o.kind==='blockwall'&&obstacleNormal>0.25){const target=obstacleNormal;if(actorNormal<target){actor.vx=(actor.vx||0)+nx*(target-actorNormal);actor.vz=(actor.vz||0)+nz*(target-actorNormal);}}
-  else{const relative=actorNormal-obstacleNormal;if(relative<0){actor.vx=(actor.vx||0)-nx*relative;actor.vz=(actor.vz||0)-nz*relative;}}
-  actor.hitCooldown=Math.min(actor.hitCooldown||0,.07);return true;
- }
- if(actor.hitCooldown>0)return false;
- let ovx=o.vx||0,ovz=o.vz||0,rotationalSpeed=0;
- if(isRotating){const angle=o.mesh.rotation.y;ovx=-Math.sin(angle)*contactLocalX*o.speed;ovz=-Math.cos(angle)*contactLocalX*o.speed;rotationalSpeed=Math.hypot(ovx,ovz);}
- const nLen=Math.hypot(nx,nz);if(nLen<.001){const rvx=(actor.vx||0)-ovx,rvz=(actor.vz||0)-ovz,rl=Math.hypot(rvx,rvz)||1;nx=rvx/rl;nz=rvz/rl;}else{nx/=nLen;nz/=nLen;}
- const impactSpeed=o.kind==='shortcutHammer'?(o.speed||3.1)*(o.reach||3.0):Math.max(rotationalSpeed,Math.hypot(ovx,ovz));
- const kick=o.kind==='shortcutHammer'?25+impactSpeed*1.6:7.9+(isMoving?Math.min(6.8,impactSpeed*.58):0);
- actor.hitCooldown=.78;actor.stunTimer=0;actor.stunPending=true;actor.vx=(actor.vx||0)*.18+nx*kick+ovx*.52;actor.vz=(actor.vz||0)*.18+nz*kick+ovz*.52;actor.vy=Math.max(actor.vy||0,o.kind==='shortcutHammer'?15.2:(isMoving?7.5:6.1));
- if(actor.isPlayer){toast('吹っ飛ばされた！ しばらく動けない！');if(isMoving)vibrateImpact(false);}return true;
+  els.amountSlider.min = '1';
+  els.amountSlider.max = String(max);
+  if (recenter) els.amountSlider.value = String(Math.max(1, Math.min(amount, max)));
+  els.amountSlider.disabled = !currentFile || !Number.isFinite(durationUnits) || durationUnits <= 1;
+  els.sliderMaxLabel.textContent = formatSliderValue(max);
 }
-function updateObstacles(dt){
- const pressure=1+Math.min(.45,Math.max(0,stageTime-12)*.01);
- for(const o of obstacles){
-  if(o.removed||!o.mesh)continue;
-  const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;
-  if(o.kind==='beam'||o.kind==='hammer')o.mesh.rotation.y+=o.speed*pressure*dt;
-  else if(o.kind==='shortcutHammer')o.mesh.rotation.x+=o.speed*pressure*dt;
-  else if(o.kind==='rolloutWall'){
-   const drum=rolloutDrums[o.rollIndex];if(drum){const angle=o.localAngle+drum.phase,z=drum.centerZ+Math.sin(angle)*drum.radius,y=drum.centerY+Math.cos(angle)*drum.radius;o.mesh.position.set(0,y+(o.height||1.7)/2,z);o.mesh.rotation.x=-angle;o.z=z;}
-  }else if(o.kind==='gate'){
-   const wave=Math.sin(stageTime*o.speed+o.phase);
-   o.mesh.position.y=wave>.12?4.0:1.55;
-   o.mesh.visible=true;
-  }else if(o.kind==='mover'||o.kind==='slime'){
-   if(o.motionPhase===undefined)o.motionPhase=stageTime*o.speed+o.phase;else o.motionPhase+=o.speed*pressure*dt;
-   const mid=((o.travelMax??o.amp)+(o.travelMin??-o.amp))/2,range=((o.travelMax??o.amp)-(o.travelMin??-o.amp))/2;
-   o.x=mid+Math.sin(o.motionPhase)*range;
-   const dx=o.x*Math.cos(o.centerYaw||0),dz=-o.x*Math.sin(o.centerYaw||0);
-   o.mesh.position.x=(o.centerX||0)+dx;o.mesh.position.z=(o.centerZ??o.z)+dz;o.z=o.mesh.position.z;
-   if(o.cap){o.cap.position.x=o.mesh.position.x;o.cap.position.z=o.mesh.position.z;}
-  }else if(o.kind==='ball'){
-   if(o.rollingDownhill){
-    o.mesh.position.z+=o.speed*pressure*dt;
-    if(o.mesh.position.z>56){o.mesh.position.z=-66-Math.random()*4;o.laneX=[-6.6,-3.3,0,3.3,6.6][Math.floor(Math.random()*5)];o.mesh.position.x=o.laneX;}
-    o.z=o.mesh.position.z;o.mesh.position.y=courseElevationAt(o.mesh.position.z,'fruitChute')+o.r+.12;
-   }else{
-    if(o.motionPhase===undefined)o.motionPhase=stageTime*o.speed+o.phase;else o.motionPhase+=o.speed*pressure*dt;
-    const mid=((o.travelMax??o.amp)+(o.travelMin??-o.amp))/2,range=((o.travelMax??o.amp)-(o.travelMin??-o.amp))/2;
-    o.x=mid+Math.sin(o.motionPhase)*range;
-    const dx=o.x*Math.cos(o.centerYaw||0),dz=-o.x*Math.sin(o.centerYaw||0);
-    o.mesh.position.x=(o.centerX||0)+dx;o.mesh.position.z=(o.centerZ??o.z)+dz;o.z=o.mesh.position.z;
-    o.mesh.rotation.x+=dt*o.speed*2*pressure;o.mesh.rotation.z+=dt*o.speed*pressure;
-   }
+function updateSummary() {
+  const info = getCutInfo();
+  els.fpsBox.classList.toggle('show', info.unit === 'frames');
+  if (!currentFile) {
+    els.cutSummary.textContent = '動画を選ぶと、切り抜く範囲を表示するよ。';
+    els.previewMeaning.textContent = 'プレビュー位置：未選択';
+    els.previewTime.textContent = '00:00:00.000';
+    els.cutButton.disabled = true;
+    return;
   }
-  if(dt>0){o.vx=(o.mesh.position.x-oldX)/dt;o.vz=(o.mesh.position.z-oldZ)/dt;}
- }
- if(world.userData.risingSlimePlane)world.userData.risingSlimePlane.position.y=-5.2+Math.min(stageTime*.24,13.5);
- for(const s of seesawPlatforms){if(!s.platform.removed)s.platform.mesh.rotation.z=Math.sin(stageTime*.7+s.phase)*s.amount;}
- for(const d of rolloutDrums){d.phase+=d.speed*dt;d.mesh.rotation.x=d.phase;for(let j=0;j<(d.holeMeshes||[]).length;j++){const h=d.holeMeshes[j],angle=d.holes[j]+d.phase;h.position.set(0,d.centerY+Math.cos(angle)*d.radius+.07,d.centerZ+Math.sin(angle)*d.radius);h.rotation.set(-Math.PI/2-angle,0,0);}}
- for(const p of racePlatforms){if(p.kind==='tipTile'&&p.collapseAt!==null&&!p.removed&&stageTime>=p.collapseAt){p.removed=true;world.remove(p.mesh);}}
-}
-function updateBlockWalls(dt){
- if(currentRound?.type!=='block'&&currentRound?.type!=='rollout')return;
- for(const o of obstacles){
-  if(o.kind==='wallblock'&&o.rollout){const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;o.mesh.position.x=o.originX+Math.sin(stageTime*o.speed+o.phase)*3.2;o.mesh.position.z=o.originZ+Math.cos(stageTime*o.speed+o.phase)*2.0;o.x=o.mesh.position.x;o.z=o.mesh.position.z;o.vx=(o.mesh.position.x-oldX)/Math.max(dt,.001);o.vz=(o.mesh.position.z-oldZ)/Math.max(dt,.001);continue;}if(o.kind!=='blockwall'||!o.wall)continue;
-  const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;
-  o.mesh.position.z-=o.speed*dt;o.z=o.mesh.position.z;
-  if(o.mesh.position.z<-17){o.mesh.position.z=17;o.z=17;const gap=Math.random()<.5?-4.7:4.7;o.mesh.position.x=Math.sign(o.mesh.position.x)*(Math.abs(o.mesh.position.x)>6?Math.abs(o.mesh.position.x):6)+gap*.5;o.vx=0;o.vz=0;}
-  else{o.vx=(o.mesh.position.x-oldX)/dt;o.vz=(o.mesh.position.z-oldZ)/dt;}
- }
-}
-function touchedCrown(actor){
- if(!crownTarget||!actor?.group)return false;
- const p=actor.group.position;
- const horizontal=Math.hypot(p.x-crownTarget.x,p.z-crownTarget.z);
- const headY=p.y+1.68;
- return horizontal<1.08&&Math.abs(headY-crownTarget.y)<.82;
-}
-function enterSpectatorMode(){
- if(spectatorMode)return;
- spectatorMode=true;spectatorTarget=null;spectatorTargetSwitch=Infinity;document.body.classList.add('spectating');
- subInfoEl.textContent='ゴール！ 左側をスワイプして観戦対象を変更';
- const controls=$('#touch-controls');controls.style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- switchSpectatorTarget(1);
- toast('ゴール！ 左側をスワイプして観戦');
-}
-function switchSpectatorTarget(direction=1){
- const pool=bots.filter(b=>b.alive&&b.group&&b.group.visible&&!b.finished).sort((a,b)=>a.group.position.z-b.group.position.z);
- const fallback=bots.filter(b=>b.alive&&b.group&&b.group.visible).sort((a,b)=>a.group.position.z-b.group.position.z);
- const candidates=pool.length?pool:fallback;if(!candidates.length)return;
- let index=candidates.indexOf(spectatorTarget);if(index<0)index=direction>0?-1:0;
- spectatorTarget=candidates[(index+direction+candidates.length)%candidates.length];spectatorTargetSwitch=8;
- toast(`観戦中：Bot ${spectatorTarget.botIndex+1}`);
-}
-function startGame(){
- document.body.classList.remove('stick-active');countdownActive=false;countdownEl.style.display='none';cameraYaw=0;cameraPitch=0;spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;document.body.classList.remove('spectating','slime-back-mode','ghost-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
- pickGameRounds();roundIndex=0;isFinalRound=false;player.alive=true;player.color=0xffe760;player.isPlayer=true;player.hasTail=false;player.ghostTimer=0;
- bots.forEach(b=>{b.alive=true;b.speed=7.7+Math.random()*1.7;b.phase=Math.random()*15;b.aiTimer=Math.random()*1.1;b.aiThink=Math.random()*.3;b.aiTargetLane=0;b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.5+Math.random()*2.8;b.stunTimer=0;b.bumpCooldown=0;b.hitCooldown=0;});
- hud.style.display='block';hideOverlay();$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- startSelectedRound(chosenRaces[0],false);
-}
-function startRaceStage(stage,isFinal){
- document.body.classList.remove('stick-active');spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
- hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- countdownEl.style.display='none';currentRound=stage;isFinalRace=isFinal;isFinalRound=isFinal;state='race';elapsed=0;stageTime=0;finishers=0;
- buildCourse(stage);
- const active=allAliveBots();
- active.forEach((b,i)=>makeBean(b));makeBean(player);[player,...active].forEach(a=>setActorTail(a,false));
- const tipToeStart=currentRound?.type==='tipToe',cols=tipToeStart?7:9;
- active.forEach((b,i)=>{
-  const col=i%cols,row=Math.floor(i/cols);
-  const x=tipToeStart?(col-3)*2.6:(col-(Math.min(cols,active.length-row*cols)-1)/2)*2.2;
-  const z=tipToeStart?58.2-row*1.1:50-row*2.45;
-  resetActorForRound(b,Math.max(-9.3,Math.min(9.3,x)),z);
-  b.baseLane=x;b.speed=7.7+Math.random()*1.7;b.aiTargetLane=x;b.aiThink=Math.random()*(b.traits?.reaction||.35);b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.4+Math.random()*2.6;b.aiJumpCooldown=.4+Math.random()*1.8;b.bumpCooldown=0;b.doorFailedRows={};b.doorTargetRow=-1;b.doorTargetX=null;
- });
- resetActorForRound(player,courseCenterX(tipToeStart?57:54.5),tipToeStart?54.5:50.5);
- if(isFinal){player.speed=8.65;active.forEach(b=>b.speed=8.0+Math.random()*2.0);finishTarget=1;}
- else {player.speed=9.0;finishTarget=QUALIFY[roundIndex];}
- stageBounds={kind:'race'};
- updateHud(true);progressLabel.textContent=isFinal?'クラウンへ！':'ゴールまで';
- const kicker=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;
- stageKickerEl.textContent=kicker;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
- camera.position.set(0,8,42);cameraLook.set(0,1,-5);
- startCountdown('race');
-}
-function getInput(){
- if((player.ghostTimer||0)>0||(player.slimeEffectTimer||0)>0){
-  cameraYaw=0;cameraPitch=0;input.x=0;input.y=(joystick.backHeld||keys.has('KeyS')||keys.has('ArrowDown'))?-1:0;input.jump=false;input.dive=false;return;
- }
- let x=0,y=0;
- if(keys.has('KeyA')||keys.has('ArrowLeft'))x-=1;if(keys.has('KeyD')||keys.has('ArrowRight'))x+=1;
- if(keys.has('KeyW')||keys.has('ArrowUp'))y+=1;if(keys.has('KeyS')||keys.has('ArrowDown'))y-=1;
- x+=joystick.x;y+=-joystick.y;
- const len=Math.hypot(x,y);if(len>1){x/=len;y/=len;}
- input.x=x;input.y=y;
-}
-function doJump(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0||(player.ghostTimer||0)>0||player.stunPending||player.stunTimer>0)return;input.jump=true;}
-function doDive(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0||(player.ghostTimer||0)>0||player.stunPending||player.stunTimer>0)return;input.dive=true;}
-function respawnFromFall(actor,ghostSeconds=1.8){
- if(!actor?.group||!actor.alive)return;
- const safe=actor.lastSafe||{x:0,z:50.5,y:0};
- actor.group.position.set(safe.x,safe.y??0,safe.z);actor.lastSafe={x:safe.x,z:safe.z,y:safe.y??0};
- actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.stunTimer=0;actor.stunPending=false;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
- actor.ghostTimer=ghostSeconds;actor.slimeEffectTimer=0;setGhostAppearance(actor,true);
- if(actor.isPlayer){cameraYaw=0;cameraPitch=0;lookPointer=null;document.body.classList.add('ghost-back-mode');joystick.x=0;joystick.y=0;joystick.backHeld=false;toast('最後の足場に復帰！ 後ろにだけ進める');}
-}
-function updateGhost(actor,dt){
- if((actor.ghostTimer||0)>0){
-  if(actor.isPlayer){cameraYaw=0;cameraPitch=0;document.body.classList.add('ghost-back-mode');}
-  actor.ghostTimer=Math.max(0,actor.ghostTimer-dt);
-  if(actor.ghostTimer<=0){setGhostAppearance(actor,false);if(actor.isPlayer){document.body.classList.remove('ghost-back-mode');joystick.backHeld=false;}}
- }else if(actor.isPlayer)document.body.classList.remove('ghost-back-mode');
-}
-function controlPlayer(dt){
- const a=player,p=player.group;if(!p||a.finished)return;
- const wasGrounded=a.grounded;
- updateGhost(a,dt);a.hitCooldown=Math.max(0,a.hitCooldown-dt);a.bumpCooldown=Math.max(0,(a.bumpCooldown||0)-dt);a.jumpLock=Math.max(0,a.jumpLock-dt);
- a.slimeEffectTimer=Math.max(0,(a.slimeEffectTimer||0)-dt);
- if(a.slimeEffectTimer<=0&&a._wasSlimeAffected){a._wasSlimeAffected=false;setGhostAppearance(a,false);document.body.classList.remove('slime-back-mode');joystick.backHeld=false;}
- if(a.slimeEffectTimer>0)a._wasSlimeAffected=true;
- a.diveTimer=Math.max(0,(a.diveTimer||0)-dt);a.diveBurstTimer=Math.max(0,(a.diveBurstTimer||0)-dt);a.diveRecovery=Math.max(0,(a.diveRecovery||0)-dt);a.stunTimer=Math.max(0,(a.stunTimer||0)-dt);
- const heading=courseYawAt(p.position.z)+cameraYaw,c=Math.cos(heading),sn=Math.sin(heading),moveX=input.x*c-input.y*sn,moveZ=-input.x*sn-input.y*c,stunned=a.stunTimer>0||!!a.stunPending;
- if(stunned){a.vx*=Math.exp(-2.45*dt);a.vz*=Math.exp(-2.45*dt);}
- else{
-  let speed=(state==='survival'?7.3:a.speed),accel=a.grounded?28:15;
-  if(a.diveRecovery>0&&a.diveBurstTimer<=0){speed*=.42;accel*=.38;}
-  a.vx+=moveX*accel*dt;a.vz+=moveZ*accel*dt;
-  const hasMove=Math.abs(input.x)+Math.abs(input.y)>.02,drag=a.diveBurstTimer>0?.23:(hasMove?1.6:7.0),damp=Math.exp(-drag*dt);a.vx*=damp;a.vz*=damp;
-  const max=speed*(a.diveBurstTimer>0?2.25:(a.diveRecovery>0?.42:1)),v=Math.hypot(a.vx,a.vz);if(v>max){a.vx*=max/v;a.vz*=max/v;}
-  if(input.jump&&a.grounded&&a.jumpLock<=0){a.vy=8.2;a.grounded=false;a.jumpLock=.18;}
-  if(input.dive&&a.diveTimer<=0&&a.stunTimer<=0&&!a.stunPending&&(a.ghostTimer||0)<=0){const recovering=a.diveRecovery>0,faceYaw=a.group.rotation.y,faceX=-Math.sin(faceYaw),faceZ=-Math.cos(faceYaw),faceLen=Math.hypot(faceX,faceZ)||1,launchSpeed=recovering?3.6:23.5;a.vx=faceX/faceLen*launchSpeed+a.vx*.12;a.vz=faceZ/faceLen*launchSpeed+a.vz*.12;a.vy=Math.max(a.vy,5.4);a.diveTimer=.54;a.diveBurstTimer=.31;a.diveRecovery=1.35;a.diveRecoveryPending=true;a.jumpLock=.22;}
- }
- input.jump=false;input.dive=false;
- a.vy-=22*dt;p.position.x+=a.vx*dt;p.position.z+=a.vz*dt;p.position.y+=a.vy*dt;
- if(currentRound?.type==='fruitChute'&&a.grounded&&a.stunTimer<=0&&(a.ghostTimer||0)<=0)a.vz+=1.6*dt; // belt moves against runners
- const probeY=p.position.y+(wasGrounded?.95:.0),groundY=groundAt(p.position.x,p.position.z,probeY);
- if(groundY!==null&&p.position.y<=groundY+.22&&a.vy<=0){
-  p.position.y=groundY;a.vy=0;a.grounded=true;
-  const contacted=racePlatformAt(p.position.x,p.position.z);
-  if(currentRound?.type!=='tipToe'||!contacted||contacted.safe)a.lastSafe={x:p.position.x,z:p.position.z,y:groundY};
-  if(currentRound?.type==='tipToe'&&a.grounded)touchRacePlatform(p.position.x,p.position.z,a);
-  if(stageBounds.kind==='hex'&&a.grounded)touchTileAt(p.position.x,p.position.z,p.position.y);
-  if(stageBounds.kind==='logic'&&a.grounded)touchTileAt(p.position.x,p.position.z,p.position.y);
-  if(a.stunPending){a.stunPending=false;a.stunTimer=1.0;}
- }else a.grounded=false;
- if(currentRound?.type==='tipToe'&&a.grounded)touchRacePlatform(p.position.x,p.position.z,a);
- if(stageBounds.kind==='hex'&&a.grounded)touchTileAt(p.position.x,p.position.z,p.position.y);
- if(stageBounds.kind==='logic'&&a.grounded)touchTileAt(p.position.x,p.position.z,p.position.y);
- if(a.diveRecoveryPending&&a.diveTimer<=0&&a.grounded&&a.stunTimer<=0){if(a.diveRecovery<=0)a.diveRecovery=.28;a.diveRecoveryPending=false;}
- const tilted=a.stunTimer>0||a.stunPending;
- if(tilted){a.visual.rotation.x=1.32;a.visual.rotation.z=Math.sign(a.vx||1)*.32;}else if(a.diveTimer>0){a.visual.rotation.x=-.95;a.visual.rotation.z=-a.vx*.035;}else{a.visual.rotation.x=THREE.MathUtils.damp(a.visual.rotation.x,0,9,dt);a.visual.rotation.z=THREE.MathUtils.damp(a.visual.rotation.z,-a.vx*.025,7,dt);}
- if(Math.hypot(a.vx,a.vz)>.22)a.group.rotation.y=THREE.MathUtils.damp(a.group.rotation.y,Math.atan2(-a.vx,-a.vz),7,dt);
- if(state==='race'){
-  if(currentRound?.type==='slime'){
-   const slimeY=-5.2+Math.min(stageTime*.24,13.5);if(p.position.y<slimeY+1.0){eliminateActor(a,true);return;}
-  }else if(p.position.y<-3.4)respawnFromFall(a,1.8);
-  if(state!=='race')return;
-  // The painted finish stripe is the actual finish, including the mountain final.
-  if(!a.finished&&p.position.z<=COURSE_FINISH_Z&&groundAt(p.position.x,p.position.z,p.position.y+1.0)!==null){a.finished=true;a.finishTime=stageTime;p.position.z=COURSE_FINISH_Z;a.vx=0;a.vz=0;enterSpectatorMode();}
-  if(!a.finished&&(a.ghostTimer||0)<=0){for(const o of obstacles)obstacleHit(a,o);}
- }else if(state==='survival'){
-  const deathY=currentRound?.type==='rollout'?-3.25:currentRound?.type==='hex'?-6.45:-1.45;
-  if(p.position.y<deathY){if(currentRound?.mode==='tail')respawnFromFall(a,1.4);else eliminateActor(a,true);}
-  if(state==='survival'&&currentRound?.mode==='tail')updateTailTagForActor(a);
-  if(state==='survival'&&(a.ghostTimer||0)<=0){for(const o of obstacles)obstacleHit(a,o);}
- }
-}
-function groundAt(x,z,actorY=0){
- if(state==='race'){
-  let best=null;
-  const platforms=currentRound?.type==='tipToe'?[...racePlatforms.filter(q=>q.kind==='tipTile'),...racePlatforms.filter(q=>q.kind!=='tipTile')]:racePlatforms;for(const p of platforms){if(p.removed)continue;const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),s=Math.sin(p.rotationY||0),lx=dx*c-dz*s,lz=dx*s+dz*c;
-   const inside=p.shape==='circle'?Math.hypot(lx,lz)<=Math.min(p.w,p.d)/2:Math.abs(lx)<=p.w/2&&Math.abs(lz)<=p.d/2;
-   const y=p.topY-Math.sin(p.rotationX||0)*(z-p.z);
-   if(inside&&y<=actorY+.35&&(best===null||y>best))best=y;
+  if (!info.validCount) {
+    els.cutSummary.innerHTML = '<span class="error">1以上の数値を入力してね。</span>';
+    els.cutButton.disabled = true;
+    return;
   }
-  return best;
- }
- if(stageBounds.kind==='rollout'){
-  let best=null;
-  for(let i=0;i<rolloutDrums.length;i++){
-   const d=rolloutDrums[i];if(Math.abs(x)>7.75)continue;const dz=z-d.centerZ;if(Math.abs(dz)>=d.radius)continue;
-   const angle=Math.asin(THREE.MathUtils.clamp(dz/d.radius,-1,1)),topY=d.centerY+Math.sqrt(Math.max(0,d.radius*d.radius-dz*dz));
-   if(topY<-2.5)continue;
-   const local=angle-d.phase;let inHole=false;
-   for(const h of d.holes){const delta=Math.atan2(Math.sin(local-h),Math.cos(local-h));if(Math.abs(delta)<.13){inHole=true;break;}}
-   if(inHole)continue;
-   if(topY<=actorY+.45&&(best===null||topY>best))best=topY;
+  if (!info.validDuration) {
+    els.cutSummary.textContent = '動画の長さを解析中…';
+    els.cutButton.disabled = true;
+    return;
   }
-  return best;
- }
- if(stageBounds.kind==='circle')return Math.hypot(x,z)<=14.4?0:null;
- if(stageBounds.kind==='rect')return Math.abs(x)<=12&&Math.abs(z)<=15?0:null;
- if(stageBounds.kind==='hex'||stageBounds.kind==='logic'){const tile=findTile(x,z,actorY);return tile?tile.topY:null;}
- return null;
-}
-function racePlatformAt(x,z){
- const contains=p=>{if(p.removed)return false;const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),s=Math.sin(p.rotationY||0),lx=dx*c-dz*s,lz=dx*s+dz*c;return p.shape==='circle'?Math.hypot(lx,lz)<=Math.min(p.w,p.d)/2:Math.abs(lx)<=p.w/2&&Math.abs(lz)<=p.d/2;};
- if(currentRound?.type==='tipToe'){const tile=racePlatforms.find(p=>p.kind==='tipTile'&&contains(p));if(tile)return tile;}
- return racePlatforms.find(contains)||null;
-}
-function obstacleRiskAt(x,z,o,extra=1.25,eta=0){
- if(!o?.mesh||o.removed)return 0;
- if(o.kind==='door'&&o.opened)return 0;
- if(o.kind==='gate'){const predicted=Math.sin((stageTime+eta)*(o.speed||1)+(o.phase||0))>.12?4.0:1.55;if(predicted>(o.baseY||1.55)+1.7)return 0;}
- const center=o.mesh.position;
- if(o.kind==='beam'||o.kind==='hammer'){
-  const angle=o.mesh.rotation.y+(o.speed||0)*eta,dx=Math.cos(angle)*o.length/2,dz=-Math.sin(angle)*o.length/2;
-  const dist=distPointSegment(x,z,center.x-dx,center.z-dz,center.x+dx,center.z+dz);
-  return THREE.MathUtils.clamp((.98+extra-dist)/(.98+extra),0,1);
- }
- if(o.kind==='shortcutHammer'){
-  const ang=o.mesh.rotation.x+(o.speed||0)*eta,reach=o.reach||3.0,hx=center.x,hz=center.z+Math.cos(ang)*reach;
-  const d=Math.hypot(x-hx,z-hz);return THREE.MathUtils.clamp((1.2+extra-d)/(1.2+extra),0,1);
- }
- if(o.kind==='ball'||o.kind==='mover'||o.kind==='slime'){
-  let cx=center.x+(o.vx||0)*eta,cz=center.z+(o.vz||0)*eta;
-  if(o.kind==='ball'&&o.rollingDownhill)cz+=o.speed*eta;
-  const radius=o.kind==='ball'?(o.r||1)+.72:(o.width||2)/2+.55,depth=o.kind==='ball'?(o.r||1)+.65:(o.depth||1)+.55;
-  const dx=Math.max(0,Math.abs(x-cx)-radius),dz=Math.max(0,Math.abs(z-cz)-depth),d=Math.hypot(dx,dz);
-  return THREE.MathUtils.clamp((extra+1-d)/(extra+1),0,1);
- }
- const angle=o.mesh.rotation?.y||0,cx=center.x+(o.vx||0)*eta,cz=center.z+(o.vz||0)*eta,dx=x-cx,dz=z-cz;
- const lx=dx*Math.cos(angle)-dz*Math.sin(angle),lz=dx*Math.sin(angle)+dz*Math.cos(angle);
- const hw=(o.width||1)/2+extra,hd=(o.depth||1)/2+extra;
- if(Math.abs(lx)<hw&&Math.abs(lz)<hd)return 1;
- const d=Math.hypot(Math.max(0,Math.abs(lx)-hw),Math.max(0,Math.abs(lz)-hd));
- return THREE.MathUtils.clamp((extra-d)/extra,0,1);
-}
-function chooseRaceBotPlan(b,p){
- const traits=b.traits||{awareness:.5,patience:.5,bravery:.5,reaction:.3,noise:.25,jumpChance:.5};
- const nearCrown=currentRound?.type==='crown'&&p.z<-34;
- const preferred=nearCrown?THREE.MathUtils.clamp(Math.sin(stageTime*.8+b.phase)*.35,-.45,.45):THREE.MathUtils.clamp(b.baseLane+Math.sin(stageTime*.36+b.phase)*1.15,-9.2,9.2);
- const lanes=[preferred,0,-9,-6.5,-4,-3.125,-1.5,0,1.5,3.125,4,6.25,6.5,9,-6.25,THREE.MathUtils.clamp(b.aiTargetLane??preferred,-9.3,9.3)];
- let bestLane=preferred,bestScore=-Infinity;
- for(const laneRaw of lanes){
-  const lane=THREE.MathUtils.clamp(laneRaw,-9.4,9.4);
-  let danger=0;
-  for(const o of obstacles){
-   const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-   if(ahead<-.8||ahead>17.5)continue;
-   const eta=Math.max(0,ahead/Math.max(3,b.speed));
-   const evalX=courseCenterX(oz+.35)+lane;
-   danger=Math.max(danger,obstacleRiskAt(evalX,oz+1.05,o,1.05,eta));
+  const rangeText = `${fmtTime(info.start)} ～ ${fmtTime(info.end)}`;
+  if (info.tooLong) {
+    els.cutSummary.innerHTML = '<span class="error">指定した長さが動画全体より長いよ。</span>';
+    els.cutButton.disabled = true;
+  } else {
+    els.cutSummary.innerHTML = `<div><strong>切り抜き範囲</strong></div><div style="margin-top:4px">${rangeText}</div><div class="muted small" style="margin-top:3px">動画全体 ${fmtTime(sourceDuration)}</div>`;
+    els.cutButton.disabled = !engineLoaded || busy;
   }
-  const lanePreference=Math.abs(lane-preferred)*(.07+.1*traits.patience);
-  const randomBias=(Math.random()-.5)*traits.noise;
-  const centerPenalty=nearCrown?Math.abs(lane)*.24:0;
-  const score=-danger*(2.8+traits.awareness*5.2)-lanePreference-centerPenalty+randomBias;
-  if(score>bestScore){bestScore=score;bestLane=lane;}
- }
- b.aiTargetLane=bestLane;
- if(currentRound?.type==='doorDash'){
-  const rows=obstacles.filter(o=>o.kind==='door'&&p.z-o.z>-.8&&p.z-o.z<15);
-  if(rows.length){const rowIndex=Math.min(...rows.map(o=>o.rowIndex));const row=rows.filter(o=>o.rowIndex===rowIndex);b.doorFailedRows??={};const failed=b.doorFailedRows[rowIndex]||[];const opened=row.find(o=>o.opened);
-   if(opened){b.doorTargetRow=rowIndex;b.doorTargetX=opened.x;}
-   else if(b.doorTargetRow!==rowIndex||failed.includes(b.doorTargetX)||!row.some(o=>!o.removed&&o.x===b.doorTargetX)){const choices=row.filter(o=>!o.removed&&!failed.includes(o.x));const pick=choices.length?choices[Math.floor(Math.random()*choices.length)]:row.find(o=>!o.removed)||row[0];b.doorTargetRow=rowIndex;b.doorTargetX=pick?.x??row[0]?.x;}
-   if(Number.isFinite(b.doorTargetX))b.aiTargetLane=b.doorTargetX-courseCenterX(row[0].z);
+  els.previewMeaning.textContent = selectedSide === 'start'
+    ? 'プレビュー：切り抜きに含まれる最後のフレーム'
+    : 'プレビュー：切り抜きに含まれる最初のフレーム';
+  els.previewTime.textContent = fmtTime(Number.isFinite(info.preview) ? info.preview : 0);
+  if (info.unit === 'frames') {
+    els.previewNote.textContent = `FPS ${fpsLabel()} を使って位置を計算。フレーム指定は動画のFPS判定に依存するよ。`;
+  } else {
+    els.previewNote.textContent = '数値を変えると、切り抜き範囲の端のフレームへプレビューが移動するよ。';
   }
- }
- b.aiThink=.18+traits.reaction*(.48+(1-traits.awareness)*.4);
- b.aiJumpRequested=false;b.aiDiveRequested=false;
- let jumpRisk=0;
- for(const o of obstacles){
-  const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-  if(ahead<.3||ahead>6.5)continue;
-  const risk=obstacleRiskAt(p.x,oz+.8,o,1.25,Math.max(0,ahead/Math.max(3,b.speed)));
-  jumpRisk=Math.max(jumpRisk,risk);
-  const jumpable=['beam','hammer','barrier','mover','slime','ball'].includes(o.kind);
-  const chance=THREE.MathUtils.clamp(traits.jumpChance*(.62+traits.awareness*.48),.28,.94);
-  if(jumpable&&risk>.2&&ahead<5.3&&Math.random()<chance){b.aiJumpRequested=true;break;}
- }
- // Not every bean reacts perfectly: they sometimes jump too early or ignore a hazard.
- if(currentRound?.type==='crown'&&p.z<-39.2&&b.grounded&&b.aiJumpCooldown<=0&&crownTarget){
-  const d=Math.hypot(p.x-crownTarget.x,p.z-crownTarget.z);
-  if(d<4.7&&Math.random()<.56+traits.awareness*.34)b.aiJumpRequested=true;
- }
- // Dive in clear gaps to gain distance, or dive after a jump to clear a low obstacle.
- if(b.aiDiveCooldown<=0&&!b.diveTimer&&Math.random()<(b.grounded ? .065 : (.16+traits.bravery*.2))){
-  if(!b.grounded&&jumpRisk>.12&&Math.random()<.48+traits.awareness*.34)b.aiDiveRequested=true;
-  else if(jumpRisk<.22&&Math.random()<.48+traits.bravery*.3)b.aiDiveRequested=true;
-  else if(jumpRisk>.3&&jumpRisk<.75&&Math.random()<.18+traits.bravery*.2)b.aiDiveRequested=true;
- }
- if(nearCrown&&!b.grounded&&b.aiDiveCooldown<=0&&Math.random()<.55+traits.bravery*.3)b.aiDiveRequested=true;
- // Bots jump at platform gaps so the segmented official-style courses remain traversable.
- if(b.grounded&&groundAt(p.x,p.z-3.45,p.y)===null&&Math.random()<.9)b.aiJumpRequested=true;
 }
-function resolveBeanCollisions(actors,dt){
- const list=actors.filter(a=>a&&a.alive&&a.group&&a.group.visible&&!a.finished&&(a.slimeEffectTimer||0)<=0&&(a.ghostTimer||0)<=0);
- for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
-  const a=list[i],b=list[j],pa=a.group.position,pb=b.group.position;
-  if(Math.abs(pa.y-pb.y)>1.2)continue;
-  let dx=pa.x-pb.x,dz=pa.z-pb.z,d=Math.hypot(dx,dz),minDist=1.08;
-  if(d>=minDist)continue;
-  if(d<.001){const angle=(i*13+j*7)*.37;dx=Math.cos(angle);dz=Math.sin(angle);d=1;}
-  const nx=dx/d,nz=dz/d,overlap=minDist-d;
-  pa.x+=nx*overlap*.52;pa.z+=nz*overlap*.52;pb.x-=nx*overlap*.48;pb.z-=nz*overlap*.48;
-  a.bumpCooldown=Math.max(0,(a.bumpCooldown||0)-dt);b.bumpCooldown=Math.max(0,(b.bumpCooldown||0)-dt);
-  const rel=(a.vx-b.vx)*nx+(a.vz-b.vz)*nz;
-  if(rel>2.8&&a.bumpCooldown<=0&&b.bumpCooldown<=0){
-   const impulse=Math.min(5.2,(rel-2)*.42);
-   a.vx=(a.vx||0)+nx*impulse;a.vz=(a.vz||0)+nz*impulse;
-   b.vx=(b.vx||0)-nx*impulse;b.vz=(b.vz||0)-nz*impulse;
-   if(rel>7){a.stunPending=true;a.stunTimer=0;b.stunPending=true;b.stunTimer=0;}
-   a.bumpCooldown=.65;b.bumpCooldown=.65;
+function fpsLabel() {
+  return Number.isFinite(Number(els.fpsInput.value)) && Number(els.fpsInput.value) > 0
+    ? `${Number(els.fpsInput.value)} FPS` : '30 FPS（仮）';
+}
+function seekNative(time) {
+  if (!nativePreviewAvailable || !Number.isFinite(time)) return false;
+  try {
+    els.video.pause();
+    const target = Math.max(0, Math.min(time, Math.max(0, els.video.duration - 0.001)));
+    if (Math.abs(els.video.currentTime - target) > 0.0005) els.video.currentTime = target;
+    els.video.hidden = false;
+    els.image.hidden = true;
+    els.previewEmpty.hidden = true;
+    return true;
+  } catch (_) { return false; }
+}
+function schedulePreview() {
+  updateSummary();
+  const info = getCutInfo();
+  if (!currentFile || !info.validDuration || !Number.isFinite(info.preview)) return;
+  const ticket = ++previewTicket;
+  if (nativePreviewAvailable && !nativePreviewFailed) {
+    seekNative(info.preview);
+    return;
   }
- }
+  pendingPreview = {ticket, time:info.preview};
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => { pumpPreview(); }, 280);
 }
-function updateRaceBots(dt){
- const active=allAliveBots();
- for(const b of active){if(!b.group)continue;
-  b.hitCooldown=Math.max(0,b.hitCooldown-dt);b.bumpCooldown=Math.max(0,(b.bumpCooldown||0)-dt);
-  b.stunTimer=Math.max(0,(b.stunTimer||0)-dt);b.aiThink=(b.aiThink||0)-dt;b.aiJumpCooldown=Math.max(0,(b.aiJumpCooldown||0)-dt);b.aiDiveCooldown=Math.max(0,(b.aiDiveCooldown||0)-dt);
-  updateGhost(b,dt);b.slimeEffectTimer=Math.max(0,(b.slimeEffectTimer||0)-dt);if(b.slimeEffectTimer<=0&&b._wasSlimeAffected){b._wasSlimeAffected=false;setGhostAppearance(b,false);}
-  b.diveTimer=Math.max(0,(b.diveTimer||0)-dt);b.diveBurstTimer=Math.max(0,(b.diveBurstTimer||0)-dt);b.diveRecovery=Math.max(0,(b.diveRecovery||0)-dt);
-  if(b.finished)continue;
-  const p=b.group.position,traits=b.traits||{awareness:.5,reaction:.3,patience:.5,bravery:.5};
-  if((b.ghostTimer||0)>0){const yaw=courseYawAt(p.z);b.vx=Math.sin(yaw)*3.0;b.vz=Math.cos(yaw)*3.0;b.vy=0;b.grounded=true;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.aiJumpRequested=false;b.aiDiveRequested=false;}
-  else if(b.slimeEffectTimer>0){const syaw=b.slimeHeadingYaw??b.group.rotation.y;b.vx=Math.sin(syaw)*3.1;b.vz=Math.cos(syaw)*3.1;b.vy=0;b.grounded=true;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;}
-  else if(b.stunTimer>0||b.stunPending){b.vx*=Math.exp(-2.15*dt);b.vz*=Math.exp(-1.65*dt);}
-  else{
-   if(b.aiThink<=0)chooseRaceBotPlan(b,p);
-   let targetX=courseCenterX(p.z)+THREE.MathUtils.clamp(b.aiTargetLane,-9.4,9.4);
-   if(currentRound?.type==='tipToe'){const candidates=racePlatforms.filter(q=>q.kind==='tipTile'&&!q.removed&&q.z<p.z-.4&&q.z>p.z-12);if(candidates.length){const nearestRowZ=Math.max(...candidates.map(q=>q.z)),row=candidates.filter(q=>Math.abs(q.z-nearestRowZ)<.02).sort((q1,q2)=>Math.abs(q1.x-p.x)-Math.abs(q2.x-p.x));const near=row.slice(0,Math.min(3,row.length));const next=near[Math.floor(Math.random()*near.length)];if(next)targetX=next.x;}}
-   else {const nearby=racePlatforms.filter(q=>!q.removed&&q.z<p.z+.4&&q.z>p.z-7.5).sort((q1,q2)=>Math.abs(q1.z-(p.z-2.5))-Math.abs(q2.z-(p.z-2.5)))[0];if(nearby){const limit=Math.max(0,nearby.w/2-1.0);targetX=nearby.x+THREE.MathUtils.clamp(b.aiTargetLane,-limit,limit);}}
-   const yaw=courseYawAt(p.z),forwardX=-Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
-   const lateral=THREE.MathUtils.clamp((targetX-p.x)*(1.75+traits.awareness*.75),-9.2,9.2);
-   let targetVx=forwardX*b.speed+rightX*lateral,targetVz=forwardZ*b.speed+rightZ*lateral;
-   if(b.diveBurstTimer>0){b.vx*=Math.exp(-.24*dt);b.vz*=Math.exp(-.24*dt);}
-   else if(b.diveRecovery>0){targetVx*=.42;targetVz*=.42;b.vx=THREE.MathUtils.damp(b.vx,targetVx,1.15,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,1.15,dt);}
-   else{b.vx=THREE.MathUtils.damp(b.vx,targetVx,2.6+traits.reaction,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,2.4+traits.patience*.55,dt);}
-   if(b.aiJumpRequested&&b.aiJumpCooldown<=0&&b.grounded){b.vy=7.35+traits.bravery*.7;b.grounded=false;b.aiJumpCooldown=2.5+Math.random()*2.4;b.aiJumpRequested=false;}
-   if(b.aiDiveRequested&&b.diveTimer<=0&&b.stunTimer<=0&&!b.stunPending){
-    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),speed=recovering?3.9:20.2;
-    b.vx=faceX*speed+b.vx*.1;b.vz=faceZ*speed+b.vz*.1;b.vy=Math.max(b.vy,5.1);
-    b.diveTimer=.52;b.diveBurstTimer=.3;b.diveRecovery=1.22;b.aiDiveCooldown=3.1+Math.random()*3.2;b.aiDiveRequested=false;
-   }
+async function pumpPreview() {
+  if (previewPumpRunning || busy || nativePreviewAvailable || !engineLoaded || !currentInputName || !pendingPreview) return;
+  previewPumpRunning = true;
+  try {
+    while (pendingPreview && !busy && !nativePreviewAvailable) {
+      const item = pendingPreview;
+      pendingPreview = null;
+      if (item.ticket !== previewTicket) continue;
+      busy = true;
+      operation = 'preview';
+      refreshHistoryButtons();
+      try {
+        try { await ffmpeg.deleteFile('preview_frame.png'); } catch (_) {}
+        const args = ['-hide_banner'];
+        if (item.time > 0.001) args.push('-ss', item.time.toFixed(4));
+        args.push('-i', currentInputName, '-frames:v','1','-an','-f','image2','-y','preview_frame.png');
+        const code = await ffmpeg.exec(args);
+        if (code === 0 && item.ticket === previewTicket) {
+          const data = await ffmpeg.readFile('preview_frame.png');
+          if (previewObjectURL) URL.revokeObjectURL(previewObjectURL);
+          previewObjectURL = URL.createObjectURL(new Blob([data], {type:'image/png'}));
+          els.image.src = previewObjectURL;
+          els.image.hidden = false;
+          els.video.hidden = true;
+          els.previewEmpty.hidden = true;
+        }
+      } catch (error) {
+        if (item.ticket === previewTicket) {
+          els.previewEmpty.hidden = false;
+          els.previewEmpty.textContent = 'この形式のプレビュー画像を作れなかったよ。切り抜き自体も対応していない可能性がある。';
+        }
+      } finally {
+        operation = '';
+        busy = false;
+        updateSummary();
+        refreshHistoryButtons();
+      }
+    }
+  } finally {
+    previewPumpRunning = false;
+    if (pendingPreview && !busy && !nativePreviewAvailable) pumpPreview();
   }
-  p.x+=b.vx*dt;p.z+=b.vz*dt;
-  b.vy-=22*dt;p.y+=b.vy*dt;
-  const probeY=p.y+(b.grounded?.95:0),groundY=groundAt(p.x,p.z,probeY);if(groundY!==null&&p.y<=groundY+.22&&b.vy<=0){p.y=groundY;b.vy=0;b.grounded=true;const landedPlatform=racePlatformAt(p.x,p.z);if(currentRound?.type!=='tipToe'||!landedPlatform||landedPlatform.safe)b.lastSafe={x:p.x,z:p.z,y:groundY};if(currentRound?.type==='tipToe')touchRacePlatform(p.x,p.z,b);if(b.stunPending){b.stunPending=false;b.stunTimer=1.0;}}else b.grounded=false;
-  if(currentRound?.type==='fruitChute'&&b.grounded&&b.stunTimer<=0)b.vz+=1.6*dt;
-  if(currentRound?.type==='slime'){const slimeY=-5.2+Math.min(stageTime*.24,13.5);if(p.y<slimeY+1.0){eliminateActor(b,true);continue;}}else if(p.y<-3.4)respawnFromFall(b,1.8);
-  if(currentRound?.type==='tipToe'&&b.grounded)touchRacePlatform(p.x,p.z,b);
-  if((b.ghostTimer||0)<=0)for(const o of obstacles)obstacleHit(b,o);
-  if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
-  b.visual.rotation.x=b.stunTimer>0?1.2:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
-  if(p.z<=COURSE_FINISH_Z&&groundAt(p.x,p.z,p.y+1.0)!==null){p.z=COURSE_FINISH_Z;b.finished=true;b.finishTime=stageTime;b.vx=0;b.vz=0;}
- }
- resolveBeanCollisions([player,...active],dt);
- if(isFinalRace){
-  const botFinishers=active.filter(b=>b.finished).sort((a,b)=>a.finishTime-b.finishTime);
-  const firstBot=botFinishers[0];
-  if(player.finished&&(!firstBot||player.finishTime<=firstBot.finishTime)){finishFinal(true,'クラウンに触れた！');return;}
-  if(firstBot){finishFinal(false,'Botが先にクラウンに触れた…');return;}
-  if(stageTime>55){finishFinal(false,'時間切れ！クラウンに届かなかった…');return;}
- }else{
-  const n=active.filter(b=>b.finished).length+(player.finished?1:0);
-  if(n>=finishTarget){endQualifier();return;}
-  if(stageTime>42){endQualifier(true);return;}
- }
 }
-function endQualifier(timeout=false){
- if(state!=='race'||isFinalRace)return;
- const participants=[player,...allAliveBots()].filter(a=>a.group&&a.group.visible);
- const sorted=participants.slice().sort((a,b)=>{const af=a.finished?0:1,bf=b.finished?0:1;if(af!==bf)return af-bf;if(a.finished&&b.finished)return a.finishTime-b.finishTime;return a.group.position.z-b.group.position.z;});
- const survivors=sorted.slice(0,Math.min(finishTarget,sorted.length));
- const survived=survivors.includes(player),survivorIds=new Set(survivors.map(a=>a.id));
- bots.forEach(b=>{if(b.alive&&!survivorIds.has(b.id)){b.alive=false;if(b.group)b.group.visible=false;}});
- if(!survived){state='between';finishEliminated(`予選${roundIndex+1}で脱落…`,`${player.finished?'ゴールしたけど、通過順位に届かなかった。':'ゴールに間に合わなかった。'} 次のゲームでリベンジしよう！`);return;}
- showQualified(survivors,roundIndex===2?'ファイナル進出！':'予選突破！');
-}
-function startFinalStage(){roundIndex=3;isFinalRound=true;startSelectedRound(chosenFinal,true);}
-function buildArenaBase(kind){
- newWorld();
- if(kind==='circle'){
-  const disk=new THREE.Mesh(new THREE.CircleGeometry(14.4,72),mat(0x6277bd,.72));disk.rotation.x=-Math.PI/2;disk.position.y=-.015;world.add(disk);
-  const trim=new THREE.Mesh(new THREE.TorusGeometry(14.25,.09,6,72),mat(0x56eee3,.4));trim.rotation.x=Math.PI/2;trim.position.y=.02;world.add(trim);
- }else if(kind==='rect'){
-  box(world,24,.42,30,0x6579c0,0,-.21,0);
-  for(let x=-9;x<=9;x+=3){box(world,.09,.025,29,0x8fe9f0,x,.012,0);}
- }else if(kind==='rollout'){
-  stageBounds={kind:'rollout'};
-  const radius=9.2,centerY=-8.6,centers=[10,-2,-14],colors=[0xf5b73d,0x5b9de3,0x55d4cc];
-  const slime=new THREE.Mesh(new THREE.PlaneGeometry(38,62),new THREE.MeshStandardMaterial({color:0xff4eaa,roughness:.38,transparent:true,opacity:.94,side:THREE.DoubleSide}));slime.rotation.x=-Math.PI/2;slime.position.set(0,-3.15,-2);world.add(slime);world.userData.rolloutSlime=slime;
-  centers.forEach((cz,i)=>{
-   const geo=new THREE.CylinderGeometry(radius,radius,16,14,1,false);const mats=Array.from({length:14},(_,j)=>mat([colors[(j+i)%colors.length],0x8d78db,0x5b73bf][(j+i)%3],.65));
-   const drum=new THREE.Mesh(geo,mats);drum.rotation.z=Math.PI/2;drum.position.set(0,centerY,cz);world.add(drum);
-   const entry={mesh:drum,centerZ:cz,centerY,radius,phase:i%2===0?0:Math.PI*.5,speed:(i%2===0?1:-1)*(.48+i*.12),holes:[.35,1.0,-.9]};rolloutDrums.push(entry);
-   for(const holeAngle of entry.holes){const patch=new THREE.Mesh(new THREE.CircleGeometry(1.05,18),mat(0x271b48,.45));patch.userData.rolloutHole={drum:i,localAngle:holeAngle};world.add(patch);entry.holeMeshes??=[];entry.holeMeshes.push(patch);}
-   for(let w=0;w<2;w++){const localAngle=(i%2===0?.35:-.45)+w*1.05;const angle=localAngle+entry.phase,z=cz+Math.sin(angle)*radius,y=centerY+Math.cos(angle)*radius;const wall=box(world,12.5,1.7,.55,i%2?0xff79ad:0x63e3e3,0,y+.85,z);wall.rotation.x=-angle;obstacles.push({kind:'rolloutWall',mesh:wall,width:12.5,height:1.7,depth:.55,x:0,z,rollIndex:i,localAngle,speed:entry.speed});}
+function createFFmpegInstance() {
+  const instance = new FFmpeg();
+  instance.on('log', ({message}) => {
+    if (operation === 'trim') {
+      const m = message.match(/time=(\d+):(\d+):(\d+(?:\.\d+)?)/);
+      if (m && currentCut && currentCut.duration > 0) {
+        const t = Number(m[1])*3600 + Number(m[2])*60 + Number(m[3]);
+        const relative = t > currentCut.start + 0.05 ? (t - currentCut.start) / currentCut.duration : t / currentCut.duration;
+        if (Number.isFinite(relative) && relative > 0 && relative < 1) {
+          setProgress(Math.max(5,Math.min(95,6+relative*88)), '切り抜き中…', '映像・音声を再エンコードせずコピー中');
+        }
+      }
+    }
   });
- }else if(kind==='hex'){
-  tileGridSpec={originX:-9,originZ:-9,spacing:1.8,cols:11,rows:11};
-  for(let layer=0;layer<3;layer++)for(let iz=0;iz<11;iz++)for(let ix=0;ix<11;ix++){
-   const x=tileGridSpec.originX+ix*tileGridSpec.spacing,z=tileGridSpec.originZ+iz*tileGridSpec.spacing,topY=-layer*2.55;
-   const mesh=box(world,1.68,.46,1.68,[0x56bfe4,0x62dfdc,0x7c9bff][(ix+iz+layer)%3],x,topY-.23,z);
-   const tile={ix,iz,x,z,w:1.68,d:1.68,topY,mesh,touched:false,expire:0,removed:false,fruitIndex:-1,kind:'hex'};tiles.push(tile);
-   const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
-  }
- }else if(kind==='logic'){
-  tileGridSpec={originX:-8,originZ:-8,spacing:4,cols:5,rows:5};
-  for(let iz=0;iz<5;iz++)for(let ix=0;ix<5;ix++){
-   const x=tileGridSpec.originX+ix*4,z=tileGridSpec.originZ+iz*4,fruitIndex=Math.floor(Math.random()*FRUIT_NAMES.length);
-   const mesh=box(world,3.62,.38,3.62,FRUIT_COLORS[fruitIndex],x,-.19,z);
-   const tile={ix,iz,x,z,w:3.62,d:3.62,topY:0,mesh,touched:false,expire:0,removed:false,fruitIndex,kind:'logic'};tiles.push(tile);
-   const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
-  }
- }
- for(let i=0;i<24;i++){const a=Math.random()*Math.PI*2,r=17+Math.random()*8,y=2+Math.random()*8;sphere(world,.2+Math.random()*.22,[0xffffff,0xffd6f0,0xb5f9ff][i%3],Math.cos(a)*r,y,Math.sin(a)*r,8);}
-}
-function startSurvivalStage(stage,isFinal=false){
- document.body.classList.remove('stick-active');spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;
- document.body.classList.remove('spectating','slime-back-mode','ghost-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;cameraYaw=0;cameraPitch=0;lookPointer=null;
- hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';countdownEl.style.display='none';
- currentRound=stage;isFinalRace=false;isFinalRound=isFinal;state='survival';elapsed=0;stageTime=0;survivalElimTimer=5.8;obstacles=[];logicCurrentTarget=-1;logicPhaseEnd=0;logicNextAt=4.6;logicRound=0;if(!isFinal)finishTarget=QUALIFY[Math.min(roundIndex,2)];
- let kind='circle';if(stage.type==='block')kind='rect';else if(stage.type==='rollout')kind='rollout';else if(stage.type==='hex')kind='hex';else if(stage.type==='perfectMatch')kind='logic';
- stageBounds={kind};buildArenaBase(kind);
- if(stage.type==='jump'){
-  addRotatingBeam(0,27,1.12,.82,0xff6ea7,.4);addRotatingBeam(0,27,-.74,2.45,0x61f6ee,1.45);
- }else if(stage.type==='jumpClub'){
-  addRotatingBeam(0,19.0,1.08,.76,0x5af4e3,.7);
- }else if(stage.type==='block'){
-  addBlockWall(15,0);addBlockWall(-15,1);
- }else if(stage.type==='royalFumble'||stage.type==='tailTag'){
-  // Open circular arena. There are no walls to trap a bean at the edge.
-  if(kind!=='circle')buildArenaBase('circle');stageBounds={kind:'circle'};
- }
- const active=allAliveBots();active.forEach(b=>makeBean(b));makeBean(player);
- if(stage.type==='rollout'){
-  const spawn=[player,...active];spawn.forEach((a,i)=>{const col=i%8,row=Math.floor(i/8),x=(col-3.5)*1.78,z=10+(row-1.5)*1.18;resetActorForRound(a,x,z);const gy=groundAt(x,z,1.5);a.group.position.y=gy??0;a.lastSafe={x,z,y:a.group.position.y};});
- }else{
-  resetActorForRound(player,0,0);
-  active.forEach((b,i)=>{const angle=i/Math.max(1,active.length)*Math.PI*2,r=stage.type==='hex'?7.7:stage.type==='perfectMatch'?7.7:9.3;resetActorForRound(b,Math.cos(angle)*r,Math.sin(angle)*r);b.aiX=Math.cos(angle+Math.PI/2);b.aiZ=Math.sin(angle+Math.PI/2);});
- }
- active.forEach(b=>{b.aiTimer=.1+Math.random()*.35;b.aiSpeed=4.4+Math.random()*1.5;b.jumpNext=.7+Math.random()*2.2;b.aiDiveCooldown=.8+Math.random()*2.8;b.aiDiveRequested=false;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.stunTimer=0;b.stunPending=false;b.bumpCooldown=0;});
- if(stage.type==='tailTag'){
-  const crew=[player,...active];const initial=shuffle(crew).slice(0,Math.min(crew.length,Math.max(finishTarget,Math.ceil(crew.length*.7))));crew.forEach(a=>setActorTail(a,initial.includes(a)));
-  tailRoundTime=38;
- }else if(stage.type==='royalFumble'){
-  const crew=[player,...active];crew.forEach(a=>setActorTail(a,false));setActorTail(crew[Math.floor(Math.random()*crew.length)],true);tailRoundTime=42;
- }else{[player,...active].forEach(a=>setActorTail(a,false));}
- hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';stageKickerEl.textContent=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
- progressLabel.textContent=stage.mode==='tail'?'しっぽを持て！':stage.type==='hex'?'足場を探せ！':stage.type==='perfectMatch'?'フルーツを覚えろ！':'生き残れ！';progressFill.style.width='100%';
- camera.position.set(0,13,17);cameraLook.set(0,0,0);updateHud(true);startCountdown('survival');
-}
-function setActorTail(actor,hasTail){actor.hasTail=!!hasTail;if(actor.group?.userData?.tailMesh)actor.group.userData.tailMesh.visible=actor.hasTail;}
-function updateTailTagForActor(actor){
- if(!actor?.alive||!actor.group||(actor.ghostTimer||0)>0)return;
- const p=actor.group.position,speed=Math.hypot(actor.vx||0,actor.vz||0);if(actor.hasTail||speed<.55)return;
- const others=[player,...allAliveBots()].filter(o=>o!==actor&&o.alive&&o.hasTail&&o.group?.visible&&(o.ghostTimer||0)<=0);
- for(const holder of others){const q=holder.group.position,dx=q.x-p.x,dz=q.z-p.z,d=Math.hypot(dx,dz);if(d>1.25||d<.001)continue;
-  const toward=((actor.vx||0)*dx+(actor.vz||0)*dz)/(speed*d);
-  if(toward>.2){setActorTail(holder,false);setActorTail(actor,true);if(actor.isPlayer)toast('しっぽをゲット！');if(holder.isPlayer)toast('しっぽを取られた！');break;}
- }
-}
-function addBlockWall(z,idx){
- const gap=idx===0?-4.5:4.5;
- const left=box(world,12,3.2,1.2,0xff719f,-6+gap,1.6,z);
- const right=box(world,12,3.2,1.2,0x5fe8e4,6+gap,1.6,z);
- obstacles.push({kind:'blockwall',mesh:left,width:12,height:3.2,depth:1.2,z,x:left.position.x,wall:true,dir:-1,speed:3.7,active:true});
- obstacles.push({kind:'blockwall',mesh:right,width:12,height:3.2,depth:1.2,z,x:right.position.x,wall:true,dir:-1,speed:3.7,active:true});
-}
-function findTile(x,z,actorY=0){
- const spec=tileGridSpec,ix=Math.round((x-spec.originX)/spec.spacing),iz=Math.round((z-spec.originZ)/spec.spacing);
- if(ix<0||ix>=spec.cols||iz<0||iz>=spec.rows)return null;
- const list=tileMap.get(`${ix},${iz}`)||[];
- const eligible=list.filter(t=>!t.removed&&t.topY<=actorY+.35&&Math.abs(x-t.x)<=t.w/2&&Math.abs(z-t.z)<=t.d/2).sort((a,b)=>b.topY-a.topY);
- return eligible[0]||null;
-}
-function touchTileAt(x,z,actorY=0){
- const tile=findTile(x,z,actorY);if(!tile||tile.touched)return;
- if(currentRound?.type==='perfectMatch'){
-  if(logicCurrentTarget<0||stageTime<logicPhaseEnd-3)return;
-  if(tile.fruitIndex===logicCurrentTarget)return;
-  tile.touched=true;tile.expire=stageTime+.58;tile.mesh.material.color.setHex(0xff4f73);return;
- }
- if(tile.kind==='hex'&&!tile.touched){tile.touched=true;tile.expire=stageTime+.78;tile.mesh.material.color.setHex(0xffbe5b);}
-}
-function touchRacePlatform(x,z,actor){
- const p=racePlatforms.find(p=>{if(p.removed||p.kind!=='tipTile')return false;const dx=x-p.x,dz=z-p.z,c=Math.cos(p.rotationY||0),s=Math.sin(p.rotationY||0),lx=dx*c-dz*s,lz=dx*s+dz*c;return Math.abs(lx)<=p.w/2&&Math.abs(lz)<=p.d/2;});
- if(p&&!p.safe&&!p.removed){p.removed=true;world.remove(p.mesh);}
-}
-function updateTiles(dt){
- for(const t of tiles){if(t.removed)continue;if(t.kind==='logic'&&logicCurrentTarget<0&&stageTime<logicNextAt){/* keep fruit colors visible during memory phase */}
-  if(t.touched){const remaining=t.expire-stageTime;if(t.kind==='hex'){t.mesh.position.y=t.topY-.23-Math.max(0,(1.45-remaining))*.22;if(remaining<.55)t.mesh.material.color.setHex(0xff5c79);}else if(t.kind==='logic'){t.mesh.material.color.setHex(0xff5c79);}
-   if(remaining<=0){t.removed=true;world.remove(t.mesh);}
-  }
- }
-}
-function resetLogicGrid(){
- for(const t of tiles)if(t.kind==='logic'&&!t.removed)world.remove(t.mesh);
- tiles=tiles.filter(t=>t.kind!=='logic');for(const [k,list] of tileMap)tileMap.set(k,list.filter(t=>t.kind!=='logic'));
- for(let iz=0;iz<5;iz++)for(let ix=0;ix<5;ix++){
-  const x=tileGridSpec.originX+ix*4,z=tileGridSpec.originZ+iz*4,fruitIndex=Math.floor(Math.random()*FRUIT_NAMES.length),mesh=box(world,3.62,.38,3.62,FRUIT_COLORS[fruitIndex],x,-.19,z);
-  const tile={ix,iz,x,z,w:3.62,d:3.62,topY:0,mesh,touched:false,expire:0,removed:false,fruitIndex,kind:'logic'};tiles.push(tile);const key=`${ix},${iz}`;if(!tileMap.has(key))tileMap.set(key,[]);tileMap.get(key).push(tile);
- }
-}
-function beginLogicRound(){
- if(logicRound>0)resetLogicGrid();logicRound++;logicCurrentTarget=Math.floor(Math.random()*FRUIT_NAMES.length);logicPhaseEnd=stageTime+2.85;
- for(const t of tiles){if(t.kind!=='logic'||t.removed)continue;t.mesh.material.color.setHex(0x7c8bc4);if(t.fruitIndex!==logicCurrentTarget){t.touched=true;t.expire=logicPhaseEnd;}}
- toast(`覚えた？ ${FRUIT_NAMES[logicCurrentTarget]}！`);
-}
-function chooseSurvivalBotPlan(b){
- const p=b.group.position,t=b.traits||{awareness:.5,patience:.4,bravery:.5,noise:.2,jumpChance:.5,reaction:.3};
- const hex=stageBounds.kind==='hex',tiled=hex||stageBounds.kind==='logic';
- const step=hex?1.58:stageBounds.kind==='logic'?3.0:2.25;
- if(currentRound?.mode==='tail'){
-  const crew=[player,...allAliveBots()].filter(a=>a!==b&&a.alive&&a.group?.visible&&(a.ghostTimer||0)<=0);
-  const targets=crew.filter(a=>b.hasTail?!a.hasTail:a.hasTail);
-  if(targets.length){targets.sort((a,c)=>Math.hypot(a.group.position.x-p.x,a.group.position.z-p.z)-Math.hypot(c.group.position.x-p.x,c.group.position.z-p.z));const q=targets[0].group.position,dx=q.x-p.x,dz=q.z-p.z,d=Math.hypot(dx,dz)||1;if(b.hasTail){b.aiX=-dx/d;b.aiZ=-dz/d;}else{b.aiX=dx/d;b.aiZ=dz/d;}}
-  else{const a=stageTime*.7+b.phase;b.aiX=Math.cos(a);b.aiZ=Math.sin(a);}
-  b.aiTimer=.16;b.aiJumpRequested=false;b.aiDiveRequested=false;return;
- }
- const dirs=[];
- for(let i=0;i<16;i++){const a=i*Math.PI/8;dirs.push([Math.cos(a),Math.sin(a)]);}
- dirs.push([0,0]);
- let best=[b.aiX||0,b.aiZ||1],bestScore=-Infinity;
- const others=[player,...allAliveBots()].filter(a=>a!==b&&a?.alive&&a.group&&a.group.visible);
- for(const [dx,dz] of dirs){
-  const nx=p.x+dx*step,nz=p.z+dz*step;let score=0;
-  if(stageBounds.kind==='circle'){
-   const r=Math.hypot(nx,nz);
-   if(r>12.8)score-=2+(r-12.8)*3;else score+=(12.8-r)*.035;
-  }else if(stageBounds.kind==='rollout'){
-   const futureGround=groundAt(nx,nz,p.y+1.4);if(futureGround===null)score-=18;else score+=1.8;
-  }else if(stageBounds.kind==='rect'){
-   const overX=Math.max(0,Math.abs(nx)-10.7),overZ=Math.max(0,Math.abs(nz)-13.7);score-=overX*4+overZ*4;
-   score+=Math.min(10.7-Math.abs(nx),13.7-Math.abs(nz))*.025;
-  }else if(tiled){
-   const tile=findTile(nx,nz,p.y);
-   if(!tile)score-=15;
-   else if(tile.touched)score-=6+Math.max(0,1.2-(tile.expire-stageTime))*2;
-   else score+=2.2;
-   if(stageBounds.kind==='logic'&&logicCurrentTarget>=0&&tile&&tile.fruitIndex!==logicCurrentTarget)score-=3.5;
-  }
-  for(const o of obstacles){
-   const danger=obstacleRiskAt(nx,nz,o,hex?1.5:2.0,0);
-   if(danger>.02)score-=danger*(1.4+t.awareness*3.4);
-  }
-  let crowd=0;
-  for(const other of others){const op=other.group.position,d=Math.hypot(nx-op.x,nz-op.z);if(d<1.8)crowd+=(1.8-d)*.38;}
-  score-=crowd*(.4+t.patience);
-  score+=(dx*(b.aiX||0)+dz*(b.aiZ||0))*(.18+t.patience*.7);
-  score+=(Math.random()-.5)*t.noise;
-  if(dx===0&&dz===0)score-=tiled?3.6:.45;
-  if(score>bestScore){bestScore=score;best=[dx,dz];}
- }
- const len=Math.hypot(best[0],best[1])||1;b.aiX=best[0]/len;b.aiZ=best[1]/len;
- b.aiTimer=.2+(1-t.awareness)*.48+t.reaction*.25;
- b.aiJumpRequested=false;b.aiDiveRequested=false;
- if(b.grounded&&b.jumpNext<=0&&Math.random()<t.jumpChance){
-  const nearbyDanger=obstacles.some(o=>['beam','hammer','barrier','mover','slime','ball'].includes(o.kind)&&obstacleRiskAt(p.x+b.aiX*1.4,p.z+b.aiZ*1.4,o,1.35,.12)>.32);
-  if(nearbyDanger&&Math.random()<THREE.MathUtils.clamp(.68+t.awareness*.24,.55,.94))b.aiJumpRequested=true;
-  else if(tiled&&Math.random()<.15)b.aiJumpRequested=true;
- }
- const forwardRisk=obstacles.reduce((max,o)=>Math.max(max,obstacleRiskAt(p.x+b.aiX*1.5,p.z+b.aiZ*1.5,o,tiled?1.3:1.7,.18)),0);
- if((b.aiDiveCooldown||0)<=0&&!b.diveTimer){
-  if(!b.grounded&&forwardRisk>.08&&Math.random()<.34+t.awareness*.35)b.aiDiveRequested=true;
-  else if(b.grounded&&forwardRisk>.24&&forwardRisk<.82&&Math.random()<.10+t.bravery*.18)b.aiDiveRequested=true;
-  else if(b.grounded&&forwardRisk<.18&&Math.random()<.11+t.bravery*.12)b.aiDiveRequested=true;
-  else if(tiled&&!b.grounded&&Math.random()<.12+t.bravery*.12)b.aiDiveRequested=true;
- }
-}
-function updateSurvivalBots(dt){
- for(const b of allAliveBots()){
-  if(!b.group)continue;
-  b.hitCooldown=Math.max(0,b.hitCooldown-dt);b.bumpCooldown=Math.max(0,(b.bumpCooldown||0)-dt);
-  b.stunTimer=Math.max(0,(b.stunTimer||0)-dt);b.aiTimer-=dt;b.jumpNext-=dt;b.aiDiveCooldown=Math.max(0,(b.aiDiveCooldown||0)-dt);
-  updateGhost(b,dt);b.slimeEffectTimer=Math.max(0,(b.slimeEffectTimer||0)-dt);if(b.slimeEffectTimer<=0&&b._wasSlimeAffected){b._wasSlimeAffected=false;setGhostAppearance(b,false);}
-  b.diveTimer=Math.max(0,(b.diveTimer||0)-dt);b.diveBurstTimer=Math.max(0,(b.diveBurstTimer||0)-dt);b.diveRecovery=Math.max(0,(b.diveRecovery||0)-dt);
-  const p=b.group.position,t=b.traits||{awareness:.5,reaction:.3,bravery:.5};
-  if((b.ghostTimer||0)>0){b.vx=0;b.vz=3.0;b.vy=0;b.grounded=true;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.aiJumpRequested=false;b.aiDiveRequested=false;}
-  else if(b.slimeEffectTimer>0){const syaw=b.slimeHeadingYaw??b.group.rotation.y;b.vx=Math.sin(syaw)*2.8;b.vz=Math.cos(syaw)*2.8;b.vy=0;b.grounded=true;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;}
-  else if(b.stunTimer>0||b.stunPending){b.vx*=Math.exp(-2.5*dt);b.vz*=Math.exp(-2.5*dt);}
-  else{
-   if(b.aiTimer<=0)chooseSurvivalBotPlan(b);
-   const sp=b.aiSpeed||4.8,targetVx=b.aiX*sp,targetVz=b.aiZ*sp;
-   if(b.diveBurstTimer>0){b.vx*=Math.exp(-.28*dt);b.vz*=Math.exp(-.28*dt);}
-   else if(b.diveRecovery>0){b.vx=THREE.MathUtils.damp(b.vx,targetVx*.45,1.5,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz*.45,1.5,dt);}
-   else{b.vx=THREE.MathUtils.damp(b.vx,targetVx,2.5+t.reaction,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,2.5+t.reaction,dt);}
-   if(b.aiJumpRequested&&b.grounded){b.vy=7.0+(t.bravery||.5)*.8;b.grounded=false;b.jumpNext=2.2+Math.random()*2.4;b.aiJumpRequested=false;}
-   if(b.aiDiveRequested&&b.diveTimer<=0){
-    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),launch=recovering?2.6:10.8;
-    b.vx=faceX*launch+b.vx*.12;b.vz=faceZ*launch+b.vz*.12;b.vy=Math.max(b.vy,4.7);
-    b.diveTimer=.46;b.diveBurstTimer=.23;b.diveRecovery=.92;b.aiDiveCooldown=2.6+Math.random()*3.0;b.aiDiveRequested=false;
-   }
-  }
-  p.x+=b.vx*dt;p.z+=b.vz*dt;
-  b.vy-=22*dt;p.y+=b.vy*dt;
-  const wasGrounded=b.grounded,groundY=groundAt(p.x,p.z,p.y+(wasGrounded?.95:0));if(groundY!==null&&p.y<=groundY+.22&&b.vy<=0){p.y=groundY;b.vy=0;b.grounded=true;b.lastSafe={x:p.x,z:p.z,y:groundY};if(b.stunPending){b.stunPending=false;b.stunTimer=1.0;}}else b.grounded=false;
-  if(stageBounds.kind==='hex'&&b.grounded)touchTileAt(p.x,p.z,p.y);if(stageBounds.kind==='logic'&&b.grounded)touchTileAt(p.x,p.z,p.y);
-  if(currentRound?.mode==='tail'&&b.grounded)updateTailTagForActor(b);
-  if((b.ghostTimer||0)<=0&&stageBounds.kind!=='hex'&&stageBounds.kind!=='logic'){for(const o of obstacles)obstacleHit(b,o);}
-  if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
-  b.visual.rotation.x=b.stunTimer>0?1.25:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
-  if(p.y<(currentRound?.mode==='tail'?-3.4:(currentRound?.type==='rollout'?-3.25:currentRound?.type==='hex'?-6.45:-1.45))){if(currentRound?.mode==='tail')respawnFromFall(b,1.4);else eliminateActor(b,true);}
- }
- resolveBeanCollisions([player,...allAliveBots()],dt);
-}
-function finishSurvivalQualifier(){
- if(state!=='survival'||isFinalRound)return;
- const alive=[player,...allAliveBots()].filter(a=>a.alive&&a.group?.visible);
- let survivors;
- if(currentRound?.mode==='tail'){
-  survivors=alive.filter(a=>a.hasTail).sort((a,b)=>Number(b.isPlayer)-Number(a.isPlayer));
-  if(!survivors.includes(player)){state='between';finishEliminated('しっぽを取れなかった…','終了時にしっぽを持っていないため脱落！');return;}
-  if(survivors.length>finishTarget){survivors=survivors.slice(0,finishTarget);if(!survivors.includes(player)){survivors[survivors.length-1]=player;}}
- }else{
-  survivors=alive.slice().sort((a,b)=>{const pa=a.group.position,pb=b.group.position;const sa=(a.lastSafe?.y??0)*1.8-Math.hypot(pa.x,pa.z)*.025+(a.isPlayer ? .03 : 0);const sb=(b.lastSafe?.y??0)*1.8-Math.hypot(pb.x,pb.z)*.025+(b.isPlayer ? .03 : 0);return sb-sa;}).slice(0,finishTarget);
-  if(!survivors.includes(player)){state='between';finishEliminated(`予選${roundIndex+1}で脱落…`,'サバイバルラウンドを通過できなかった。');return;}
- }
- const ids=new Set(survivors.map(a=>a.id));bots.forEach(b=>{if(b.alive&&!ids.has(b.id)){b.alive=false;if(b.group)b.group.visible=false;}});
- showQualified(survivors,currentRound?.mode==='tail'?'しっぽを持って予選突破！':'サバイバル突破！');
-}
-function updateSurvival(dt){
- updateTiles(dt);updateSurvivalBots(dt);
- if(state!=='survival')return;
- if(currentRound?.type==='perfectMatch'){
-  if(logicCurrentTarget<0&&stageTime>=logicNextAt)beginLogicRound();
-  else if(logicCurrentTarget>=0&&stageTime>=logicPhaseEnd){logicCurrentTarget=-1;logicNextAt=stageTime+4.6;}
- }
- if(currentRound?.mode==='tail'){
-  updateTailTagForActor(player);
-  if(stageTime>=tailRoundTime){
-   if(isFinalRound)finishFinal(!!player.hasTail,player.hasTail?'時間切れ！しっぽを持っていた！':'時間切れ…しっぽを持っていなかった！');
-   else finishSurvivalQualifier();
-   return;
-  }
- }else if(!isFinalRound){
-  const aliveCount=(player.alive?1:0)+allAliveBots().length;
-  if(aliveCount<=finishTarget||stageTime>34){finishSurvivalQualifier();return;}
- }else{
-  if(allAliveBots().length===0)finishFinal(true,'最後まで生き残った！');
-  if(stageTime>90)finishFinal(true,'90秒間耐え抜いた！');
- }
-}
-function eliminateActor(actor,byFall){
- if(!actor||!actor.alive)return;
- actor.alive=false;if(actor.group)actor.group.visible=false;
- if(actor.isPlayer){
-  if(isFinalRound)finishFinal(false,byFall?'落ちて脱落…':'脱落…');
-  else {state='between';finishEliminated(byFall?'落下して脱落…':'脱落…',byFall?'サバイバルラウンドは落ちた時点で即脱落！':'次のラウンドでリベンジしよう！');}
- }else if(isFinalRound&&state==='survival'&&allAliveBots().length===0){finishFinal(true,'最後まで生き残った！');}
- else if(!isFinalRound&&state==='survival'&&currentRound?.mode!=='tail'&&((player.alive?1:0)+allAliveBots().length)<=finishTarget){finishSurvivalQualifier();}
-}
-function finishFinal(won,message){
- if(state==='result'||state==='menu')return;
- document.body.classList.remove('stick-active','ghost-back-mode','slime-back-mode');state='result';hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">${won?'CROWN WINNER':'GAME OVER'}</div><h1 class="logo-line">${won?'YOU <span>WIN!</span>':'ONE MORE <span>TRY!</span>'}</h1><h2>${won?'勝利！':'ゲーム終了'}</h2><p>${won?'最後まで勝ち残った！':'今回はここで終了。もう一度挑戦しよう。'}<br>また挑戦してクラウンをつかもう！</p><div class="pill-row"><span class="pill">自分を含め32人</span><span class="pill">ソロ用ラウンド</span><span class="pill">ファイナル</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
- $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
-}
-function finishEliminated(title,desc){
- document.body.classList.remove('stick-active');hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">ELIMINATED</div><h2>${title}</h2><p>${desc}</p><div class="pill-row"><span class="pill">挑戦ラウンド：${roundIndex+1} / 4</span><span class="pill">Botは毎回31体</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
- $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
-}
-function updateHud(force=false){
- if(!force&&stageTime-lastHud<.13)return;lastHud=stageTime;
- const remaining=state==='race'?bots.filter(b=>b.alive&&!b.finished).length+(player.alive&&!player.finished?1:0):allAliveBots().length+(player.alive?1:0);
- aliveNumberEl.textContent=`${remaining} 人`;
- $('#alive-caption').textContent=spectatorMode?'観戦中':'残り';
- const phase=state==='race'?(isFinalRace?'ファイナル':'予選'):state==='survival'?'ファイナル':'';
- if(state==='race'){
-  const progress=THREE.MathUtils.clamp((COURSE_START_Z-player.group.position.z)/(COURSE_START_Z-COURSE_FINISH_Z),0,1);
-  progressFill.style.width=`${(progress*100).toFixed(1)}%`;
-  progressLabel.textContent=spectatorMode?'観戦中':(isFinalRace?'クラウンへ！':'ゴールまで');
- }else if(state==='survival'){
-  progressFill.style.width=`${Math.max(0,100-stageTime/70*100)}%`;
-  progressLabel.textContent=currentRound?.mode==='tail'?`しっぽを持て！ ${Math.max(0,Math.ceil(tailRoundTime-stageTime))}秒`:`生き残り ${Math.floor(stageTime)}秒`;
- }
-}
-function updateCamera(dt){
- if(!player.group)return;
- let followed=player.group.position;
- if(spectatorMode&&state==='race'){
-  // Keep the chosen bean selected; switch only on a manual swipe or when it can no longer be watched.
-  if(!spectatorTarget||!spectatorTarget.alive||!spectatorTarget.group?.visible||spectatorTarget.finished){
-   const pool=bots.filter(b=>b.alive&&b.group&&b.group.visible&&!b.finished).sort((a,b)=>a.group.position.z-b.group.position.z);
-   spectatorTarget=pool[0]||bots.find(b=>b.group?.visible)||null;
-  }
-  if(spectatorTarget?.group)followed=spectatorTarget.group.position;
- }
- const p=followed;
- if(player.ghostTimer>0){cameraYaw=0;cameraPitch=0;}
- const angle=cameraYaw;
- if(state==='race'){
-  desiredCamera.set(p.x+Math.sin(angle)*9.5,Math.max(5.7,p.y+6.8+cameraPitch*6),p.z+Math.cos(angle)*9.5);
-  cameraLook.set(p.x-Math.sin(angle)*5.8,p.y+1.2-cameraPitch*3.8,p.z-Math.cos(angle)*5.8);
- }else if(state==='survival'){
-  desiredCamera.set(p.x+Math.sin(cameraYaw)*17,13+p.y*.2+cameraPitch*6,p.z+Math.cos(cameraYaw)*17);
-  cameraLook.set(p.x-Math.sin(cameraYaw)*1.5,.4-cameraPitch*3.8,p.z-Math.cos(cameraYaw)*1.5);
- }else{
-  desiredCamera.set(0,10,24);cameraLook.set(0,0,0);
- }
- camera.position.lerp(desiredCamera,1-Math.exp(-3.2*dt));camera.lookAt(cameraLook);
-}
-function tick(){requestAnimationFrame(tick);let dt=Math.min(clock.getDelta(),.04);
- if(countdownActive){
-  countdownRemaining-=dt;
-  countdownEl.textContent=countdownRemaining>.6?String(Math.min(3,Math.ceil(countdownRemaining-.6))):'GO!';
-  if(countdownRemaining<=0){countdownActive=false;countdownEl.style.display='none';input.jump=false;input.dive=false;toast('スタート！');}
- }else if(state==='race'){
-  stageTime+=dt;elapsed+=dt;updateObstacles(dt);getInput();controlPlayer(dt);updateRaceBots(dt);
-  if(state==='race'){
-   if(isFinalRace&&player.finished)finishFinal(true,'クラウンをつかんだ！');
-   updateHud();
-  }
- }else if(state==='survival'){
-  stageTime+=dt;elapsed+=dt;updateObstacles(dt);updateBlockWalls(dt);getInput();controlPlayer(dt);if(state==='survival')updateSurvival(dt);updateHud();
- }else if(state==='menu'){
-  // Slow camera drift while the title is displayed.
-  camera.position.x=Math.sin(performance.now()*.00015)*.5;camera.lookAt(0,0,0);
- }
- if(player.group&&player.group.visible&&player.grounded&&state!=='menu'){
-  const ring=player.group.userData.footRing;if(ring){ring.material.opacity=.3+Math.sin(performance.now()*.01)*.08;}
- }
- updateCamera(dt);renderer.render(scene,camera);
+  instance.on('progress', ({progress}) => {
+    if (operation === 'trim' && Number.isFinite(progress) && progress > 0) {
+      setProgress(Math.max(5,Math.min(95,6+progress*88)), '切り抜き中…', '映像・音声を再エンコードせずコピー中');
+    }
+  });
+  return instance;
 }
 
-window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.setSize(window.innerWidth,window.innerHeight);});
-for(const eventName of ['selectstart','contextmenu','dblclick'])document.addEventListener(eventName,e=>e.preventDefault(),{capture:true});
-for(const eventName of ['gesturestart','gesturechange','gestureend'])document.addEventListener(eventName,e=>e.preventDefault(),{passive:false});
-document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
-window.addEventListener('keydown',e=>{
- if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);
- if(e.code==='Space'&&!e.repeat)doJump();if(e.code==='ShiftLeft'||e.code==='ShiftRight'){if(!e.repeat)doDive();}
- if(state==='menu'&&e.code==='Enter')$('#start-btn')?.click();
-});
-window.addEventListener('keyup',e=>keys.delete(e.code));
-window.addEventListener('blur',()=>{keys.clear();input.jump=false;input.dive=false;});
-const stickBase=$('#stick-base'),stickKnob=$('#stick-knob'),stickZone=$('#stick-zone'),lookZone=$('#look-zone');
-function setStick(clientX,clientY){
- const r=stickBase.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
- let dx=clientX-cx,dy=clientY-cy;const max=43,d=Math.hypot(dx,dy);
- if(d>max){dx=dx/d*max;dy=dy/d*max;}
- joystick.x=dx/max;joystick.y=dy/max;
- stickKnob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+function withTimeout(promise, timeoutMs, errorMessage) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+    })
+  ]).finally(() => clearTimeout(timer));
 }
-function placeStickAt(clientX,clientY){
- const zr=stickZone.getBoundingClientRect();
- stickBase.style.left=(clientX-zr.left-66)+'px';stickBase.style.top=(clientY-zr.top-66)+'px';stickBase.style.bottom='auto';stickBase.style.transform='none';
-}
-function resetStickHome(){
- stickBase.style.removeProperty('left');stickBase.style.removeProperty('top');stickBase.style.removeProperty('bottom');stickBase.style.removeProperty('transform');
- stickKnob.style.transform='translate(-50%,-50%)';
-}
-stickZone.addEventListener('pointerdown',e=>{
- e.preventDefault();
- if(spectatorMode){spectatorSwipeId=e.pointerId;spectatorSwipeStartX=e.clientX;try{stickZone.setPointerCapture(e.pointerId);}catch{}return;}
- if(joystick.active)return;joystick.active=true;joystick.id=e.pointerId;document.body.classList.add('stick-active');
- try{stickZone.setPointerCapture(e.pointerId);}catch{}
- if((player.slimeEffectTimer||0)>0||(player.ghostTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;return;}
- placeStickAt(e.clientX,e.clientY);setStick(e.clientX,e.clientY);
-});
-stickZone.addEventListener('pointermove',e=>{
- if(spectatorMode&&spectatorSwipeId===e.pointerId){e.preventDefault();return;}
- if(joystick.active&&joystick.id===e.pointerId){e.preventDefault();if((player.slimeEffectTimer||0)>0||(player.ghostTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;}else setStick(e.clientX,e.clientY);}
-});
-function releaseStick(e){
- if(spectatorSwipeId!==null&&(e.pointerId===undefined||spectatorSwipeId===e.pointerId)){
-  if(e.type==='pointerup'){const dx=e.clientX-spectatorSwipeStartX;if(Math.abs(dx)>24)switchSpectatorTarget(dx<0?1:-1);}
-  spectatorSwipeId=null;return;
- }
- if(joystick.active&&(e.pointerId===undefined||joystick.id===e.pointerId)){joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;document.body.classList.remove('stick-active');resetStickHome();}
-}
-stickZone.addEventListener('pointerup',releaseStick);stickZone.addEventListener('pointercancel',releaseStick);stickZone.addEventListener('lostpointercapture',releaseStick);
-lookZone.addEventListener('pointerdown',e=>{
- if(!(state==='race'||state==='survival')||(player.ghostTimer||0)>0)return;
- e.preventDefault();lookPointer=e.pointerId;lookLastX=e.clientX;lookLastY=e.clientY;lookStartX=e.clientX;lookStartY=e.clientY;lookMoved=false;
- try{lookZone.setPointerCapture(e.pointerId);}catch{}
-});
-lookZone.addEventListener('pointermove',e=>{
- if(lookPointer!==e.pointerId)return;e.preventDefault();
- if((player.slimeEffectTimer||0)>0||(player.ghostTimer||0)>0)return;
- const dx=e.clientX-lookLastX,dy=e.clientY-lookLastY;lookLastX=e.clientX;lookLastY=e.clientY;
- if(Math.hypot(e.clientX-lookStartX,e.clientY-lookStartY)>10)lookMoved=true;
- cameraYaw-=dx*.0065;cameraYaw=((cameraYaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
- cameraPitch=THREE.MathUtils.clamp(cameraPitch+dy*.0045,-.55,.7);
-});
-function endLook(e){
- if(lookPointer===null||(e.pointerId!==undefined&&lookPointer!==e.pointerId))return;
- if(!lookMoved&&!countdownActive&&!spectatorMode&& (state==='race'||state==='survival')&&(player.slimeEffectTimer||0)<=0&&(player.ghostTimer||0)<=0&&player.stunTimer<=0&&!player.stunPending){if(player.grounded)doJump();else doDive();}
- lookPointer=null;
-}
-lookZone.addEventListener('pointerup',endLook);lookZone.addEventListener('pointercancel',()=>{lookPointer=null;});lookZone.addEventListener('lostpointercapture',()=>{lookPointer=null;});
 
-// A basic fallback for browsers without WebGL.
-if(!renderer.capabilities.isWebGL2&&!renderer.capabilities.isWebGL){setOverlay('<h2>このブラウザではゲームを起動できないみたい</h2><p>Chrome / Edge / Safariの最新版で開いてみてね。</p>');}
-showMenu();
+async function downloadBlobURL(url, mimeType, onProgress, timeoutMs = 45000, expectedBytes = 0) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {signal:controller.signal, cache:'force-cache'});
+    if (!response.ok) throw new Error(`HTTP ${response.status}（${url}）`);
+    const headerLength = Number(response.headers.get('content-length'));
+    const total = Number.isFinite(headerLength) && headerLength > 0 ? headerLength : expectedBytes;
+    let blob;
+    if (response.body && typeof response.body.getReader === 'function') {
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.byteLength;
+        if (onProgress) onProgress(total > 0 ? Math.min(100, received / total * 100) : 0, received, total);
+      }
+      blob = new Blob(chunks, {type:mimeType});
+    } else {
+      const data = await response.arrayBuffer();
+      if (onProgress) onProgress(100, data.byteLength, total || data.byteLength);
+      blob = new Blob([data], {type:mimeType});
+    }
+    if (!blob.size) throw new Error(`ダウンロードしたファイルが空だった（${url}）`);
+    if (onProgress) onProgress(100, blob.size, total || blob.size);
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    if (error && error.name === 'AbortError') {
+      throw new Error(`ダウンロードが時間切れになったよ：${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function createFFmpegWorkerURL() {
+  const workerSource = `
+const FFMessageType = {
+  LOAD: "LOAD", EXEC: "EXEC", FFPROBE: "FFPROBE", WRITE_FILE: "WRITE_FILE",
+  READ_FILE: "READ_FILE", DELETE_FILE: "DELETE_FILE", RENAME: "RENAME",
+  CREATE_DIR: "CREATE_DIR", LIST_DIR: "LIST_DIR", DELETE_DIR: "DELETE_DIR",
+  MOUNT: "MOUNT", UNMOUNT: "UNMOUNT", ERROR: "ERROR", LOG: "LOG", PROGRESS: "PROGRESS"
+};
+let ffmpeg = null;
+async function loadCore(config = {}) {
+  const coreURL = config.coreURL;
+  if (!coreURL) throw new Error("ffmpeg-core.js のURLが指定されていないよ。");
+  const imported = await import(coreURL);
+  const createCore = imported && imported.default;
+  if (typeof createCore !== "function") throw new Error("FFmpegコアの読み込みに失敗したよ（default export が見つからない）。");
+  const wasmURL = config.wasmURL || coreURL.replace(/\\.js(?:[?#].*)?$/i, ".wasm");
+  const workerURL = config.workerURL || coreURL.replace(/\\.js(?:[?#].*)?$/i, ".worker.js");
+  ffmpeg = await createCore({
+    mainScriptUrlOrBlob: coreURL + "#" + btoa(JSON.stringify({ wasmURL, workerURL }))
+  });
+  ffmpeg.setLogger(data => self.postMessage({ type: FFMessageType.LOG, data }));
+  ffmpeg.setProgress(data => self.postMessage({ type: FFMessageType.PROGRESS, data }));
+  return true;
+}
+function runExec(data) {
+  ffmpeg.setTimeout(Number.isFinite(data.timeout) ? data.timeout : -1);
+  ffmpeg.exec(...data.args);
+  const code = ffmpeg.ret;
+  ffmpeg.reset();
+  return code;
+}
+function runProbe(data) {
+  ffmpeg.setTimeout(Number.isFinite(data.timeout) ? data.timeout : -1);
+  ffmpeg.ffprobe(...data.args);
+  const code = ffmpeg.ret;
+  ffmpeg.reset();
+  return code;
+}
+function listDirectory(data) {
+  return ffmpeg.FS.readdir(data.path).map(name => {
+    const stat = ffmpeg.FS.stat(data.path.replace(/\\/$/, "") + "/" + name);
+    return { name, isDir: ffmpeg.FS.isDir(stat.mode) };
+  });
+}
+self.onmessage = async event => {
+  const message = event.data || {};
+  const id = message.id;
+  const type = message.type;
+  const input = message.data || {};
+  let result;
+  try {
+    if (type !== FFMessageType.LOAD && !ffmpeg) throw new Error("FFmpeg is not loaded.");
+    switch (type) {
+      case FFMessageType.LOAD:
+        result = await loadCore(input);
+        break;
+      case FFMessageType.EXEC:
+        result = runExec(input);
+        break;
+      case FFMessageType.FFPROBE:
+        result = runProbe(input);
+        break;
+      case FFMessageType.WRITE_FILE:
+        ffmpeg.FS.writeFile(input.path, input.data);
+        result = true;
+        break;
+      case FFMessageType.READ_FILE:
+        result = ffmpeg.FS.readFile(input.path, { encoding: input.encoding || "binary" });
+        break;
+      case FFMessageType.DELETE_FILE:
+        ffmpeg.FS.unlink(input.path);
+        result = true;
+        break;
+      case FFMessageType.RENAME:
+        ffmpeg.FS.rename(input.oldPath, input.newPath);
+        result = true;
+        break;
+      case FFMessageType.CREATE_DIR:
+        ffmpeg.FS.mkdir(input.path);
+        result = true;
+        break;
+      case FFMessageType.LIST_DIR:
+        result = listDirectory(input);
+        break;
+      case FFMessageType.DELETE_DIR:
+        ffmpeg.FS.rmdir(input.path);
+        result = true;
+        break;
+      case FFMessageType.MOUNT: {
+        const fs = ffmpeg.FS.filesystems[input.fsType];
+        if (!fs) throw new Error("指定されたファイルシステムは利用できないよ。");
+        ffmpeg.FS.mount(fs, input.options, input.mountPoint);
+        result = true;
+        break;
+      }
+      case FFMessageType.UNMOUNT:
+        ffmpeg.FS.unmount(input.mountPoint);
+        result = true;
+        break;
+      default:
+        throw new Error("unknown message type: " + String(type));
+    }
+    const transfers = result instanceof Uint8Array ? [result.buffer] : [];
+    self.postMessage({ id, type, data: result }, transfers);
+  } catch (error) {
+    self.postMessage({ id, type: FFMessageType.ERROR, data: error && error.stack ? error.stack : String(error) });
+  }
+};
+`;
+  return URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
+}
+
+async function ensureEngine() {
+  if (engineLoaded) return;
+  const sources = [
+    {name:'jsDelivr', base:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist'},
+    {name:'unpkg', base:'https://unpkg.com/@ffmpeg/core@0.12.10/dist'}
+  ];
+  const failures = [];
+  for (const source of sources) {
+    let wasmURL = null;
+    let coreURL = null;
+    let classWorkerURL = null;
+    try {
+      setProgress(4, '処理エンジンを読み込み中…', `${source.name} に接続中…`, true);
+      coreURL = await downloadBlobURL(
+        `${source.base}/esm/ffmpeg-core.js`,
+        'text/javascript',
+        (percent, received, total) => {
+          const detail = total > 0
+            ? `${source.name}：エンジン本体 ${humanSize(received)} / ${humanSize(total)}`
+            : `${source.name}：エンジン本体をダウンロード中…`;
+          setProgress(4 + percent * 0.04, '処理エンジンを準備中…', detail);
+        },
+        45000,
+        115000
+      );
+      wasmURL = await downloadBlobURL(
+        `${source.base}/esm/ffmpeg-core.wasm`,
+        'application/wasm',
+        (percent, received, total) => {
+          const detail = total > 0
+            ? `${source.name}：WASM本体 ${humanSize(received)} / ${humanSize(total)}`
+            : `${source.name}：WASM本体をダウンロード中…`;
+          setProgress(8 + percent * 0.44, '処理エンジンをダウンロード中…', detail);
+        },
+        90000,
+        32000000
+      );
+      classWorkerURL = createFFmpegWorkerURL();
+      setProgress(54, '処理エンジンを起動中…', 'ダウンロード完了。ブラウザ内でFFmpegを準備しているよ。', true);
+      ffmpeg = createFFmpegInstance();
+      await withTimeout(
+        ffmpeg.load({classWorkerURL, coreURL, wasmURL}),
+        60000,
+        '処理エンジンの起動が60秒で完了しなかったよ。ブラウザのWorker／WebAssembly制限、または配信元への接続を確認してね。'
+      );
+      engineLoaded = true;
+      if (classWorkerURL) { URL.revokeObjectURL(classWorkerURL); classWorkerURL = null; }
+      if (coreURL) { URL.revokeObjectURL(coreURL); coreURL = null; }
+      if (wasmURL) { URL.revokeObjectURL(wasmURL); wasmURL = null; }
+      setProgress(56, '処理エンジンの準備完了', '動画ファイルを読み込んでいるよ。');
+      return;
+    } catch (error) {
+      console.error(`${source.name} engine load failed:`, error);
+      failures.push(`${source.name}：${error && error.message ? error.message : String(error)}`);
+      if (ffmpeg) {
+        try { ffmpeg.terminate(); } catch (_) {}
+        ffmpeg = null;
+      }
+      if (classWorkerURL) URL.revokeObjectURL(classWorkerURL);
+      if (coreURL) URL.revokeObjectURL(coreURL);
+      if (wasmURL) URL.revokeObjectURL(wasmURL);
+      setProgress(4, '別の配信元を試しているよ…', failures[failures.length - 1], true);
+    }
+  }
+  const localHint = location.protocol === 'file:'
+    ? '\nPCでHTMLファイルを直接開いている場合は、HTTPSのWebサイト上から開いて試してね。'
+    : '';
+  throw new Error(`処理エンジンを読み込めなかったよ。ネット接続やブラウザの拡張機能によるブロックを確認して再試行してね。${localHint}\n${failures.join('\n')}`);
+}
+function updatePreviewPickState() {
+  const empty = !currentFile;
+  els.previewShell.classList.toggle('empty-pick', empty);
+  els.previewShell.setAttribute('role', empty ? 'button' : 'group');
+  els.previewShell.setAttribute('tabindex', empty ? '0' : '-1');
+  els.previewShell.setAttribute('aria-label', empty
+    ? 'タップして動画を選択。動画をドラッグ＆ドロップすると差し替え'
+    : 'プレビュー。動画をドラッグ＆ドロップすると差し替え');
+}
+
+async function loadSelectedFile(file) {
+  if (!file) return;
+  const previousInputName = currentInputName;
+  if (busy) {
+    alert('今の処理が終わってから、別のファイルを選んでね。');
+    return;
+  }
+  currentFile = file;
+  updatePreviewPickState();
+  currentExt = extFromName(file.name);
+  currentInputName = `input_media.${currentExt}`;
+  sourceDuration = NaN;
+  parsedFPS = NaN;
+  discoveredVideo = true;
+  nativePreviewAvailable = false;
+  nativePreviewFailed = false;
+  pendingPreview = null;
+  previewTicket++;
+  clearTimeout(previewTimer);
+  els.result.style.display = 'none';
+  els.fileMeta.style.display = 'flex';
+  els.fileName.textContent = file.name;
+  els.fileInfo.textContent = `${humanSize(file.size)} · .${currentExt}`;
+  setFileStatus('準備中');
+  els.previewEmpty.hidden = false;
+  els.previewEmpty.textContent = 'プレビューを準備中…';
+  els.video.hidden = true;
+  els.image.hidden = true;
+  els.cutButton.disabled = true;
+  if (currentObjectURL) URL.revokeObjectURL(currentObjectURL);
+  currentObjectURL = URL.createObjectURL(file);
+  els.video.removeAttribute('src');
+  els.video.load();
+  els.video.src = currentObjectURL;
+  els.video.load();
+  if (Number.isFinite(els.video.duration)) sourceDuration = els.video.duration;
+  updateSummary();
+  await prepareWithFFmpeg(file, previousInputName);
+}
+async function prepareWithFFmpeg(file, previousInputName = '') {
+  busy = true;
+  operation = 'prepare';
+  refreshHistoryButtons();
+  els.cutButton.disabled = true;
+  try {
+    await ensureEngine();
+    setProgress(56, 'ファイルをメモリに読み込み中…', `${humanSize(file.size)} をブラウザ内に読み込んでいるよ。`);
+    if (previousInputName && previousInputName !== currentInputName) { try { await ffmpeg.deleteFile(previousInputName); } catch (_) {} }
+    try { await ffmpeg.deleteFile(currentInputName); } catch (_) {}
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    await ffmpeg.writeFile(currentInputName, bytes);
+    setProgress(76, '動画情報を解析中…', '長さ・FPS・映像ストリームを確認中。');
+    const lines = [];
+    const logger = ({message}) => lines.push(message);
+    ffmpeg.on('log', logger);
+    try {
+      // FFmpeg prints stream metadata before returning a nonzero code because no output was supplied.
+      try { await ffmpeg.exec(['-hide_banner','-i',currentInputName]); } catch (_) {}
+    } finally {
+      ffmpeg.off('log', logger);
+    }
+    const logText = lines.join('\n');
+    const logDuration = durationFromLogs(logText);
+    const logFPS = fpsFromLogs(logText);
+    if (!Number.isFinite(sourceDuration) || sourceDuration <= 0) sourceDuration = logDuration;
+    if (Number.isFinite(logFPS) && logFPS > 0) {
+      parsedFPS = logFPS;
+      if (!userChangedFPS) els.fpsInput.value = String(Number(logFPS.toFixed(6)));
+      els.fpsStatus.textContent = `自動判定：${Number(logFPS.toFixed(3))} FPS`;
+      els.fpsStatus.style.color = 'var(--ok)';
+    } else {
+      els.fpsStatus.textContent = '判定できず（30 FPS仮）';
+      els.fpsStatus.style.color = 'var(--muted)';
+    }
+    discoveredVideo = /\bVideo:/i.test(logText);
+    if (!Number.isFinite(sourceDuration) || sourceDuration <= 0) {
+      throw new Error('動画の長さを読み取れなかったよ。このファイル形式は非対応かもしれない。');
+    }
+    if (!discoveredVideo) {
+      throw new Error('映像ストリームが見つからなかったよ。動画ファイルを選んでね。');
+    }
+    setFileStatus('準備完了','ok');
+    els.fileInfo.textContent = `${humanSize(file.size)} · ${fmtTime(sourceDuration)} · ${Number.isFinite(parsedFPS) ? parsedFPS.toFixed(3)+' FPS' : 'FPS未判定'}`;
+    finishProgress('準備完了', '切り抜きできるよ。');
+    syncAmountSlider(true);
+    replaceCurrentHistorySnapshot();
+    updateSummary();
+    if (nativePreviewAvailable) schedulePreview();
+    else schedulePreview();
+    setTimeout(() => { if (!busy) els.progressWrap.style.display = 'none'; }, 1500);
+  } catch (error) {
+    console.error(error);
+    setFileStatus('解析エラー','warn');
+    setProgress(100,'読み込みに失敗',error && error.message ? error.message : String(error));
+    els.cutSummary.innerHTML = `<span class="error">読み込みに失敗したよ。</span><div class="muted small" style="margin-top:5px">${escapeHTML(error && error.message ? error.message : String(error))}</div>`;
+    els.cutButton.disabled = true;
+  } finally {
+    operation = '';
+    busy = false;
+    updateSummary();
+    refreshHistoryButtons();
+    if (pendingPreview) pumpPreview();
+  }
+}
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      selectedSide,
+      amount: els.amount.value,
+      unit: els.unit.value,
+      fpsInput: els.fpsInput.value,
+      userChangedFPS,
+      outputMode: els.outputMode.value
+    }));
+  } catch (error) {
+    console.warn('設定を保存できなかったよ:', error);
+  }
+}
+function restoreSettings() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch (_) {}
+  if (!saved || typeof saved !== 'object') return;
+  if (saved.selectedSide === 'start' || saved.selectedSide === 'end') selectedSide = saved.selectedSide;
+  if (typeof saved.amount === 'string' && saved.amount.trim() !== '' && Number.isFinite(Number(saved.amount)) && Number(saved.amount) > 0) els.amount.value = saved.amount;
+  if (['frames','seconds','minutes','hours'].includes(saved.unit)) els.unit.value = saved.unit;
+  if (typeof saved.fpsInput === 'string' && Number.isFinite(Number(saved.fpsInput)) && Number(saved.fpsInput) > 0 && Number(saved.fpsInput) <= 1000) els.fpsInput.value = saved.fpsInput;
+  userChangedFPS = saved.userChangedFPS === true;
+  if (['download','share','quicklook'].includes(saved.outputMode)) els.outputMode.value = saved.outputMode;
+  const isStart = selectedSide === 'start';
+  els.fromStart.classList.toggle('active', isStart);
+  els.fromEnd.classList.toggle('active', !isStart);
+  els.fromStart.setAttribute('aria-pressed', String(isStart));
+  els.fromEnd.setAttribute('aria-pressed', String(!isStart));
+  els.amount.step = els.unit.value === 'frames' ? '1' : 'any';
+}
+function readSettingsSnapshot() {
+  return {
+    selectedSide,
+    amount: els.amount.value,
+    unit: els.unit.value,
+    fpsInput: els.fpsInput.value,
+    userChangedFPS,
+    outputMode: els.outputMode.value
+  };
+}
+function snapshotKey(snapshot) {
+  return JSON.stringify(snapshot);
+}
+function refreshHistoryButtons() {
+  const locked = busy && operation !== 'preview';
+  els.undoButton.disabled = locked || historyCursor <= 0;
+  els.redoButton.disabled = locked || historyCursor < 0 || historyCursor >= settingsHistory.length - 1;
+}
+function initializeHistory() {
+  settingsHistory = [readSettingsSnapshot()];
+  historyCursor = 0;
+  refreshHistoryButtons();
+}
+function commitHistory() {
+  if (applyingHistory) return;
+  const snapshot = readSettingsSnapshot();
+  if (historyCursor >= 0 && snapshotKey(settingsHistory[historyCursor]) === snapshotKey(snapshot)) {
+    refreshHistoryButtons();
+    return;
+  }
+  settingsHistory = settingsHistory.slice(0, historyCursor + 1);
+  settingsHistory.push(snapshot);
+  if (settingsHistory.length > 100) settingsHistory.shift();
+  historyCursor = settingsHistory.length - 1;
+  refreshHistoryButtons();
+}
+function replaceCurrentHistorySnapshot() {
+  if (historyCursor < 0) {
+    initializeHistory();
+    return;
+  }
+  settingsHistory[historyCursor] = readSettingsSnapshot();
+  refreshHistoryButtons();
+}
+function applyHistorySnapshot(snapshot) {
+  if (!snapshot) return;
+  applyingHistory = true;
+  selectedSide = snapshot.selectedSide === 'end' ? 'end' : 'start';
+  els.amount.value = snapshot.amount;
+  els.unit.value = ['frames','seconds','minutes','hours'].includes(snapshot.unit) ? snapshot.unit : 'seconds';
+  els.fpsInput.value = snapshot.fpsInput;
+  userChangedFPS = snapshot.userChangedFPS === true;
+  els.outputMode.value = ['download','share','quicklook'].includes(snapshot.outputMode) ? snapshot.outputMode : 'download';
+  const isStart = selectedSide === 'start';
+  els.fromStart.classList.toggle('active', isStart);
+  els.fromEnd.classList.toggle('active', !isStart);
+  els.fromStart.setAttribute('aria-pressed', String(isStart));
+  els.fromEnd.setAttribute('aria-pressed', String(!isStart));
+  els.amount.step = els.unit.value === 'frames' ? '1' : 'any';
+  if (userChangedFPS) {
+    els.fpsStatus.textContent = '手動設定';
+    els.fpsStatus.style.color = 'var(--cyan)';
+  } else if (Number.isFinite(parsedFPS) && parsedFPS > 0) {
+    els.fpsStatus.textContent = `自動判定：${Number(parsedFPS.toFixed(3))} FPS`;
+    els.fpsStatus.style.color = 'var(--ok)';
+  } else {
+    els.fpsStatus.textContent = '未解析（仮に30 FPS）';
+    els.fpsStatus.style.color = 'var(--muted)';
+  }
+  syncAmountSlider(true);
+  saveSettings();
+  applyingHistory = false;
+  updateSummary();
+  schedulePreview();
+  refreshHistoryButtons();
+}
+function undoSettings() {
+  if (historyCursor <= 0 || (busy && operation !== 'preview')) return;
+  historyCursor--;
+  applyHistorySnapshot(settingsHistory[historyCursor]);
+}
+function redoSettings() {
+  if (historyCursor < 0 || historyCursor >= settingsHistory.length - 1 || (busy && operation !== 'preview')) return;
+  historyCursor++;
+  applyHistorySnapshot(settingsHistory[historyCursor]);
+}
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function showOutputMessage(message, kind = 'muted') {
+  const status = document.createElement('div');
+  status.className = `${kind} small`;
+  status.style.marginTop = '6px';
+  status.textContent = message;
+  els.result.appendChild(status);
+}
+function showShareFallback(message) {
+  showOutputMessage(message, 'error');
+  if (!currentOutputBlob || !currentOutputName) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'secondary';
+  button.textContent = '動画を保存して共有する';
+  button.addEventListener('click', () => {
+    triggerDownload(currentOutputBlob, currentOutputName);
+    showOutputMessage('保存を開始したよ。iPhoneなら「ファイル」アプリ、PCならダウンロード先から動画を開いて共有してね。');
+  });
+  els.result.appendChild(button);
+}
+async function shareCurrentOutput() {
+  if (!currentOutputBlob || !currentOutputName) {
+    showOutputMessage('共有する出力ファイルがまだないよ。', 'error');
+    return;
+  }
+  if (typeof navigator.share !== 'function') {
+    showShareFallback('このページの開き方では共有シートを直接呼び出せないよ。保存してから端末の共有メニューを使ってね。');
+    return;
+  }
+  let file;
+  try {
+    file = new File([currentOutputBlob], currentOutputName, {
+      type: currentOutputBlob.type || 'application/octet-stream',
+      lastModified: Date.now()
+    });
+  } catch (error) {
+    showShareFallback('このブラウザでは共有用ファイルを作成できなかったよ。保存して共有メニューを使ってね。');
+    return;
+  }
+  if (typeof navigator.canShare === 'function') {
+    let filesSupported = false;
+    try { filesSupported = navigator.canShare({ files: [file] }); } catch (_) {}
+    if (!filesSupported) {
+      showShareFallback('このブラウザでは動画ファイルの直接共有に対応していないみたい。保存してから共有してね。');
+      return;
+    }
+  }
+  try {
+    // Invoke the share API directly from the button click while the user activation is active.
+    await navigator.share({ files: [file], title: currentOutputName });
+    showOutputMessage('共有シートを開いたよ。');
+  } catch (error) {
+    if (error && error.name === 'AbortError') {
+      showOutputMessage('共有をキャンセルしたよ。');
+    } else {
+      const message = error && error.message ? error.message : String(error);
+      showShareFallback(`共有シートを開けなかったよ（${message}）。保存してから端末の共有メニューを使ってね。`);
+    }
+  }
+}
+function showQuickLookInPage() {
+  if (!currentOutputURL || !currentOutputBlob) {
+    showOutputMessage('プレビューできる出力ファイルがまだないよ。', 'error');
+    return;
+  }
+  els.quicklookTitle.textContent = currentOutputName || 'クイックルック';
+  els.quicklookFileInfo.textContent = `${humanSize(currentOutputBlob.size)} · ${currentOutputBlob.type || '動画ファイル'}`;
+  els.quicklookVideo.pause();
+  els.quicklookVideo.src = currentOutputURL;
+  els.quicklookVideo.load();
+  els.quicklookDownload.href = currentOutputURL;
+  els.quicklookDownload.download = currentOutputName || 'video';
+  els.quicklookOverlay.hidden = false;
+}
+function openQuickLook() {
+  if (!currentOutputURL || !currentOutputBlob) {
+    showOutputMessage('プレビューできる出力ファイルがまだないよ。', 'error');
+    return;
+  }
+  // When a tab was opened synchronously from the Cut button, navigate that tab to the output.
+  // This avoids Safari blocking a new window after the asynchronous FFmpeg operation finishes.
+  if (outputViewerWindow && !outputViewerWindow.closed) {
+    try {
+      if (outputViewerWindow.location.href === 'about:blank') outputViewerWindow.location.replace(currentOutputURL);
+      outputViewerWindow.focus();
+      return;
+    } catch (_) {}
+  }
+  // On a direct user tap, try opening the actual output in the browser's native media viewer.
+  try {
+    const opened = window.open(currentOutputURL, '_blank');
+    if (opened) {
+      outputViewerWindow = opened;
+      return;
+    }
+  } catch (_) {}
+  // Popup-blocked browsers still get an in-page preview as a fallback.
+  showQuickLookInPage();
+}
+function closeQuickLook() {
+  els.quicklookVideo.pause();
+  els.quicklookOverlay.hidden = true;
+}
+function renderOutputResult(filename, blob, outputURL) {
+  const mode = els.outputMode.value;
+  currentOutputBlob = blob;
+  currentOutputName = filename;
+  els.result.style.display = 'block';
+  const linkHTML = `<div class="small" style="margin-top:4px"><a href="${outputURL}" download="${escapeHTML(filename)}">ファイルをもう一度保存</a></div>`;
+  if (mode === 'download') {
+    triggerDownload(blob, filename);
+    els.result.innerHTML = `<strong style="color:var(--ok)">✓ 切り抜き完了！</strong><div>${escapeHTML(filename)}（${humanSize(blob.size)}）</div>${linkHTML}`;
+  } else if (mode === 'share') {
+    els.result.innerHTML = `<strong style="color:var(--ok)">✓ 切り抜き完了！</strong><div>${escapeHTML(filename)}（${humanSize(blob.size)}）</div><button id="shareOutputButton" class="secondary" type="button">共有シートを開く（自動で開かない場合）</button>${linkHTML}`;
+    $('shareOutputButton').addEventListener('click', shareCurrentOutput);
+    // Try to open the native share sheet immediately when output generation finishes.
+    // Some browsers require a fresh user gesture and may reject this automatic attempt;
+    // shareCurrentOutput then leaves the manual share/save fallback visible.
+    void shareCurrentOutput();
+  } else {
+    els.result.innerHTML = `<strong style="color:var(--ok)">✓ 切り抜き完了！</strong><div>${escapeHTML(filename)}（${humanSize(blob.size)}）</div><button id="quicklookOutputButton" class="secondary" type="button">クイックルックで開く</button>${linkHTML}`;
+    $('quicklookOutputButton').addEventListener('click', openQuickLook);
+    if (outputViewerWindow && !outputViewerWindow.closed) {
+      try { outputViewerWindow.location.replace(outputURL); } catch (_) { showQuickLookInPage(); }
+    } else {
+      // Native Quick Look cannot be invoked directly from a standalone HTML file.
+      // Use the built-in preview immediately when the browser blocked the reserved tab.
+      showQuickLookInPage();
+    }
+  }
+}
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+async function performCut() {
+  const info = getCutInfo();
+  if (!currentFile || !engineLoaded || !info.validCount || !info.validDuration || info.tooLong || busy) return;
+  if (!discoveredVideo) { alert('映像ストリームが見つからないため、切り抜けないよ。'); return; }
+  outputViewerWindow = null;
+  if (els.outputMode.value === 'quicklook') {
+    // Open a blank tab during the user's tap. Safari can block window.open after FFmpeg finishes.
+    try {
+      outputViewerWindow = window.open('about:blank', '_blank');
+      if (outputViewerWindow) {
+        outputViewerWindow.document.open();
+        outputViewerWindow.document.write('<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>クイックルック</title><body style="margin:0;background:#080b11;color:#edf3fc;font:16px system-ui;display:grid;place-items:center;min-height:100vh"><p>切り抜き処理中… 完了したら動画を開くよ。</p></body></html>');
+        outputViewerWindow.document.close();
+      }
+    } catch (_) { outputViewerWindow = null; }
+  }
+  busy = true;
+  operation = 'trim';
+  refreshHistoryButtons();
+  currentCut = {start:info.start,duration:info.cutDuration};
+  els.cutButton.disabled = true;
+  refreshHistoryButtons();
+  setProgress(5,'切り抜き中…','映像・音声を再エンコードせずコピー中',true);
+  els.result.style.display = 'none';
+  try {
+    const outName = `cut_output_${Date.now()}.${currentExt}`;
+    const args = ['-hide_banner'];
+    if (info.start > 0.001) args.push('-ss',info.start.toFixed(6));
+    args.push('-i',currentInputName,'-t',info.cutDuration.toFixed(6),'-map','0','-c','copy','-y');
+    if (['mp4','mov','m4v'].includes(currentExt)) args.push('-movflags','+faststart');
+    args.push(outName);
+    let code = await ffmpeg.exec(args);
+    if (code !== 0) {
+      // A container can contain auxiliary streams that are not supported in the chosen output muxer.
+      // Retry while preserving all video/audio streams, without re-encoding them.
+      try { await ffmpeg.deleteFile(outName); } catch (_) {}
+      const retry = ['-hide_banner'];
+      if (info.start > 0.001) retry.push('-ss',info.start.toFixed(6));
+      retry.push('-i',currentInputName,'-t',info.cutDuration.toFixed(6),'-map','0:v?','-map','0:a?','-c','copy','-y');
+      if (['mp4','mov','m4v'].includes(currentExt)) retry.push('-movflags','+faststart');
+      retry.push(outName);
+      setProgress(9,'出力形式を調整して再試行中…','映像・音声は引き続き再エンコードなし');
+      code = await ffmpeg.exec(retry);
+    }
+    if (code !== 0) throw new Error('FFmpegが切り抜きを完了できなかったよ。非対応コーデック／コンテナの可能性がある。');
+    setProgress(96,'切り抜き完了。ファイルを準備中…','出力ファイルをダウンロード用に準備しているよ。');
+    const data = await ffmpeg.readFile(outName);
+    const mime = currentFile.type || ({mp4:'video/mp4',mov:'video/quicktime',webm:'video/webm',mkv:'video/x-matroska',avi:'video/x-msvideo',m4v:'video/mp4',ogv:'video/ogg'}[currentExt] || 'application/octet-stream');
+    const blob = new Blob([data],{type:mime});
+    try { await ffmpeg.deleteFile(outName); } catch (_) {}
+    const base = currentFile.name.replace(/\.[^.]+$/,'') || 'video';
+    const suffix = selectedSide === 'start' ? 'from-start' : 'from-end';
+    const outputName = `${base}_cut-${suffix}.${currentExt}`;
+    if (currentOutputURL) URL.revokeObjectURL(currentOutputURL);
+    currentOutputURL = URL.createObjectURL(blob);
+    renderOutputResult(outputName, blob, currentOutputURL);
+    finishProgress('完了！',`${outputName} · ${humanSize(blob.size)} · 再エンコードなし`);
+  } catch (error) {
+    console.error(error);
+    setProgress(100,'切り抜きに失敗',error && error.message ? error.message : String(error));
+    els.result.style.display = 'block';
+    els.result.innerHTML = `<strong style="color:var(--danger)">切り抜きに失敗したよ</strong><div class="small" style="margin-top:5px">${escapeHTML(error && error.message ? error.message : String(error))}</div><div class="muted small" style="margin-top:5px">別のコンテナ形式や、ファイルサイズが小さい動画で試してみてね。</div>`;
+  } finally {
+    operation = '';
+    busy = false;
+    refreshHistoryButtons();
+    updateSummary();
+    if (pendingPreview) pumpPreview();
+    setTimeout(() => { if (!busy) els.progressWrap.style.display = 'none'; }, 4500);
+  }
+}
+
+restoreSettings();
+syncAmountSlider(true);
+updatePreviewPickState();
+initializeHistory();
+els.dropzone.addEventListener('click', () => els.fileInput.click());
+els.dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); els.fileInput.click(); } });
+els.fileInput.addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if (file) loadSelectedFile(file); });
+els.dropzone.addEventListener('dragover', e => { e.preventDefault(); els.dropzone.classList.add('drag'); });
+els.dropzone.addEventListener('dragleave', () => els.dropzone.classList.remove('drag'));
+els.dropzone.addEventListener('drop', e => { e.preventDefault(); els.dropzone.classList.remove('drag'); const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (file) loadSelectedFile(file); });
+els.previewShell.addEventListener('click', e => {
+  if (currentFile) return;
+  if (e.target.closest('video')) return;
+  els.fileInput.click();
+});
+els.previewShell.addEventListener('keydown', e => {
+  if (currentFile) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    els.fileInput.click();
+  }
+});
+els.previewShell.addEventListener('dragover', e => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  els.previewShell.classList.add('drag');
+});
+els.previewShell.addEventListener('dragleave', e => {
+  if (!els.previewShell.contains(e.relatedTarget)) els.previewShell.classList.remove('drag');
+});
+els.previewShell.addEventListener('drop', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  els.previewShell.classList.remove('drag');
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) loadSelectedFile(file);
+});
+els.fromStart.addEventListener('click', () => { selectedSide='start'; els.fromStart.classList.add('active'); els.fromEnd.classList.remove('active'); els.fromStart.setAttribute('aria-pressed','true'); els.fromEnd.setAttribute('aria-pressed','false'); saveSettings(); commitHistory(); schedulePreview(); });
+els.fromEnd.addEventListener('click', () => { selectedSide='end'; els.fromEnd.classList.add('active'); els.fromStart.classList.remove('active'); els.fromEnd.setAttribute('aria-pressed','true'); els.fromStart.setAttribute('aria-pressed','false'); saveSettings(); commitHistory(); schedulePreview(); });
+els.amount.addEventListener('input', () => { syncAmountSlider(true); saveSettings(); schedulePreview(); });
+els.amount.addEventListener('change', () => { syncAmountSlider(true); saveSettings(); commitHistory(); schedulePreview(); });
+els.amountSlider.addEventListener('input', () => {
+  const value = Number(els.amountSlider.value);
+  const safeValue = Math.max(1, value);
+  els.amount.value = els.unit.value === 'frames' ? String(Math.round(safeValue)) : String(Number(safeValue.toFixed(2))); 
+  saveSettings();
+  schedulePreview();
+});
+els.amountSlider.addEventListener('change', () => { syncAmountSlider(true); saveSettings(); commitHistory(); schedulePreview(); });
+els.unit.addEventListener('change', () => { els.amount.step = els.unit.value === 'frames' ? '1' : 'any'; syncAmountSlider(true); saveSettings(); commitHistory(); schedulePreview(); });
+els.fpsInput.addEventListener('input', () => { userChangedFPS=true; els.fpsStatus.textContent='手動設定'; els.fpsStatus.style.color='var(--cyan)'; syncAmountSlider(true); saveSettings(); schedulePreview(); });
+els.fpsInput.addEventListener('change', commitHistory);
+els.outputMode.addEventListener('change', () => { saveSettings(); commitHistory(); });
+els.cutButton.addEventListener('click', performCut);
+els.undoButton.addEventListener('click', undoSettings);
+els.redoButton.addEventListener('click', redoSettings);
+els.infoButton.addEventListener('click', () => { els.infoOverlay.hidden = false; });
+els.infoClose.addEventListener('click', () => { els.infoOverlay.hidden = true; });
+els.infoOverlay.addEventListener('click', e => { if (e.target === els.infoOverlay) els.infoOverlay.hidden = true; });
+els.quicklookClose.addEventListener('click', closeQuickLook);
+els.quicklookOverlay.addEventListener('click', e => { if (e.target === els.quicklookOverlay) closeQuickLook(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { els.infoOverlay.hidden = true; closeQuickLook(); } });
+els.video.addEventListener('loadedmetadata', () => {
+  if (Number.isFinite(els.video.duration) && els.video.duration > 0) {
+    nativePreviewAvailable = true;
+    nativePreviewFailed = false;
+    if (!Number.isFinite(sourceDuration) || sourceDuration <= 0) sourceDuration = els.video.duration;
+    els.video.hidden = false;
+    els.image.hidden = true;
+    els.previewEmpty.hidden = true;
+    syncAmountSlider(true);
+    updateSummary();
+    schedulePreview();
+  }
+});
+els.video.addEventListener('error', () => {
+  nativePreviewAvailable = false;
+  nativePreviewFailed = true;
+  els.video.hidden = true;
+  els.image.hidden = true;
+  if (currentFile) {
+    els.previewEmpty.hidden = false;
+    els.previewEmpty.textContent = 'この形式はブラウザで直接再生できないため、静止画プレビューを試しているよ…';
+    schedulePreview();
+  }
+});
+els.video.addEventListener('seeked', () => {
+  // Keeping the timestamp derived from the requested cut avoids jitter from browser-specific seeking.
+});
+
+updateSummary();
 </script>
 </body>
 </html>
