@@ -123,20 +123,33 @@ const clock=new THREE.Clock();
 const COURSE_START_Z=54.5, COURSE_FINISH_Z=-68.7;
 
 const raceRounds=[
- {id:'slime',name:'スライム・ラン',desc:'動く障害物をかわしてゴールへ！',type:'mover'},
- {id:'spin',name:'スピン・ラッシュ',desc:'回転バーのタイミングを見切れ！',type:'beam'},
- {id:'hammer',name:'ハンマー・アレー',desc:'巨大ハンマーに飛ばされるな！',type:'hammer'},
- {id:'balls',name:'ボール・ラン',desc:'横切るボールをよけて進め！',type:'ball'},
- {id:'pipes',name:'パイプ・スプリント',desc:'低い障害物はジャンプで越えろ！',type:'barrier'},
- {id:'walls',name:'ウォール・バウンス',desc:'壁のすき間を見つけて突破！',type:'wall'},
- {id:'mix',name:'カオス・コース',desc:'いろいろな障害物が待っている！',type:'mix'},
- {id:'turns',name:'ターン・トライアル',desc:'曲がり角で方向転換しながらゴールへ！',type:'curve'}
+ {id:'dizzy-heights',name:'ディジー・ハイツ',desc:'回転する足場とボールを越えてゴールへ！',type:'race'},
+ {id:'door-dash',name:'ドアダッシュ',desc:'本物のドアを見つけて突き破れ！',type:'race'},
+ {id:'fruit-chute',name:'フルーツパニック',desc:'斜面の足場を進み、飛んでくるフルーツを避けろ！',type:'race'},
+ {id:'gate-crash',name:'ゲートクラッシュ',desc:'上下するゲートの隙間を通り抜けろ！',type:'race'},
+ {id:'hit-parade',name:'ヒットパレード',desc:'振り子と回転障害物を抜けて進め！',type:'race'},
+ {id:'see-saw',name:'シーソーゲーム',desc:'傾くシーソーを渡ってゴールを目指せ！',type:'race',path:'s'},
+ {id:'slime-climb',name:'スライム・クライム',desc:'細い足場と押し出す障害物を越えて登れ！',type:'race'},
+ {id:'tip-toe',name:'ヒヤヒヤロード',desc:'正しい足場を探りながら進め！',type:'race'},
+ {id:'whirlygig',name:'ぐるぐるファイト',desc:'巨大な風車と回転バーを突破しろ！',type:'race'},
+ {id:'block-party',name:'ブロックパーティー',desc:'迫りくる壁の隙間を見つけて進め！',type:'race'},
+ {id:'jump-club',name:'ジャンプクラブ',desc:'回転するバーを跳び越えてゴールへ！',type:'race'},
+ {id:'roll-out',name:'ロールアウト',desc:'回転する足場の上でバランスを取れ！',type:'race'},
+ {id:'tail-tag',name:'しっぽオニ',desc:'入り組んだ足場を駆け抜けろ！',type:'race'},
+ {id:'perfect-match',name:'パーフェクトマッチ',desc:'模様のある足場を渡って進め！',type:'race'},
+ {id:'egg-scramble',name:'エッグ・スクランブル',desc:'卵が散らばるバスケットアリーナを駆け抜けろ！',type:'race'},
+ {id:'fall-ball',name:'フォールボール',desc:'巨大なボールが転がる競技場を突破しろ！',type:'race'},
+ {id:'hoarders',name:'ためこみ合戦',desc:'ボールが行き交う3つのエリアを進め！',type:'race'},
+ {id:'hoopsie-daisy',name:'フープ・ループ・ゴール',desc:'リングが並ぶ浮島を渡って進め！',type:'race'},
+ {id:'jinxed',name:'バッドラック',desc:'ピンクのスライム障害物を避けろ！',type:'race'},
+ {id:'rock-n-roll',name:'ロックンロール',desc:'巨大なボールが待つ坂道を下れ！',type:'race'},
+ {id:'team-tail-tag',name:'チームしっぽオニ',desc:'チームカラーの足場を渡り切れ！',type:'race'}
 ];
 const finalRounds=[
- {id:'jump',name:'ジャンプ・ショーダウン',desc:'回転するバーを避けて最後まで生き残れ！',type:'jump'},
- {id:'hex',name:'ヘキサゴン・サバイバル',desc:'踏んだタイルは消える。足場を探せ！',type:'hex'},
- {id:'block',name:'ブロック・パーティー',desc:'迫ってくる壁を避けて生き残れ！',type:'block'},
- {id:'crown',name:'クラウン・ターンマウンテン',desc:'急カーブを抜け、ジャンプしてクラウンに触れ！',type:'crown'}
+ {id:'fall-mountain',name:'フォールマウンテン',desc:'障害物を越え、最後にクラウンへジャンプ！',type:'crown'},
+ {id:'hex-a-gone',name:'止まるなキケン',desc:'消えていく六角形の足場で最後まで生き残れ！',type:'hex'},
+ {id:'jump-showdown',name:'ジャンプ・ショーダウン',desc:'回転する2本のバーを避けて最後まで生き残れ！',type:'jump'},
+ {id:'royal-fumble',name:'ロイヤルファンブル',desc:'浮島のアリーナで最後まで生き残れ！',type:'royal'}
 ];
 const QUALIFY=[24,16,8];
 const COLORS=[0xff6688,0x35d6d0,0xffc94e,0x9b7bff,0x79e05b,0xff8c42,0x56a8ff,0xf17dce,0xffe9a5,0x76f1a0,0xd8ecff,0xb4a2ff];
@@ -147,7 +160,7 @@ let spectatorMode=false, crownTarget=null, spectatorTarget=null, spectatorTarget
 let countdownActive=false,countdownRemaining=0,countdownTargetState='race';
 let cameraYaw=0,cameraPitch=0,lookPointer=null,lookLastX=0,lookLastY=0,lookStartX=0,lookStartY=0,lookMoved=false;
 let elapsed=0, stageTime=0, finishTarget=24, finishers=0, survivalElimTimer=6.2, lastHud=0;
-let obstacles=[], tiles=[], tileMap=new Map(), stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
+let obstacles=[], tiles=[], tileMap=new Map(), platforms=[], stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
 let joystick={active:false,id:null,x:0,y:0,backHeld:false};
 let cameraLook=new THREE.Vector3(0,0,0), desiredCamera=new THREE.Vector3();
 
@@ -158,7 +171,7 @@ function box(parent,w,h,d,color,x,y,z,extra={}){
 }
 function sphere(parent,r,color,x,y,z,segments=14){const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,Math.max(8,Math.floor(segments*.7))),mat(color,.55));m.position.set(x,y,z);parent.add(m);return m;}
 function addWorld(mesh){world.add(mesh);return mesh;}
-function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();worldActors=[];crownTarget=null;}
+function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();platforms=[];worldActors=[];crownTarget=null;}
 function makeBean(actor){
  const group=new THREE.Group();
  const visual=new THREE.Group();visual.position.y=1.02;group.add(visual);
@@ -175,7 +188,7 @@ function makeBean(actor){
  world.add(group);return group;
 }
 function resetActorForRound(actor,x,z){
- actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.slimeHeadingYaw=0;actor.visual.rotation.set(0,0,0);actor.group.visible=true;
+ actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.slimeHeadingYaw=0;actor.visual.rotation.set(0,0,0);actor.group.visible=true;actor.lastGroundX=x;actor.lastGroundY=0;actor.lastGroundZ=z;
 }
 function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 function pickGameRounds(){chosenRaces=shuffle(raceRounds).slice(0,3);chosenFinal=finalRounds[Math.floor(Math.random()*finalRounds.length)];}
@@ -187,7 +200,7 @@ function courseCenterX(z){
   if(rz>=-42.1)return 10*smooth((-36.2-rz)/5.9);
   return 10;
  }
- if(currentRound?.type!=='curve')return 0;
+ if(currentRound?.type!=='curve'&&currentRound?.path!=='s')return 0;
  if(rz>=15)return 0;
  if(rz>=7)return 0;
  if(rz>=1)return 7*smooth((7-rz)/6);
@@ -214,90 +227,215 @@ function toast(text){toastEl.textContent=text;toastEl.classList.add('show');clea
 function showMenu(){document.body.classList.remove('stick-active');state='menu';spectatorMode=false;spectatorTarget=null;document.body.classList.remove('spectating');countdownActive=false;countdownEl.style.display='none';hud.style.display='none';$('#touch-controls').style.display='none';overlay.style.display='flex';setOverlay(`<div class="eyebrow">FALL PARTY RACE</div><h1 class="logo-line">BEAN <span>BATTLE</span></h1><p>32体のBotと勝ち抜け！ ランダムに選ばれる3つの予選を突破して、ファイナルでクラウンをつかもう。</p><div class="pill-row"><span class="pill">ランダムコース</span><span class="pill">ジャンプ＆ダイブ</span><span class="pill">全4ラウンド</span><span class="pill">毎回ランダム選出</span></div><div class="rules"><div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div><div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div><div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div><div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div></div><p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p><button id="start-btn" class="main-btn">ゲームスタート！</button>`);
  $('#start-btn').addEventListener('click',startGame,{once:true});
 }
-function buildCourse(stage){
- newWorld();stageBounds={kind:'race'};
- const length=145, centerZ=-6.5, isCrown=stage.type==='crown', isCurved=stage.type==='curve'||isCrown;
- if(!isCurved){
-  box(world,23,.9,length,0x4b60a3,0,-.5,centerZ);
-  box(world,21.5,.045,length,0x6178bf,0,-.025,centerZ);
-  for(let z=61;z>=-73;z-=5){box(world,21.35,.025,.18,(Math.round(z/5)%2===0)?0x8fe9f0:0x8aa5ed,0,.012,z);}
-  box(world,.42,.85,length,0x263b7c,-11.38,.32,centerZ);box(world,.42,.85,length,0x263b7c,11.38,.32,centerZ);
-  for(const side of [-1,1])for(let z=59;z>-71;z-=8){box(world,.55,2.4,.55,side<0?0xff83c4:0x62f0e8,side*11.05,1.1,z);}
+function addFooting(x,z,w,d,color=0x6178bf,yaw=0,topY=0,options={}){
+ const thickness=options.thickness??.62;
+ let mesh;
+ if(options.shape==='round'){
+  mesh=new THREE.Mesh(new THREE.CylinderGeometry(Math.min(w,d)/2,Math.min(w,d)/2,thickness,24),mat(color,.68));
+  mesh.position.set(x,topY-thickness/2,z);mesh.rotation.y=yaw;world.add(mesh);
+ }else if(options.shape==='hex'){
+  mesh=new THREE.Mesh(new THREE.CylinderGeometry(Math.min(w,d)/2,Math.min(w,d)/2,thickness,6),mat(color,.68));
+  mesh.position.set(x,topY-thickness/2,z);mesh.rotation.y=yaw;world.add(mesh);
  }else{
-  // Overlapped slabs follow the extended sharp-turn route, avoiding holes at corners.
-  for(let z=64;z>-75;z-=1.15){
-   const step=1.15,mid=z-step/2,yaw=courseYawAt(mid),cx=courseCenterX(mid),slabDepth=3.7;
-   box(world,23,.9,slabDepth,0x4b60a3,cx,-.5,mid,{rotationY:yaw});
-   box(world,21.5,.045,slabDepth-.05,0x6178bf,cx,-.025,mid,{rotationY:yaw});
-   if(Math.round(mid/5)%2===0)box(world,21.35,.025,.22,0x8fe9f0,cx,.012,mid,{rotationY:yaw});
-   for(const side of [-1,1]){
-    const edge=courseSidePoint(mid,side*11.38);
-    box(world,.42,.85,slabDepth+.05,0x263b7c,edge.x,.32,edge.z,{rotationY:yaw});
-    if(Math.abs(Math.round(mid))%8<2){const post=courseSidePoint(mid,side*11.05);box(world,.55,2.4,.55,side<0?0xff83c4:0x62f0e8,post.x,1.1,post.z,{rotationY:yaw});}
-   }
-  }
+  mesh=box(world,w,thickness,d,color,x,topY-thickness/2,z,{rotationY:yaw});
  }
- const startZ=COURSE_START_Z-.6, finishZ=COURSE_FINISH_Z;
- const startLine=courseSidePoint(startZ,0),finishLine=courseSidePoint(finishZ,0);
- box(world,21.2,.04,.7,0xfbf1a1,startLine.x,.035,startLine.z,{rotationY:startLine.yaw});
- box(world,21.2,.05,.8,0xffdf59,finishLine.x,.04,finishLine.z,{rotationY:finishLine.yaw});
- for(let lateral=-9.5;lateral<=9.5;lateral+=1.9){const q=courseSidePoint(finishZ,lateral);box(world,.75,.055,.82,0xffffff,q.x,.075,q.z,{rotationY:q.yaw});}
- // Finish arch and crown are aligned to the actual end of the longer track.
- const crownZ=finishZ+.25,finishYaw=courseYawAt(crownZ),finishCX=courseCenterX(crownZ);
- const archL=courseSidePoint(crownZ,-9.5),archR=courseSidePoint(crownZ,9.5);
- box(world,.55,4.2,.55,0xffcf4f,archL.x,2.05,archL.z,{rotationY:finishYaw});box(world,.55,4.2,.55,0xffcf4f,archR.x,2.05,archR.z,{rotationY:finishYaw});box(world,19.5,.5,.65,0xffcf4f,finishCX,4.1,crownZ,{rotationY:finishYaw});
- const crownY=isCrown?3.05:4.9;
- const crown=new THREE.Mesh(new THREE.TorusGeometry(.78,.2,8,20),mat(0xffef75,.3,.45));crown.position.set(finishCX,crownY,crownZ);world.add(crown);crown.rotation.x=Math.PI/2;
- if(isCrown)crownTarget=new THREE.Vector3(finishCX,crownY,crownZ);
- // Long, varied obstacle sequences: each course has its own rhythm and hazard mix.
- for(let i=0;i<24;i++){
-  const z=50-i*5.2,colors=[0xff6ab0,0x66f3e4,0xffd85a,0x9a8aff];
-  for(const side of [-1,1]){
-   const polePoint=courseSidePoint(z,side*13),flagPoint=courseSidePoint(z,side*12.65);
-   box(world,.13,2.8,.13,0xf4f7ff,polePoint.x,1.4,polePoint.z,{rotationY:polePoint.yaw});
-   box(world,1.35,.7,.12,colors[(i+(side===1?1:0))%colors.length],flagPoint.x,2.35,flagPoint.z,{rotationY:flagPoint.yaw+side*-.1});
-  }
- }
- const zones=isCrown?[45,35,25,15,5,-5,-15,-25,-35,-44,-51,-57,-61,-64]:[44,32,20,8,-4,-16,-28,-40,-50,-59,-63];
- const patterns={
-  slime:['slime','barrier','slime','ball','mover','wall','slime','beam','slime','hammer','barrier'],
-  spin:['beam','barrier','beam','mover','beam','hammer','beam','wall','beam','ball','beam'],
-  hammer:['hammer','barrier','hammer','ball','mover','hammer','wall','hammer','beam','hammer','barrier'],
-  balls:['ball','mover','barrier','ball','wall','ball','beam','ball','hammer','mover','ball'],
-  pipes:['barrier','beam','barrier','mover','barrier','hammer','barrier','ball','wall','barrier','beam'],
-  walls:['wall','mover','wall','barrier','wall','beam','wall','ball','hammer','wall','mover'],
-  mix:['mover','beam','ball','barrier','wall','hammer','slime','beam','ball','wall','mover'],
-  turns:['mover','barrier','beam','wall','ball','hammer','slime','barrier','beam','mover','wall']
- };
- const crownPattern=['hammer','mover','beam','ball','wall','barrier','hammer','mover','beam','ball','wall','hammer','barrier','beam'];
- const pattern=isCrown?crownPattern:(patterns[stage.id]||patterns.mix);
- zones.forEach((z,i)=>{
-  const kind=pattern[i%pattern.length],before=obstacles.length;
-  if(kind==='mover'||kind==='slime')addMover(z,3.2+(i%3)*.55,1.9,1.25,1.15+(i%4)*.18,7.3,(i%2)*Math.PI,kind);
-  else if(kind==='beam')addRotatingBeam(z,22,1.0+(i%3)*.22,.88,0x55f4e5,(i%2)*.75);
-  else if(kind==='hammer')addHammer(z,i);
-  else if(kind==='ball')addRollingBall(z,1.05,1.0+(i%3)*.16,7.4,(i%2)*Math.PI);
-  else if(kind==='barrier')addBarrierSet(z,i);
-  else if(kind==='wall')addWallGate(z,i);
-  if(isCrown){for(const o of obstacles.slice(before)){if(typeof o.speed==='number')o.speed*=1.22;if(typeof o.amp==='number')o.amp*=1.15;}}
-  const offset=courseCenterX(z);
-  for(const o of obstacles.slice(before)){
-   if(o.kind==='mover'||o.kind==='slime'||o.kind==='ball'){
-    o.centerX=offset;o.centerZ=z;o.centerYaw=courseYawAt(z);o.z=z;o.x=0;
-    o.mesh.position.x=offset;o.mesh.position.z=z;
-    if(o.cap){o.cap.position.x=offset;o.cap.position.z=z;}
-   }else{
-    const yaw=courseYawAt(z),localX=o.mesh.position.x;
-    o.mesh.position.x=offset+localX*Math.cos(yaw);o.mesh.position.z=z-localX*Math.sin(yaw);o.z=o.mesh.position.z;
-    if(typeof o.x==='number')o.x=o.mesh.position.x;
-    if(o.kind==='beam'||o.kind==='hammer')o.mesh.rotation.y+=yaw;
-    else if(o.kind==='barrier'||o.kind==='wallblock')o.mesh.rotation.y=yaw;
-   }
+ if(options.tiltZ)mesh.rotation.z=options.tiltZ;
+ if(options.tiltX)mesh.rotation.x=options.tiltX;
+ if(options.solid!==false)platforms.push({x,z,w,d,yaw,topY,shape:options.shape==='round'||options.shape==='hex'?'round':'rect',radius:Math.min(w,d)/2,mesh});
+ if(options.alpha!==undefined){mesh.material.transparent=true;mesh.material.opacity=options.alpha;}
+ return mesh;
+}
+function addCourseWall(z,laneCenter,gapLane=0,kind='door',yaw=0){
+ const slots=kind==='door'?[-6.4,-3.2,0,3.2,6.4]:[-5.6,-2.8,0,2.8,5.6];
+ const gapIndex=Math.max(0,Math.min(slots.length-1,slots.reduce((best,v,i)=>Math.abs(v-gapLane)<Math.abs(slots[best]-gapLane)?i:best,0)));
+ slots.forEach((slot,i)=>{
+  if(i===gapIndex)return;
+  const width=kind==='door'?3.12:2.72,height=kind==='door'?3.15:1.18;
+  const q=courseSidePoint(z,slot);
+  const mesh=box(world,width,height,.72,kind==='door'?(i%2?0xff8cae:0x7e8dcb):(i%2?0xffc15a:0x7ed7ed),q.x,height/2,q.z,{rotationY:q.yaw});
+  obstacles.push({kind:kind==='door'?'wallblock':'barrier',mesh,width,height,depth:.72,x:q.x,z:q.z});
+  if(kind==='door'){
+   box(world,width*.78,.16,.12,0xffe7a0,q.x,height-.28,q.z,{rotationY:q.yaw});
   }
  });
- for(const z of [35,15,-5,-25,-45,-58]){const q=courseSidePoint(z,0);box(world,20.8,.025,.16,0x7af8f2,q.x,.04,q.z,{rotationY:q.yaw});}
- for(let i=0;i<40;i++){
-  const x=(i%2===0?-1:1)*(15+Math.random()*22),z=55-Math.random()*125,h=3+Math.random()*13,w=2+Math.random()*5;
+}
+function placeCourseObstacle(o,z,lateral=0){
+ if(!o||!o.mesh)return;
+ const q=courseSidePoint(z,lateral);
+ if(o.kind==='mover'||o.kind==='slime'||o.kind==='ball'){
+  o.centerX=q.x;o.centerZ=q.z;o.centerYaw=q.yaw;o.z=q.z;o.x=0;
+  o.mesh.position.x=q.x;o.mesh.position.z=q.z;
+  if(o.cap){o.cap.position.x=q.x;o.cap.position.z=q.z;}
+  o.travelMin=-3.8+Math.sin((o.phase||0)+.4)*.35;o.travelMax=3.8+Math.cos((o.phase||0)+.8)*.35;
+ }else{
+  o.mesh.position.x=q.x;o.mesh.position.z=q.z;o.z=q.z;
+  if(o.kind==='beam'||o.kind==='hammer')o.mesh.rotation.y+=q.yaw;
+  else o.mesh.rotation.y=q.yaw;
+ }
+}
+function addCourseHazard(kind,z,index,lateral=0){
+ if(kind==='door'){const q=courseSidePoint(z,0);addCourseWall(z,q.x,[-3.2,0,3.2,0,-3.2,3.2][index%6],'door',q.yaw);return;}
+ if(kind==='gate'||kind==='barrier'||kind==='block'){
+  const q=courseSidePoint(z,0);addCourseWall(z,q.x,[-2.8,2.8,0,-2.8,2.8][index%5],kind==='block'?'block':'gate',q.yaw);return;
+ }
+ const before=obstacles.length;
+ if(kind==='beam')addRotatingBeam(z,12.5,1.0+(index%3)*.2,.88,index%2?0x5beee6:0xff74ad,index*.71);
+ else if(kind==='hammer')addHammer(z,index);
+ else if(kind==='ball'||kind==='fruit')addRollingBall(z,kind==='fruit'?.78:1.05,1.0+(index%3)*.18,5.5,(index%2)*Math.PI);
+ else if(kind==='slime'||kind==='mover')addMover(z,3.4,1.65,1.3,1.25+(index%3)*.2,4.1,index*.83,kind);
+ else if(kind==='sweeper')addRotatingBeam(z,15,1.28,.76,0xff69a9,index*.55);
+ if(obstacles.length>before)placeCourseObstacle(obstacles[obstacles.length-1],z,lateral);
+}
+function buildCourse(stage){
+ newWorld();stageBounds={kind:'platforms'};
+ const isCrown=stage.type==='crown';
+ const baseColors={
+  'dizzy-heights':0x687ec5,'door-dash':0x6578bd,'fruit-chute':0x6e80c5,'gate-crash':0x637bc0,
+  'hit-parade':0x6b75bb,'see-saw':0x7082c8,'slime-climb':0x6879be,'tip-toe':0x7682bd,
+  'whirlygig':0x687fc5,'block-party':0x6277b8,'jump-club':0x6a7dc2,'roll-out':0x6c80c1,
+  'tail-tag':0x6f7fc4,'perfect-match':0x7384c7,'egg-scramble':0x6b7fbe,'fall-ball':0x5f75b7,
+  'hoarders':0x6575b6,'hoopsie-daisy':0x7483c5,'jinxed':0x6979b9,'rock-n-roll':0x6c7ec0,
+  'team-tail-tag':0x7182c1
+ };
+ const id=stage.id||'dizzy-heights',color=baseColors[id]||0x667bbf;
+ const startPoint=courseSidePoint(COURSE_START_Z-.8,0);
+ // The starting grid is wide enough for all 33 beans; beyond it the route is made of separated islands.
+ addFooting(startPoint.x,startPoint.z,22,18,color,startPoint.yaw,0,{thickness:.9});
+ for(let x=-9.5;x<=9.5;x+=1.9){const q=courseSidePoint(COURSE_START_Z-1.2,x);box(world,.12,.035,.3,0xb5f3f7,q.x,.035,q.z,{rotationY:q.yaw});}
+ const lanePatterns={
+  'dizzy-heights':[0,-1.5,1.5,0,3,-3,0,1.5,-1.5,0],
+  'door-dash':[0,0,0,0,0,0,0,0],
+  'fruit-chute':[0,-2,2,-3,3,-2,2,0],
+  'gate-crash':[0,-2.6,2.6,-2.6,2.6,0],
+  'hit-parade':[0,-3,3,-2,2,0],
+  'see-saw':[0,-4,4,-4,4,-3,3,0],
+  'slime-climb':[0,-3.5,3.5,-2.5,2.5,-4,4,0],
+  'tip-toe':[0,0,-2.2,-4.4,-2.2,0,2.2,4.4,2.2,0],
+  'whirlygig':[0,2.5,-2.5,0,3,-3,0],
+  'block-party':[0,0,0,0,0,0],
+  'jump-club':[0,0,0,0,0,0],
+  'roll-out':[0,-3,3,-3,3,0],
+  'tail-tag':[0,-4,0,4,0,-3,3,0],
+  'perfect-match':[0,2.5,-2.5,0,2.5,-2.5,0],
+  'egg-scramble':[0,-3,3,-3,3,0],
+  'fall-ball':[0,0,0,0,0,0],
+  'hoarders':[0,-4,0,4,0,-4,4],
+  'hoopsie-daisy':[0,-3,3,-3,3,0],
+  'jinxed':[0,-3,3,-3,3,0],
+  'rock-n-roll':[0,0,0,0,0,0],
+  'team-tail-tag':[0,-4,0,4,0,-4,4]
+ };
+ const lanes=lanePatterns[id]||[0,-2,2,0];
+ const platformWidth={
+  'dizzy-heights':8.4,'door-dash':10.2,'fruit-chute':7.8,'gate-crash':8.8,'hit-parade':7.2,
+  'see-saw':10.4,'slime-climb':7.0,'tip-toe':2.35,'whirlygig':8.8,'block-party':12.8,
+  'jump-club':9.6,'roll-out':8.2,'tail-tag':7.6,'perfect-match':8.8,'egg-scramble':10.5,
+  'fall-ball':12.2,'hoarders':10.2,'hoopsie-daisy':7.2,'jinxed':7.4,'rock-n-roll':12.5,'team-tail-tag':8.2
+ }[id]||8.2;
+ const platformDepth={
+  'dizzy-heights':3.9,'door-dash':4.2,'fruit-chute':3.3,'gate-crash':3.7,'hit-parade':3.4,
+  'see-saw':6.1,'slime-climb':3.3,'tip-toe':2.35,'whirlygig':3.8,'block-party':6.0,
+  'jump-club':4.5,'roll-out':4.1,'tail-tag':3.8,'perfect-match':4.4,'egg-scramble':5.0,
+  'fall-ball':5.5,'hoarders':4.8,'hoopsie-daisy':3.8,'jinxed':3.5,'rock-n-roll':5.6,'team-tail-tag':4.0
+ }[id]||3.8;
+ const pathCount=24,firstZ=39.5,spacing=4.65;
+ const tipPath=[0,0,-2.2,-4.4,-2.2,0,2.2,4.4,2.2,0,0,-2.2,-4.4,-2.2,0,2.2,4.4,2.2,0,0,0,0,0,0];
+ for(let i=0;i<pathCount;i++){
+  const z=firstZ-i*spacing;
+  const lane=id==='tip-toe'?tipPath[i]:lanes[i%lanes.length];
+  const q=courseSidePoint(z,lane);
+  const w=id==='tip-toe'?2.35:platformWidth*(i%7===4?.82:1);
+  const d=id==='tip-toe'?2.35:platformDepth*(i%6===3?.88:1);
+  const roundShape=id==='dizzy-heights'||id==='hoopsie-daisy';
+  const tilt=id==='see-saw'?((i%2===0)?-.075:.075):0;
+  addFooting(q.x,q.z,w,d,id==='tip-toe'?0x7d8bc8:color,q.yaw,0,{shape:roundShape?'round':'rect',tiltZ:tilt,thickness:id==='see-saw'?.78:.62});
+  // Tip Toe shows decoy tiles, but only the hidden route is solid.
+  if(id==='tip-toe'){
+   for(const side of [-1,1]){
+    const decoy=courseSidePoint(z,lane+side*2.2);
+    addFooting(decoy.x,decoy.z,2.1,2.1,0x8390c8,decoy.yaw,0,{solid:false,alpha:.76,thickness:.34});
+   }
+  }else if(['tail-tag','hoopsie-daisy','egg-scramble','hoarders'].includes(id)&&i%4===2){
+   const side=(i%8===2)?-1:1,alt=courseSidePoint(z,lane+side*4.4);
+   addFooting(alt.x,alt.z,3.0,2.8,color,alt.yaw,0,{thickness:.48});
+  }
+  if(id==='see-saw'){
+   const axle=sphere(world,.24,0xffdf64,q.x,.18,q.z,10);axle.scale.set(2.0,.5,.5);
+  }
+  if(id==='perfect-match'&&i%3===1){
+   const mark=sphere(world,.32,[0xffd65c,0xff78ac,0x6ef0dc][Math.floor(i/3)%3],q.x,.38,q.z,10);mark.scale.y=.22;
+  }
+  if(id==='egg-scramble'&&i%3===1){
+   for(let e=0;e<3;e++)sphere(world,.38,[0xffe8a0,0xffa2c9,0x9fe9ff][e],q.x+(e-1)*1.05,.42,q.z+.35,12);
+  }
+  if(id==='fall-ball'&&i%4===2){
+   const ball=sphere(world,1.0,i%8?0xffdf62:0x9aa9ff,q.x,.98,q.z,16);ball.userData.decorative=true;
+  }
+  if(id==='hoopsie-daisy'&&i%3===1){
+   const hoop=new THREE.Mesh(new THREE.TorusGeometry(.92,.12,8,24),mat([0xffd95f,0xff72ad,0x67f1e5][i%3],.4));hoop.position.set(q.x,1.9,q.z);world.add(hoop);hoop.rotation.x=Math.PI/2;
+  }
+  if((id==='tail-tag'||id==='team-tail-tag')&&i%5===2){
+   const flag=box(world,.18,1.8,.18,id==='tail-tag'?0xffcf58:[0xff729c,0x70e7e4,0xffd45d][i%3],q.x,1.0,q.z);box(world,.95,.48,.12,flag.material.color.getHex(),q.x+.48,1.55,q.z);
+  }
+ }
+ // A broad finish island is followed by the actual finish/crown target; there are no side fences.
+ const finishPoint=courseSidePoint(COURSE_FINISH_Z+.15,0);
+ addFooting(finishPoint.x,finishPoint.z,15,8,color,finishPoint.yaw,0,{thickness:.9});
+ const startLine=courseSidePoint(COURSE_START_Z-.65,0),finishLine=courseSidePoint(COURSE_FINISH_Z,0);
+ box(world,21.2,.045,.65,0xfbf1a1,startLine.x,.04,startLine.z,{rotationY:startLine.yaw});
+ box(world,14.2,.055,.78,0xffdf59,finishLine.x,.05,finishLine.z,{rotationY:finishLine.yaw});
+ for(let lateral=-6;lateral<=6;lateral+=2){const q=courseSidePoint(COURSE_FINISH_Z,lateral);box(world,.7,.055,.82,0xffffff,q.x,.08,q.z,{rotationY:q.yaw});}
+ const crownZ=COURSE_FINISH_Z+.25,finishYaw=courseYawAt(crownZ),finishCX=courseCenterX(crownZ);
+ if(isCrown){
+  const archL=courseSidePoint(crownZ,-7.5),archR=courseSidePoint(crownZ,7.5);
+  box(world,.55,4.2,.55,0xffcf4f,archL.x,2.05,archL.z,{rotationY:finishYaw});box(world,.55,4.2,.55,0xffcf4f,archR.x,2.05,archR.z,{rotationY:finishYaw});box(world,15.5,.5,.65,0xffcf4f,finishCX,4.1,crownZ,{rotationY:finishYaw});
+  const crown=new THREE.Mesh(new THREE.TorusGeometry(.78,.2,8,20),mat(0xffef75,.3,.45));crown.position.set(finishCX,3.05,crownZ);world.add(crown);crown.rotation.x=Math.PI/2;crownTarget=new THREE.Vector3(finishCX,3.05,crownZ);
+ }
+ const hazardMap={
+  'dizzy-heights':['beam','ball','beam','mover','ball','beam','hammer'],
+  'door-dash':['door','door','door','door','beam'],
+  'fruit-chute':['fruit','fruit','fruit','mover','fruit','ball'],
+  'gate-crash':['gate','gate','gate','gate','mover','gate'],
+  'hit-parade':['hammer','mover','hammer','beam','ball','hammer'],
+  'see-saw':['beam','ball','hammer','beam','mover','beam'],
+  'slime-climb':['slime','barrier','slime','hammer','slime','barrier','slime'],
+  'tip-toe':['mover','beam','mover','beam'],
+  'whirlygig':['sweeper','beam','sweeper','hammer','sweeper'],
+  'block-party':['block','block','block','block','block'],
+  'jump-club':['beam','beam','sweeper','beam','beam'],
+  'roll-out':['beam','mover','beam','mover','beam'],
+  'tail-tag':['mover','ball','hammer','mover','beam'],
+  'perfect-match':['gate','beam','gate','mover'],
+  'egg-scramble':['ball','mover','ball','hammer','ball'],
+  'fall-ball':['ball','ball','mover','ball','hammer'],
+  'hoarders':['ball','ball','mover','ball','ball'],
+  'hoopsie-daisy':['beam','mover','beam','hammer','beam'],
+  'jinxed':['slime','hammer','slime','mover','slime'],
+  'rock-n-roll':['ball','ball','hammer','ball','mover'],
+  'team-tail-tag':['mover','beam','ball','mover','hammer'],
+  'fall-mountain':['hammer','ball','beam','barrier','mover','hammer','sweeper','ball']
+ };
+ const hazardKinds=hazardMap[id]||hazardMap['dizzy-heights'];
+ const hazardIndices=id==='door-dash'?[3,7,11,15,19]:id==='tip-toe'?[4,9,14,19]:[2,5,8,11,14,17,20,22];
+ hazardIndices.forEach((platformIndex,j)=>{
+  if(platformIndex>=pathCount)return;
+  const z=firstZ-platformIndex*spacing-2.0;
+  const lane=id==='tip-toe'?tipPath[platformIndex]:lanes[platformIndex%lanes.length];
+  addCourseHazard(hazardKinds[j%hazardKinds.length],z,j,lane);
+ });
+ if(id==='rock-n-roll'){
+  for(const side of [-1,1]){const q=courseSidePoint(13,side*8.4);const ball=sphere(world,1.45,side<0?0xffd05b:0x67ddeb,q.x,1.45,q.z,18);ball.rotation.x=.3;}
+ }
+ if(id==='hoarders'){
+  for(const side of [-1,0,1]){const q=courseSidePoint(7,side*6);const ring=new THREE.Mesh(new THREE.TorusGeometry(2.7,.18,8,36),mat([0xff78a6,0x69e7e2,0xffd45e][side+1],.45));ring.position.set(q.x,.18,q.z);ring.rotation.x=Math.PI/2;world.add(ring);}
+ }
+ if(id==='fall-ball'){
+  const goalL=courseSidePoint(8,-7.2),goalR=courseSidePoint(8,7.2);
+  box(world,.5,3.3,.5,0xffe16a,goalL.x,1.6,goalL.z,{rotationY:goalL.yaw});box(world,.5,3.3,.5,0xffe16a,goalR.x,1.6,goalR.z,{rotationY:goalR.yaw});
+ }
+ // Decorative floating scenery only; it does not form a wall or a walkable floor.
+ for(let i=0;i<34;i++){
+  const x=(i%2===0?-1:1)*(15+Math.random()*22),z=58-Math.random()*128,h=3+Math.random()*13,w=2+Math.random()*5;
   const building=box(world,w,h,w,[0x5a78c2,0x7d68bd,0x65b9d5,0xff9ecb][i%4],x,h/2-1,z);building.material.transparent=true;building.material.opacity=.65;
  }
 }
@@ -555,7 +693,7 @@ function startRaceStage(stage,isFinal){
  resetActorForRound(player,0,54.5);
  if(isFinal){player.speed=8.65;active.forEach(b=>b.speed=8.0+Math.random()*2.0);finishTarget=1;}
  else {player.speed=9.0;finishTarget=QUALIFY[roundIndex];}
- stageBounds={kind:'race'};
+ stageBounds={kind:'platforms'};
  updateHud(true);progressLabel.textContent=isFinal?'クラウンへ！':'ゴールまで';
  const kicker=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;
  stageKickerEl.textContent=kicker;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
@@ -623,9 +761,10 @@ function controlPlayer(dt){
  }
  input.jump=false;input.dive=false;
  a.vy-=22*dt;p.position.x+=a.vx*dt;p.position.z+=a.vz*dt;p.position.y+=a.vy*dt;
- const groundUnderPlayer=hasGround(p.position.x,p.position.z,a);
- if(p.position.y<=0&&a.vy<=0&&groundUnderPlayer){p.position.y=0;a.vy=0;a.grounded=true;}
- else {a.grounded=false;}
+ const surface=groundHeightAt(p.position.x,p.position.z,a);
+ if(surface!==null&&p.position.y<=surface&&a.vy<=0){p.position.y=surface;a.vy=0;a.grounded=true;}
+ else{a.grounded=false;}
+ if(a.grounded){a.lastGroundX=p.position.x;a.lastGroundY=surface??p.position.y;a.lastGroundZ=p.position.z;}
  if(a.diveRecoveryPending&&a.diveTimer<=0&&a.grounded&&a.stunTimer<=0){if(a.diveRecovery<=0)a.diveRecovery=.28;a.diveRecoveryPending=false;}
  if(a.stunTimer>0){a.visual.rotation.x=1.32;a.visual.rotation.z=Math.sign(a.vx||1)*.32;}
  else if(a.diveTimer>0){a.visual.rotation.x=-.95;a.visual.rotation.z=-a.vx*.035;}
@@ -633,36 +772,52 @@ function controlPlayer(dt){
  // The model's face points toward local -Z, so the yaw sign on X must be negative.
  if(Math.hypot(a.vx,a.vz)>.22)a.group.rotation.y=THREE.MathUtils.damp(a.group.rotation.y,Math.atan2(-a.vx,-a.vz),7,dt);
  if(state==='race'){
-  const laneCenter=courseCenterX(p.position.z);
-  p.position.x=THREE.MathUtils.clamp(p.position.x,laneCenter-10.15,laneCenter+10.15);
   if(currentRound?.type==='crown'){
    if(!a.finished&&touchedCrown(a)){a.finished=true;a.finishTime=stageTime;a.vx=0;a.vz=0;toast('クラウンにタッチ！');}
    if(!a.finished&&p.position.z<=COURSE_FINISH_Z+.35){p.position.z=COURSE_FINISH_Z+.35;a.vz=Math.max(0,a.vz);}
-  }else if(p.position.z<=COURSE_FINISH_Z&&!a.finished){a.finished=true;a.finishTime=stageTime;p.position.z=COURSE_FINISH_Z;a.vx=0;a.vz=0;enterSpectatorMode();}
-  if(p.position.y<-3||Math.abs(p.position.x-courseCenterX(p.position.z))>11.5){
-   p.position.z=Math.max(COURSE_FINISH_Z+12,Math.min(COURSE_START_Z-12,Math.ceil(p.position.z/14)*14));
-   const respawnCenter=courseCenterX(p.position.z);
-   p.position.y=0;p.position.x=THREE.MathUtils.clamp(p.position.x,respawnCenter-8.5,respawnCenter+8.5);a.vy=0;a.vx=0;a.vz=0;a.grounded=true;a.stunTimer=0;toast('コースに戻った！');
-  }
+  }else if(p.position.z<=COURSE_FINISH_Z&&!a.finished&&surface!==null){a.finished=true;a.finishTime=stageTime;p.position.z=COURSE_FINISH_Z;a.vx=0;a.vz=0;enterSpectatorMode();}
+  if(p.position.y<-4.5)respawnActorAtLastGround(a);
   if(!a.finished){for(const o of obstacles)obstacleHit(a,o);}
  }else if(state==='survival'){
-  if(stageBounds.kind==='circle'){const r=Math.hypot(p.position.x,p.position.z);if(r>14.4||(r<5.82&&r>2.72))a.grounded=false;}
-  if(stageBounds.kind==='rect'&&(Math.abs(p.position.x)>12.4||Math.abs(p.position.z)>15.2)){a.grounded=false;}
-  if(stageBounds.kind==='hex'&&p.position.y<=0&&a.vy<=0&&hasGround(p.position.x,p.position.z,a)){
-   p.position.y=0;a.vy=0;a.grounded=true;
-  }
-  if(stageBounds.kind!=='hex'&&a.vy<=0&&hasGround(p.position.x,p.position.z,a)){p.position.y=0;a.vy=0;a.grounded=true;}
   if(stageBounds.kind==='hex'&&a.grounded)touchTileAt(p.position.x,p.position.z);
   if(stageBounds.kind!=='hex'&&obstacles.length){for(const o of obstacles)obstacleHit(a,o);}
-  if(p.position.y<-5)eliminateActor(a,true);
+  if(p.position.y<-4.5)respawnActorAtLastGround(a);
  }
 }
-function hasGround(x,z,actor){
- if(state==='race')return true;
- if(stageBounds.kind==='circle'){const r=Math.hypot(x,z);return (r<=2.72)||(r>=5.82&&r<=14.4);}
- if(stageBounds.kind==='rect')return Math.abs(x)<=12&&Math.abs(z)<=15;
- if(stageBounds.kind==='hex')return !!findTile(x,z);
- return true;
+function groundHeightAt(x,z,actor){
+ if(stageBounds.kind==='circle'){
+  const r=Math.hypot(x,z);return (r<=2.72)||(r>=5.7&&r<=14.5)?0:null;
+ }
+ if(stageBounds.kind==='hex')return findTile(x,z)?0:null;
+ for(let i=platforms.length-1;i>=0;i--){
+  const f=platforms[i],dx=x-f.x,dz=z-f.z,c=Math.cos(f.yaw||0),s=Math.sin(f.yaw||0);
+  const lx=dx*c-dz*s,lz=dx*s+dz*c;
+  const inside=f.shape==='round'?(lx*lx+lz*lz<=(f.radius||Math.min(f.w,f.d)/2)**2):Math.abs(lx)<=f.w/2&&Math.abs(lz)<=f.d/2;
+  if(inside)return f.topY||0;
+ }
+ return null;
+}
+function hasGround(x,z,actor){return groundHeightAt(x,z,actor)!==null;}
+function respawnActorAtLastGround(actor){
+ if(!actor?.group)return;
+ let rx=actor.lastGroundX??0,ry=actor.lastGroundY??0,rz=actor.lastGroundZ??COURSE_START_Z;
+ // If a Hex tile disappeared after the actor last stood on it, use the nearest tile that still exists.
+ if(groundHeightAt(rx,rz,actor)===null){
+  if(stageBounds.kind==='hex'){
+   let nearest=null,best=Infinity;
+   for(const tile of tiles){if(tile.removed)continue;const d=(tile.x-rx)**2+(tile.z-rz)**2;if(d<best){best=d;nearest=tile;}}
+   if(nearest){rx=nearest.x;rz=nearest.z;ry=0;}
+  }else if(platforms.length){
+   let nearest=null,best=Infinity;
+   for(const footing of platforms){const d=(footing.x-rx)**2+(footing.z-rz)**2;if(d<best){best=d;nearest=footing;}}
+   if(nearest){rx=nearest.x;rz=nearest.z;ry=nearest.topY||0;}
+  }
+ }
+ const p=actor.group.position;p.set(rx,ry,rz);
+ actor.lastGroundX=rx;actor.lastGroundY=ry;actor.lastGroundZ=rz;
+ actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.stunTimer=0;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
+ startSlimeEffect(actor);
+ if(actor.isPlayer)toast('最後の足場に復帰！');
 }
 function obstacleRiskAt(x,z,o,extra=1.25,eta=0){
  if(!o?.mesh)return 0;
@@ -701,13 +856,17 @@ function chooseRaceBotPlan(b,p){
    const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
    if(ahead<-.8||ahead>17.5)continue;
    const eta=Math.max(0,ahead/Math.max(3,b.speed));
-   const evalX=courseCenterX(oz+.35)+lane;
-   danger=Math.max(danger,obstacleRiskAt(evalX,oz+1.05,o,1.05,eta));
+   const evalPoint=courseSidePoint(oz+.35,lane);
+   danger=Math.max(danger,obstacleRiskAt(evalPoint.x,evalPoint.z+1.05,o,1.05,eta));
   }
   const lanePreference=Math.abs(lane-preferred)*(.07+.1*traits.patience);
+  const nextPoint=courseSidePoint(p.z-4.0,lane);
+  const fartherPoint=courseSidePoint(p.z-7.1,lane);
+  const footingPenalty=groundHeightAt(nextPoint.x,nextPoint.z,b)===null?3.8:-.9;
+  const fartherPenalty=groundHeightAt(fartherPoint.x,fartherPoint.z,b)===null?1.2:-.25;
   const randomBias=(Math.random()-.5)*traits.noise;
   const centerPenalty=nearCrown?Math.abs(lane)*.24:0;
-  const score=-danger*(1.2+traits.awareness*3.3)-lanePreference-centerPenalty+randomBias;
+  const score=-danger*(1.2+traits.awareness*3.3)-lanePreference-centerPenalty-footingPenalty-fartherPenalty+randomBias;
   if(score>bestScore){bestScore=score;bestLane=lane;}
  }
  b.aiTargetLane=bestLane;
@@ -770,7 +929,7 @@ function updateRaceBots(dt){
   else if(b.stunTimer>0){b.vx*=Math.exp(-2.15*dt);b.vz*=Math.exp(-1.65*dt);}
   else{
    if(b.aiThink<=0)chooseRaceBotPlan(b,p);
-   const targetX=courseCenterX(p.z)+THREE.MathUtils.clamp(b.aiTargetLane,-9.4,9.4);
+   const targetX=courseSidePoint(p.z,THREE.MathUtils.clamp(b.aiTargetLane,-9.4,9.4)).x;
    const yaw=courseYawAt(p.z),forwardX=-Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
    const lateral=THREE.MathUtils.clamp((targetX-p.x)*(1.75+traits.awareness*.75),-9.2,9.2);
    let targetVx=forwardX*b.speed+rightX*lateral,targetVz=forwardZ*b.speed+rightZ*lateral;
@@ -786,20 +945,17 @@ function updateRaceBots(dt){
   }
   p.x+=b.vx*dt;p.z+=b.vz*dt;
   b.vy-=22*dt;p.y+=b.vy*dt;
-  if(p.y<=0&&b.vy<=0){p.y=0;b.vy=0;b.grounded=true;}else b.grounded=false;
-  const laneCenter=courseCenterX(p.z);
-  if(p.y<-3||Math.abs(p.x-laneCenter)>11.5){
-   const checkpoint=Math.max(COURSE_FINISH_Z+12,Math.min(COURSE_START_Z-12,Math.ceil(p.z/13)*13));
-   p.z=checkpoint;p.x=courseCenterX(checkpoint)+THREE.MathUtils.clamp(b.aiTargetLane??b.baseLane,-8.5,8.5);
-   p.y=0;b.vy=0;b.vx=0;b.vz=0;b.grounded=true;b.stunTimer=Math.max(b.stunTimer,.75);b.aiTargetLane=b.baseLane;
-  }
+  const surface=groundHeightAt(p.x,p.z,b);
+  if(surface!==null&&p.y<=surface&&b.vy<=0){p.y=surface;b.vy=0;b.grounded=true;}else b.grounded=false;
+  if(b.grounded){b.lastGroundX=p.x;b.lastGroundY=surface??p.y;b.lastGroundZ=p.z;}
+  if(p.y<-4.5)respawnActorAtLastGround(b);
   for(const o of obstacles)obstacleHit(b,o);
   if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
   b.visual.rotation.x=b.stunTimer>0?1.2:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
   if(currentRound?.type==='crown'){
    if(!b.finished&&touchedCrown(b)){b.finished=true;b.finishTime=stageTime;b.vx=0;b.vz=0;}
    if(!b.finished&&p.z<=COURSE_FINISH_Z+.35){p.z=COURSE_FINISH_Z+.35;b.vz=Math.max(0,b.vz);}
-  }else if(p.z<=COURSE_FINISH_Z){p.z=COURSE_FINISH_Z;b.finished=true;b.finishTime=stageTime;b.vx=0;b.vz=0;}
+  }else if(p.z<=COURSE_FINISH_Z&&b.grounded&&groundHeightAt(p.x,p.z,b)!==null){p.z=COURSE_FINISH_Z;b.finished=true;b.finishTime=stageTime;b.vx=0;b.vz=0;}
  }
  resolveBeanCollisions([player,...active],dt);
  if(isFinalRace){
@@ -843,47 +999,54 @@ function startFinalStage(){
 function buildArenaBase(kind){
  newWorld();
  if(kind==='circle'){
-  // A ring-shaped Jump Showdown arena: the inner floor is completely absent.
+  // Jump Showdown's annular platform: there is no floor in the moat or outside the ring.
   const ringGeo=new THREE.RingGeometry(5.7,14.5,80,1);
   const ring=new THREE.Mesh(ringGeo,mat(0x5b6fbd,.7));ring.rotation.x=-Math.PI/2;ring.position.y=-.025;world.add(ring);
   const outerRim=new THREE.Mesh(new THREE.TorusGeometry(14.2,.22,8,64),mat(0x52f0dc,.35));outerRim.rotation.x=Math.PI/2;outerRim.position.y=.02;world.add(outerRim);
   const innerRim=new THREE.Mesh(new THREE.TorusGeometry(5.72,.16,8,48),mat(0xff6ea7,.35));innerRim.rotation.x=Math.PI/2;innerRim.position.y=.025;world.add(innerRim);
-  // A small safe footing under the rotating-bar pivot; the surrounding inner gap stays open.
   const centerFooting=new THREE.Mesh(new THREE.CircleGeometry(2.72,48),mat(0x5b8fca,.62));centerFooting.rotation.x=-Math.PI/2;centerFooting.position.y=-.006;world.add(centerFooting);
   const centerTrim=new THREE.Mesh(new THREE.TorusGeometry(2.68,.13,8,40),mat(0x58f0e5,.35));centerTrim.rotation.x=Math.PI/2;centerTrim.position.y=.035;world.add(centerTrim);
-  for(let i=0;i<24;i++){const a=i/24*Math.PI*2;const x=Math.cos(a)*14.5,z=Math.sin(a)*14.5;box(world,.28,1.7,.28,i%2?0xff83bc:0x58e9ed,x,.4,z);}
- }else if(kind==='rect'){
-  box(world,24.4,.9,30.4,0x586cba,0,-.5,0);
-  box(world,24,.05,30,0x7088d0,0,-.025,0);
-  for(let x=-10;x<=10;x+=4){box(world,.22,.3,.22,0x6bf5ee,x,.1,-14.7);box(world,.22,.3,.22,0x6bf5ee,x,.1,14.7);}
  }else if(kind==='hex'){
-  // No solid floor beneath the tiles.
+  // Individual hexagonal tiles float over the void; gaps are intentional.
   for(let iz=0;iz<9;iz++)for(let ix=0;ix<9;ix++){
+   if((ix===0||ix===8)&&(iz===0||iz===8))continue;
+   if((ix*7+iz*11)%13===0)continue;
    const x=(ix-4)*2,z=(iz-4)*2;
-   const mesh=box(world,1.82,.48,1.82,[0x56bfe4,0x62dfdc,0x7c9bff][(ix+iz)%3],x,-.24,z);
+   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(1.06,1.06,.48,6),mat([0x56bfe4,0x62dfdc,0x7c9bff][(ix+iz)%3],.68));
+   mesh.position.set(x,-.24,z);world.add(mesh);
    const tile={ix,iz,x,z,mesh,touched:false,expire:0,removed:false};tiles.push(tile);tileMap.set(`${ix},${iz}`,tile);
   }
+ }else if(kind==='royal'){
+  // Royal Fumble-inspired floating island arena, with a broad central island and separate outer pads.
+  addFooting(0,0,17,15,0x5d72bd,0,0,{thickness:.9});
+  const islands=[[-10,-3,5.5,5.2],[10,-3,5.5,5.2],[-7,10,5.2,5.2],[7,10,5.2,5.2],[-7,-11,5.2,5.2],[7,-11,5.2,5.2],[0,15,4.8,4.8]];
+  islands.forEach((v,i)=>{
+   addFooting(v[0],v[1],v[2],v[3],[0x6379c5,0x7584d1,0x5f9ec5][i%3],0,0,{shape:'round',thickness:.72});
+   const flag=box(world,.18,1.5,.18,[0xff78a6,0x72eee2,0xffd65c][i%3],v[0],.85,v[1]);
+   box(world,.85,.42,.1,flag.material.color.getHex(),v[0]+.42,1.35,v[1]);
+  });
+  // Short connectors are narrow platforms, not fences; missing connectors leave open gaps.
+  addFooting(-8.0,-3,3.7,1.45,0x7e8ed2,0,0,{thickness:.48});
+  addFooting(8.0,-3,3.7,1.45,0x7e8ed2,0,0,{thickness:.48});
+  addFooting(0,7.5,1.5,3.8,0x7e8ed2,0,0,{thickness:.48});
  }
- // soft scenic sky dots
+ // Soft scenic sky dots.
  for(let i=0;i<28;i++){const a=Math.random()*Math.PI*2,r=18+Math.random()*10,y=2+Math.random()*8;sphere(world,.25+Math.random()*.3,[0xffffff,0xffd6f0,0xb5f9ff][i%3],Math.cos(a)*r,y,Math.sin(a)*r,8);}
 }
 function startSurvivalStage(stage){
- // A player who finished the previous qualifier may have been spectating. Finals must always restore controls.
  document.body.classList.remove('stick-active');spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;
  document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
  cameraYaw=0;cameraPitch=0;lookPointer=null;
  hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';countdownEl.style.display='none';
  currentRound=stage;isFinalRace=false;state='survival';elapsed=0;stageTime=0;survivalElimTimer=5.8;obstacles=[];
- const kind=stage.type==='jump'?'circle':stage.type==='hex'?'hex':'rect';stageBounds={kind};
+ const kind=stage.type==='jump'?'circle':stage.type==='hex'?'hex':'royal';stageBounds={kind};
  buildArenaBase(kind);
  if(stage.type==='jump'){
   addRotatingBeam(0,33,1.12,.78,0xff6ea7,.4);
   addRotatingBeam(0,33,-.72,2.82,0x61f6ee,1.45);
- }else if(stage.type==='block'){
-  addBlockWall(15,0);addBlockWall(-15,1);
  }
  const active=allAliveBots();active.forEach(b=>makeBean(b));makeBean(player);
-  resetActorForRound(player,0,kind==='circle'?10.2:0);
+ resetActorForRound(player,0,kind==='circle'?10.2:0);
  active.forEach((b,i)=>{
   const angle=i/Math.max(1,active.length)*Math.PI*2;
   const ringAngle=angle+Math.PI/Math.max(1,active.length);
@@ -908,8 +1071,9 @@ function findTile(x,z){
  const ix=Math.round((x+8)/2),iz=Math.round((z+8)/2);
  if(ix<0||ix>8||iz<0||iz>8)return null;
  const tile=tileMap.get(`${ix},${iz}`);
- if(!tile||tile.removed||Math.abs(x-tile.x)>.92||Math.abs(z-tile.z)>.92)return null;
- return tile;
+ if(!tile||tile.removed)return null;
+ const dx=Math.abs(x-tile.x),dz=Math.abs(z-tile.z);
+ return dx<=1.04&&dz<=1.04&&(dx+dz*.28)<=1.25?tile:null;
 }
 function touchTileAt(x,z){const tile=findTile(x,z);if(tile&&!tile.touched){tile.touched=true;tile.expire=stageTime+1.75;tile.mesh.material.color.setHex(0xffbe5b);}}
 function updateTiles(dt){
@@ -930,9 +1094,9 @@ function chooseSurvivalBotPlan(b){
    const r=Math.hypot(nx,nz);
    if(r>12.8)score-=2+(r-12.8)*3;else score+=(12.8-r)*.035;
    if(r<6.5)score-=18+(6.5-r)*4;
-  }else if(stageBounds.kind==='rect'){
-   const overX=Math.max(0,Math.abs(nx)-10.7),overZ=Math.max(0,Math.abs(nz)-13.7);score-=overX*4+overZ*4;
-   score+=Math.min(10.7-Math.abs(nx),13.7-Math.abs(nz))*.025;
+  }else if(stageBounds.kind==='platforms'||stageBounds.kind==='royal'){
+   if(groundHeightAt(nx,nz,b)===null)score-=18;
+   else score+=1.6;
   }else if(hex){
    const tile=findTile(nx,nz);
    if(!tile)score-=15;
@@ -992,12 +1156,14 @@ function updateSurvivalBots(dt){
   }
   p.x+=b.vx*dt;p.z+=b.vz*dt;
   b.vy-=22*dt;p.y+=b.vy*dt;
-  if(p.y<=0&&b.vy<=0&&hasGround(p.x,p.z,b)){p.y=0;b.vy=0;b.grounded=true;}else b.grounded=false;
+  const surface=groundHeightAt(p.x,p.z,b);
+  if(surface!==null&&p.y<=surface&&b.vy<=0){p.y=surface;b.vy=0;b.grounded=true;}else b.grounded=false;
+  if(b.grounded){b.lastGroundX=p.x;b.lastGroundY=surface??p.y;b.lastGroundZ=p.z;}
   if(stageBounds.kind==='hex'&&b.grounded)touchTileAt(p.x,p.z);
   if(stageBounds.kind!=='hex'){for(const o of obstacles)obstacleHit(b,o);}
   if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
   b.visual.rotation.x=b.stunTimer>0?1.25:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
-  if(p.y<-5)eliminateActor(b,false);
+  if(p.y<-4.5)respawnActorAtLastGround(b);
  }
  resolveBeanCollisions([player,...allAliveBots()],dt);
 }
