@@ -2,1308 +2,350 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#122047">
-<title>Bean Battle - Fall Race</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#11152a">
+<title>Fall Guys Lab - Round Creator</title>
 <style>
-  :root{color-scheme:dark;--ink:#f8fbff;--panel:rgba(12,22,53,.86);--cyan:#45e5f5;--pink:#ff5caa;--yellow:#ffe66b}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none;-webkit-user-drag:none}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#75cfff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);touch-action:none;user-select:none}
-  #game{position:fixed;inset:0;overflow:hidden}
-  canvas{display:block;width:100%;height:100%;touch-action:none}
-  #hud{position:absolute;inset:0;pointer-events:none;display:none}
-  .hud-card{position:absolute;top:calc(env(safe-area-inset-top) + 12px);padding:10px 14px;border:1px solid rgba(255,255,255,.2);border-radius:15px;background:rgba(11,20,49,.68);backdrop-filter:blur(8px);box-shadow:0 8px 24px #08122c26;max-width:50vw}
-  #round-card{left:12px;min-width:155px;max-width:48vw}
-  .alive-inline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;padding-top:6px;border-top:1px solid #ffffff24;font-size:11px;color:#d7e8ff}
-  .alive-inline strong{font-size:13px;color:#fff4a5;font-weight:1000;white-space:nowrap}
-  .tiny{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a9d9ff;font-weight:800}
-  .hud-big{font-size:17px;font-weight:900;line-height:1.2;margin-top:3px}
-  #subinfo{font-size:12px;color:#d4eaff;margin-top:4px}
-  #progress-wrap{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);width:min(32vw,260px);padding:9px 12px;border-radius:15px;background:rgba(11,20,49,.68);border:1px solid #ffffff2b}
-  #progress-label{font-size:11px;font-weight:800;text-align:center;margin-bottom:5px;color:#dff8ff}
-  #progress-track{height:8px;border-radius:99px;background:#ffffff30;overflow:hidden}
-  #progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#43e8e6,#fff176);border-radius:99px;transition:width .12s}
-  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#08143035,#08143025);}
-  #panel{width:min(570px,100%);max-height:88vh;overflow:auto;text-align:center;padding:clamp(22px,5vw,36px);border:1px solid #ffffff40;border-radius:26px;background:linear-gradient(145deg,rgba(14,27,67,.94),rgba(33,30,82,.92));box-shadow:0 24px 80px #08102b66;backdrop-filter:blur(14px)}
-  .logo-line{font-size:clamp(30px,7vw,56px);font-weight:1000;line-height:.98;letter-spacing:-.055em;text-shadow:0 5px 0 #15265b;margin:0 0 12px}
-  .logo-line span{color:var(--yellow)}
-  .eyebrow{display:inline-block;border:1px solid #ffffff38;border-radius:99px;padding:6px 11px;font-size:11px;font-weight:900;letter-spacing:.12em;color:#9cefff;margin-bottom:14px}
-  #panel h2{font-size:clamp(23px,5vw,33px);line-height:1.1;margin:3px 0 10px}
-  #panel p{color:#dce9ff;line-height:1.65;margin:8px 0 16px;font-size:14px}
-  .rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:18px 0;text-align:left}
-  .rule{padding:11px;border-radius:13px;background:#ffffff0c;border:1px solid #ffffff19;font-size:12px;color:#dce9ff;line-height:1.5}
-  .rule b{display:block;color:#fff;font-size:13px;margin-bottom:3px}
-  button{font:inherit;border:0;cursor:pointer;touch-action:none;user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none}
-  .main-btn{width:100%;padding:15px 20px;border-radius:15px;font-size:17px;font-weight:1000;color:#171f45;background:linear-gradient(135deg,#fff27a,#ffbd62);box-shadow:0 5px 0 #b77636;transition:transform .12s,filter .12s;margin-top:5px}
-  .main-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b77636}
-  .secondary{background:#ffffff16;color:#fff;box-shadow:none;border:1px solid #ffffff2e;margin-top:12px}
-  .pill-row{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:13px 0 18px}
-  .pill{padding:7px 10px;border-radius:99px;background:#ffffff12;border:1px solid #ffffff20;color:#eff7ff;font-size:12px;font-weight:800}
-  #touch-controls{display:none;position:absolute;inset:0;pointer-events:none}
-  #look-zone{position:absolute;right:0;top:0;width:50%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
-  #stick-zone{position:absolute;left:0;top:0;width:50%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
-  #stick-base{display:none;position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;background:#0e184a48;border:2px solid #ffffff67;box-shadow:inset 0 0 20px #ffffff10;pointer-events:none;touch-action:none}
-  #stick-knob{position:absolute;width:57px;height:57px;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(145deg,#ffffffde,#a9d5ffb8);border:2px solid #fff;box-shadow:0 5px 15px #09153673;pointer-events:none}
-  #slime-back-label{display:none;position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(28px,env(safe-area-inset-bottom));width:132px;height:132px;border-radius:50%;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:#ff4fa355;border:3px solid #ffd0e6;color:#fff;font-size:28px;font-weight:1000;text-shadow:0 2px 5px #183c3b;pointer-events:none}
-  #slime-back-label span{font-size:11px;letter-spacing:.08em}
-  .touch-btn{position:absolute;right:max(22px,env(safe-area-inset-right));width:76px;height:76px;border-radius:50%;font-weight:1000;font-size:14px;color:#121b44;border:3px solid #ffffffc7;box-shadow:0 6px 0 #20275d99,0 8px 18px #0915364d;pointer-events:auto;touch-action:none;z-index:3}
-  #jump-btn{bottom:max(30px,env(safe-area-inset-bottom));background:linear-gradient(135deg,#fff27a,#ffc261)}
-  #dive-btn{bottom:calc(max(30px,env(safe-area-inset-bottom)) + 88px);right:max(31px,env(safe-area-inset-right));width:64px;height:64px;background:linear-gradient(135deg,#77fff4,#56b5ff);font-size:12px}
-  #toast{position:absolute;left:50%;top:35%;transform:translate(-50%,-50%) scale(.9);opacity:0;padding:12px 18px;background:#101a3ee8;border:1px solid #ffffff3b;border-radius:14px;font-weight:900;text-align:center;pointer-events:none;transition:opacity .2s,transform .2s;max-width:85vw}
-  #countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:5;font-size:clamp(84px,25vw,180px);font-weight:1000;line-height:1;color:#fff9b5;text-shadow:0 7px 0 #5b3f9b,0 14px 35px #101a3ecc;letter-spacing:-.06em}
-  #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  @media (pointer:coarse){#touch-controls{display:block}#progress-wrap{top:calc(env(safe-area-inset-top) + 82px);width:min(45vw,220px)}#round-card,#alive-card{top:calc(env(safe-area-inset-top) + 10px)}}
-  .stick-active #stick-base{display:block}
-  .spectating #stick-zone{display:block!important;opacity:0!important}
-.spectating #stick-base,.spectating #slime-back-label{display:none!important}
-.slime-back-mode #stick-base{display:none!important}
-.slime-back-mode #slime-back-label{display:none}
-.slime-back-mode.stick-active #slime-back-label{display:flex}
-  @media (max-width:520px){#round-card{min-width:0;max-width:48vw;padding:8px 10px}.hud-big{font-size:14px}#subinfo{font-size:10px}.tiny{font-size:9px}.alive-inline{font-size:9px;gap:5px}.alive-inline strong{font-size:11px}#progress-wrap{padding:7px 9px}#progress-label{font-size:10px}.rules{gap:7px}.rule{padding:9px;font-size:11px}}
+:root{color-scheme:dark;--bg:#11152a;--panel:#1b2140;--panel2:#252d52;--line:#3a4677;--text:#f4f5ff;--muted:#aab3dc;--pink:#ff4fa0;--cyan:#49d9e8;--yellow:#ffd45e;--green:#5ce0a1;--red:#ff667d}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none}button,input,select{font:inherit}button{border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:9px 11px;font-weight:700;cursor:pointer}button:active{transform:translateY(1px);filter:brightness(1.2)}button.primary{background:linear-gradient(135deg,#fa4c9b,#a650e9);border:0}button.good{background:#176f61;border-color:#2a9e89}button.danger{background:#672b43;border-color:#a84466}button.small{padding:6px 8px;font-size:12px}input,select{width:100%;background:#11172e;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}label{display:block;color:var(--muted);font-size:11px;font-weight:700;margin:5px 0 4px}.hidden{display:none!important}
+#app{height:100%;display:flex;flex-direction:column}.topbar{height:54px;flex:0 0 54px;background:#171c36;border-bottom:1px solid #313a63;display:flex;align-items:center;gap:10px;padding:0 12px;z-index:10}.brand{font-weight:1000;letter-spacing:.4px;white-space:nowrap}.brand span{color:var(--pink)}.tabs{display:flex;gap:5px}.tabs button{padding:7px 12px;background:transparent;border-color:transparent;color:var(--muted)}.tabs button.active{background:#343d68;color:white;border-color:#58679f}.top-spacer{flex:1}.pill{border-radius:20px;background:#292f52;border:1px solid #454f7f;padding:5px 9px;color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap}.status{font-size:11px;color:var(--muted);max-width:28vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#main{position:relative;display:flex;min-height:0;flex:1}.world-wrap{position:relative;flex:1;min-width:0;min-height:0;background:linear-gradient(#6b88b4,#b6c7dd 62%,#7a93a9)}#gameCanvas{display:block;width:100%;height:100%;outline:none}.side{width:340px;max-width:38vw;background:#181e39;border-left:1px solid #313a63;overflow:auto;padding:12px;flex:0 0 auto;z-index:5}.section{background:#202747;border:1px solid #343e69;border-radius:12px;padding:10px;margin-bottom:10px}.section h3{font-size:13px;margin:0 0 9px;display:flex;align-items:center;justify-content:space-between}.hint{font-size:11px;color:var(--muted);line-height:1.55}.fieldrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.fieldrow.three{grid-template-columns:repeat(3,minmax(0,1fr))}.fieldrow.four{grid-template-columns:repeat(4,minmax(0,1fr))}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.actions>*{flex:1}.objgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.objbtn{padding:8px 4px;min-height:53px;font-size:11px;line-height:1.2;background:#293255}.objbtn b{display:block;font-size:19px;margin-bottom:2px}.objbtn.active{outline:2px solid var(--cyan);background:#314b68}.stageitem{display:flex;align-items:center;gap:7px;padding:7px;border-radius:8px;background:#151b34;margin:5px 0;font-size:12px}.stageitem .nm{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stageitem button{padding:5px 7px;font-size:10px}.subhead{font-size:10px;color:var(--cyan);font-weight:900;letter-spacing:.8px;margin:10px 0 5px}.editorbar{position:absolute;left:12px;top:12px;display:flex;gap:7px;z-index:3;align-items:center;pointer-events:none}.editorbar>*{pointer-events:auto}.editorbar .glass{background:#171d36dc;border:1px solid #ffffff35;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:800;backdrop-filter:blur(8px)}.center-message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#141a30e8;border:1px solid #ffffff30;padding:16px 20px;border-radius:15px;text-align:center;z-index:7;max-width:min(90%,420px);box-shadow:0 10px 50px #0006}.center-message h2{margin:0 0 7px;font-size:21px}.center-message p{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 12px}.hud{position:absolute;right:12px;top:12px;z-index:3;display:flex;gap:6px;align-items:flex-start;flex-direction:column;pointer-events:none}.hudbox{background:#141a30dc;border:1px solid #ffffff30;border-radius:10px;padding:8px 11px;min-width:100px;text-align:right;backdrop-filter:blur(8px)}.hudbox strong{font-size:18px;display:block}.hudbox small{font-size:10px;color:var(--muted)}#touchControls{position:absolute;inset:0;z-index:6;pointer-events:none;display:none}.stickzone{position:absolute;left:18px;bottom:max(18px,env(safe-area-inset-bottom));width:136px;height:136px;pointer-events:auto;touch-action:none}.stickbase{position:absolute;inset:0;border-radius:50%;border:2px solid #ffffff55;background:#11182c55;backdrop-filter:blur(3px)}.stickknob{position:absolute;width:58px;height:58px;left:39px;top:39px;border-radius:50%;background:#e9f4ffb8;border:2px solid white;box-shadow:0 4px 14px #0006}.touchbtn{position:absolute;width:76px;height:76px;border-radius:50%;pointer-events:auto;display:flex;align-items:center;justify-content:center;flex-direction:column;border:2px solid #ffffffa8;box-shadow:0 4px 20px #0005;user-select:none;touch-action:none}.touchbtn span{font-size:26px;line-height:1}.touchbtn small{font-size:10px}.divebtn{right:20px;top:43%;background:#e84b91d9}.jumpbtn{right:20px;bottom:max(24px,env(safe-area-inset-bottom));background:#3f9cebd9}.mobiletip{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);font-size:10px;color:#fff;background:#11182c99;padding:5px 8px;border-radius:8px;pointer-events:none;white-space:nowrap}.toast{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:#151b34eF;border:1px solid #fff3;border-radius:9px;padding:8px 13px;font-size:12px;z-index:9;pointer-events:none;opacity:0;transition:opacity .2s}.toast.show{opacity:1}.progress-wrap{height:5px;background:#10152b;position:relative}.progress{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--pink))}
+#fileInput{display:none}.footer-note{font-size:10px;color:#8792bd;text-align:center;padding:4px}.object-list{max-height:135px;overflow:auto}.object-row{display:flex;align-items:center;gap:5px;padding:5px 6px;border-radius:7px;font-size:11px;background:#171e39;margin:3px 0}.object-row.selected{outline:1px solid var(--cyan)}.object-row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.object-row button{font-size:10px;padding:4px 6px}.mini-tag{font-size:9px;color:#9da9d7}.keycap{border:1px solid #63709c;border-radius:4px;padding:1px 4px;background:#303958;color:white}
+@media(max-width:760px){.topbar{height:48px;flex-basis:48px;padding:0 8px;gap:5px}.brand{font-size:13px}.tabs button{font-size:11px;padding:6px 8px}.status{display:none}.pill{font-size:9px;padding:4px 7px}#main{flex-direction:column}.world-wrap{flex:1 1 auto;min-height:43%;}.side{height:38vh;width:100%;max-width:none;border-left:0;border-top:1px solid #313a63;padding:8px;flex:0 0 38vh;display:grid;grid-template-columns:1fr 1fr;gap:7px;align-content:start}.section{margin:0;padding:8px}.section.wide{grid-column:1/-1}.objgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.objbtn{min-height:47px;padding:5px 2px}.objbtn b{font-size:16px}.fieldrow.four{grid-template-columns:repeat(2,minmax(0,1fr))}.object-list{max-height:100px}.editorbar{left:6px;top:6px}.hud{right:6px;top:6px}.hudbox{padding:5px 8px;min-width:78px}.hudbox strong{font-size:15px}.hudbox small{font-size:9px}.stickzone{width:120px;height:120px;left:13px;bottom:max(12px,env(safe-area-inset-bottom))}.stickknob{width:52px;height:52px;left:33px;top:33px}.touchbtn{width:66px;height:66px;right:14px}.divebtn{top:40%}.jumpbtn{bottom:max(16px,env(safe-area-inset-bottom))}.mobiletip{display:none}}
+@media(max-width:430px){.side{grid-template-columns:1fr}.section.wide{grid-column:auto}.world-wrap{min-height:40%}.side{height:42vh;flex-basis:42vh}.brand{font-size:12px}.tabs button{padding:5px 6px}.objgrid{grid-template-columns:repeat(4,minmax(0,1fr))}.objbtn{font-size:9px}.objbtn b{font-size:15px}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
 </head>
 <body>
-<div id="game">
-  <div id="hud">
-    <div id="round-card" class="hud-card">
-      <div class="tiny" id="stage-kicker">ROUND 1 / 4</div>
-      <div class="hud-big" id="stage-name">スライム・ラン</div>
-      <div id="subinfo">ゴールまで走れ！</div>
-      <div class="alive-inline"><span id="alive-caption">レース中</span><strong id="alive-number">33 人</strong></div>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">FALL GUYS <span>LAB</span></div>
+    <nav class="tabs"><button id="tabEditor" class="active">エディタ</button><button id="tabPlay">プレイ</button></nav>
+    <div class="top-spacer"></div>
+    <span class="pill" id="modePill">ROUND CREATOR</span>
+    <span class="status" id="statusText">準備完了</span>
+  </header>
+  <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
+  <main id="main">
+    <div class="world-wrap" id="worldWrap">
+      <canvas id="gameCanvas"></canvas>
+      <div class="editorbar" id="editorBar">
+        <div class="glass" id="viewportLabel">EDITOR VIEW · ドラッグで視点回転 / ホイールでズーム</div>
+        <button class="small" id="toolToggle">配置モード</button>
+        <button class="small" id="focusBtn">視点リセット</button>
+      </div>
+      <div class="hud hidden" id="gameHud">
+        <div class="hudbox"><small id="roundLabel">ROUND 1 / 4</small><strong id="timerLabel">120.0</strong><small id="qualLabel">QUALIFY 24</small></div>
+        <div class="hudbox"><small>順位 / 残り</small><strong id="rankLabel">1 / 32</strong></div>
+      </div>
+      <div id="touchControls">
+        <div class="stickzone" id="stickZone"><div class="stickbase"></div><div class="stickknob" id="stickKnob"></div></div>
+        <div class="touchbtn divebtn" id="diveTouch"><span>➤</span><small>ダイブ</small></div>
+        <div class="touchbtn jumpbtn" id="jumpTouch"><span>↑</span><small>ジャンプ</small></div>
+      </div>
+      <div class="mobiletip" id="mobileTip">左スティック：移動　右上：ダイブ　右下：ジャンプ</div>
+      <div class="center-message hidden" id="modalMessage"><h2 id="modalTitle">準備OK!</h2><p id="modalText"></p><div class="actions" id="modalActions"></div></div>
+      <div class="toast" id="toast"></div>
     </div>
-    <div id="progress-wrap"><div id="progress-label">ゴールまで</div><div id="progress-track"><div id="progress-fill"></div></div></div>
-    </div>
-  <div id="touch-controls">
-    <div id="look-zone" aria-label="視点操作"></div>
-    <div id="stick-zone" aria-label="移動操作"><div id="stick-base"><div id="stick-knob"></div></div><div id="slime-back-label">↓<span>BACK ONLY</span></div></div>
-  </div>
-  <div id="countdown"></div>
-  <div id="toast"></div>
-  <div id="overlay"><div id="panel">
-    <div class="eyebrow">FALL PARTY RACE</div>
-    <h1 class="logo-line">BEAN <span>BATTLE</span></h1>
-    <p>32体のBotと勝ち抜け！ シーズン1のレースとサバイバルを突破して、ファイナルでクラウンをつかもう。</p>
-    <div class="pill-row"><span class="pill">ランダムコース</span><span class="pill">ジャンプ＆ダイブ</span><span class="pill">全4ラウンド</span><span class="pill">毎回ランダム選出</span></div>
-    <div class="rules">
-      <div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div>
-      <div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div>
-      <div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div>
-      <div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div>
-    </div>
-    <p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p>
-    <button id="start-btn" class="main-btn">ゲームスタート！</button>
-  </div></div>
+    <aside class="side" id="editorPanel">
+      <section class="section wide">
+        <h3>ラウンド設定 <span class="mini-tag" id="objectCount">0 OBJECTS</span></h3>
+        <div class="fieldrow">
+          <div><label>ステージ名</label><input id="stageName" maxlength="48" value="新しいラウンド"></div>
+          <div><label>ラウンド形式</label><select id="stageType"><option value="race">レース</option><option value="survival">サバイバル</option></select></div>
+        </div>
+        <div class="fieldrow three">
+          <div><label>制限時間 (秒)</label><input id="stageTime" type="number" min="15" max="900" value="120"></div>
+          <div><label>予選に使用</label><select id="useQual"><option value="yes">使用する</option><option value="no">使用しない</option></select></div>
+          <div><label>ファイナルに使用</label><select id="useFinal"><option value="yes">使用する</option><option value="no">使用しない</option></select></div>
+        </div>
+        <div class="actions"><button class="good" id="saveStageBtn">ライブラリに保存</button><button id="exportBtn">.fgr 書き出し</button><button id="importBtn">.fgr 読み込み</button></div>
+      </section>
+      <section class="section wide">
+        <h3>オブジェクト追加 <span class="mini-tag">選択 → 配置</span></h3>
+        <div class="subhead">足場・判定</div>
+        <div class="objgrid" id="objectPalette">
+          <button class="objbtn active" data-type="platform"><b>▰</b>足場</button>
+          <button class="objbtn" data-type="paddedFloor"><b>▱</b>やわらかい床</button>
+          <button class="objbtn" data-type="ramp"><b>◢</b>坂</button>
+          <button class="objbtn" data-type="checkpoint"><b>⚑</b>セーブP</button>
+          <button class="objbtn" data-type="goal"><b>🏁</b>ゴール</button>
+          <button class="objbtn" data-type="spawn"><b>◎</b>スタート</button>
+          <button class="objbtn" data-type="slime"><b>☣</b>スライム床</button>
+          <button class="objbtn" data-type="slimePit"><b>▧</b>スライム池</button>
+          <button class="objbtn" data-type="routeNode"><b>◆</b>AIルート点</button>
+        </div>
+        <div class="subhead">障害物・ギミック</div>
+        <div class="objgrid">
+          <button class="objbtn" data-type="block"><b>▦</b>ブロック</button>
+          <button class="objbtn" data-type="wall"><b>▥</b>壁</button>
+          <button class="objbtn" data-type="bumper"><b>●</b>バンパー</button>
+          <button class="objbtn" data-type="spinner"><b>✳</b>回転バー</button>
+          <button class="objbtn" data-type="fan"><b>✺</b>ファン</button>
+          <button class="objbtn" data-type="jumpPad"><b>⇧</b>ジャンプ台</button>
+          <button class="objbtn" data-type="conveyor"><b>⇢</b>ベルト</button>
+          <button class="objbtn" data-type="movingPlatform"><b>↔</b>動く足場</button>
+        </div>
+        <div class="hint" style="margin-top:7px">選択中の種類を3D画面の床でクリック／タップすると配置。AIルート点はスタート側から順番に置いてね。</div>
+      </section>
+      <section class="section">
+        <h3>選択オブジェクト</h3>
+        <div id="noSelection" class="hint">オブジェクトをクリックして選択。</div>
+        <div id="inspector" class="hidden">
+          <label>名前</label><input id="objName" maxlength="40">
+          <div class="fieldrow three"><div><label>X</label><input id="objX" type="number" step="0.25"></div><div><label>Y</label><input id="objY" type="number" step="0.25"></div><div><label>Z</label><input id="objZ" type="number" step="0.25"></div></div>
+          <div class="fieldrow three"><div><label>幅</label><input id="objW" type="number" min="0.2" step="0.25"></div><div><label>高さ</label><input id="objH" type="number" min="0.2" step="0.25"></div><div><label>奥行</label><input id="objD" type="number" min="0.2" step="0.25"></div></div>
+          <div class="fieldrow"><div><label>Y回転 (°)</label><input id="objRot" type="number" step="5"></div><div><label>強さ / 速度</label><input id="objPower" type="number" step="0.25"></div></div>
+          <div class="actions"><button id="duplicateBtn">複製</button><button class="danger" id="deleteBtn">削除</button></div>
+        </div>
+      </section>
+      <section class="section">
+        <h3>配置済み一覧 <span class="mini-tag" id="listCount">0</span></h3>
+        <div class="object-list" id="objectList"></div>
+      </section>
+      <section class="section wide">
+        <h3>ステージライブラリ</h3>
+        <div id="stageLibrary" class="hint">まだ保存されたステージはないよ。</div>
+        <div class="actions"><button id="newStageBtn">新規ステージ</button><button id="clearStageBtn">全消去</button></div>
+      </section>
+      <div class="footer-note wide">FGR = Fall Guys Round · ステージデータはこのブラウザ内に保存 · 3D表示には初回ネット接続が必要</div>
+    </aside>
+  </main>
+  <input id="fileInput" type="file" accept=".fgr,.json,application/json">
 </div>
 <script>
 
-const $ = (s)=>document.querySelector(s);
-const gameEl=$('#game'), overlay=$('#overlay'), panel=$('#panel'), hud=$('#hud');
-const stageNameEl=$('#stage-name'), stageKickerEl=$('#stage-kicker'), subInfoEl=$('#subinfo');
-const aliveNumberEl=$('#alive-number'), progressFill=$('#progress-fill'), progressLabel=$('#progress-label');
-const toastEl=$('#toast');
-const countdownEl=$('#countdown');
+// ------------------------------------------------------------
+// Fall Guys Lab: editable round format + lightweight 3D physics
+// ------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rand=(a,b)=>a+Math.random()*(b-a);
+const uid=()=>Math.random().toString(36).slice(2,10);
+const COLORS=['#ff5798','#4dc9ff','#ffd34f','#8b72ff','#56dfa2','#ff884e','#62e2db','#e9e9ff','#f27bdf','#a9e05e'];
+const TYPE_INFO={
+ platform:{label:'足場',color:0x7d8fc4,solid:true,defaultSize:[8,.6,8]}, paddedFloor:{label:'やわらかい床',color:0x4cbbca,solid:true,defaultSize:[8,.6,8]}, ramp:{label:'坂',color:0x8b9acb,solid:true,defaultSize:[5,1,8]},
+ checkpoint:{label:'セーブポイント',color:0x5ce0a1,defaultSize:[2,2,.5]}, goal:{label:'ゴール',color:0xffd45e,defaultSize:[3,2,.7]}, spawn:{label:'スタート',color:0x49d9e8,defaultSize:[6,.35,2]},
+ slime:{label:'スライム床',color:0x71e66d,solid:true,defaultSize:[8,.25,8]}, slimePit:{label:'スライム池',color:0x7bea50,defaultSize:[8,.15,8]}, routeNode:{label:'AIルート点',color:0xffc95c,defaultSize:[.7,.7,.7]},
+ block:{label:'ブロック',color:0x9da9c9,solid:true,defaultSize:[2,2,2]}, wall:{label:'壁',color:0x8897bc,solid:true,defaultSize:[6,3,.5]}, bumper:{label:'バンパー',color:0xff6d9f,defaultSize:[1.5,1.5,1.5]}, spinner:{label:'回転バー',color:0xffb64d,defaultSize:[7,.45,.5]}, fan:{label:'ファン',color:0x5bdde5,defaultSize:[2,2,.7]}, jumpPad:{label:'ジャンプ台',color:0xb27aff,solid:true,defaultSize:[3,.3,3]}, conveyor:{label:'ベルト',color:0x54d5b1,solid:true,defaultSize:[5,.35,7]}, movingPlatform:{label:'動く足場',color:0xf5b34d,solid:true,defaultSize:[5,.5,5]}
+};
+const PHYS={gravity:23,walkSpeed:7.2,groundAccel:34,airAccel:12,groundDrag:10,airDrag:1.2,jumpSpeed:9.7,diveSpeed:10.5,diveLift:2.5,diveRecovery:.62,diveCooldown:.85,beanRadius:.38,beanHeight:1.32,terminalVelocity:-32,knockThreshold:10,knockDuration:.82,airSteer:.58};
+const STORE='fgLabStagesV1',DRAFT='fgLabDraftV1';
+let library=[];try{library=JSON.parse(localStorage.getItem(STORE)||'[]');if(!Array.isArray(library))library=[];}catch{library=[];}
+let stage=makeBlankStage();let selectedId=null,placementType='platform',mode='editor',worldObjects=[],bodies=[],player=null,gameRunning=false,gameState=null,lastTime=0,accumulator=0,toastTimer=0;
+let keys={},jumpPressed=false,divePressed=false,pointerDown=null,editorYaw=.8,editorPitch=.52,editorDistance=24,cameraYaw=0,touchMove={x:0,y:0},touchPointer=null,mouseLook=false,editorBackup=null,toolMode='place';
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x7ed4ff);
-scene.fog=new THREE.Fog(0x7ed4ff,48,145);
-const camera=new THREE.PerspectiveCamera(63,window.innerWidth/window.innerHeight,.1,350);
-camera.position.set(0,8,12);
-const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled=false;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-gameEl.prepend(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xeaf9ff,0x5c6597,2.0));
-const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-15,28,18);scene.add(sun);
-const fillLight=new THREE.DirectionalLight(0xffc9ef,.75);fillLight.position.set(18,10,-25);scene.add(fillLight);
-let world=new THREE.Group();scene.add(world);
-const clock=new THREE.Clock();
-const COURSE_START_Z=54.5, COURSE_FINISH_Z=-68.7;
+function makeBlankStage(){return {format:'FGR',version:1,id:uid(),name:'新しいラウンド',type:'race',timeLimit:120,useQual:true,useFinal:true,objects:[
+ {id:uid(),type:'platform',name:'スタート足場',p:[0,-.3,0],s:[18,.6,18],rot:0,power:1},
+ {id:uid(),type:'spawn',name:'スタート地点',p:[0,.15,6],s:[8,.3,2],rot:0,power:1},
+ {id:uid(),type:'goal',name:'ゴール',p:[0,.3,-7],s:[3,2,.7],rot:0,power:1},
+ {id:uid(),type:'routeNode',name:'ルート点 1',p:[0,.3,1],s:[.7,.7,.7],rot:0,power:1},
+ {id:uid(),type:'routeNode',name:'ルート点 2',p:[0,.3,-4],s:[.7,.7,.7],rot:0,power:1}
+ ]};}
+function clone(x){return JSON.parse(JSON.stringify(x));}
+function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2100);}
+function saveLibrary(){localStorage.setItem(STORE,JSON.stringify(library));renderLibrary();}
+function saveDraft(){try{localStorage.setItem(DRAFT,JSON.stringify(stage));}catch{}}
+try{const d=JSON.parse(localStorage.getItem(DRAFT)||'null');if(d?.format==='FGR')stage=normalizeStage(d);}catch{}
+function normalizeStage(input){const s=clone(input);s.format='FGR';s.version=1;s.id=s.id||uid();s.name=String(s.name||'読み込んだラウンド').slice(0,48);s.type=s.type==='survival'?'survival':'race';s.timeLimit=clamp(Number(s.timeLimit)||120,15,900);s.useQual=s.useQual!==false;s.useFinal=s.useFinal!==false;s.objects=Array.isArray(s.objects)?s.objects.map(o=>({id:o.id||uid(),type:TYPE_INFO[o.type]?o.type:'platform',name:String(o.name||TYPE_INFO[o.type]?.label||'Object').slice(0,40),p:Array.isArray(o.p)?o.p.slice(0,3).map(Number):[0,0,0],s:Array.isArray(o.s)?o.s.slice(0,3).map(n=>Math.max(.2,Number(n)||1)):[2,1,2],rot:Number(o.rot)||0,power:Number(o.power)||1})):[];return s;}
 
-const raceRounds=[
- {id:'dizzy',name:'スピンレース（ディジー・ハイツ）',desc:'回転する床とボールを越えてゴールへ！',type:'dizzy'},
- {id:'doors',name:'ドアダッシュ',desc:'本物のドアを見つけて突き破れ！',type:'doors'},
- {id:'fruit',name:'フルーツパニック',desc:'飛んでくるフルーツを避けて坂を登れ！',type:'fruit'},
- {id:'gate',name:'ゲートクラッシュ',desc:'上下するゲートの隙間を抜けろ！',type:'gate'},
- {id:'hit',name:'ヒットパレード',desc:'振り子や回転障害物を避けて進め！',type:'hit'},
- {id:'seesaw',name:'シーソーゲーム',desc:'左右に揺れる足場を渡ってゴールへ！',type:'seesaw'},
- {id:'slimeClimb',name:'スライム・クライム',desc:'細い足場とスライム障害物を越えろ！',type:'slimeClimb'},
- {id:'tiptoe',name:'ヒヤヒヤロード',desc:'穴だらけの道を見極めて進め！',type:'tiptoe'},
- {id:'whirly',name:'ぐるぐるファイト',desc:'回転するプロペラを突破しろ！',type:'whirly'}
-];
-const survivalRounds=[
- {id:'blockParty',name:'ブロックパーティー',desc:'迫ってくる壁に押し出されないように生き残れ！',type:'block'},
- {id:'jumpClub',name:'ジャンプクラブ',desc:'回転するバーを跳び越えて生き残れ！',type:'jumpClub'},
- {id:'rollOut',name:'ロールアウト',desc:'回転する足場の上で落ちないように生き残れ！',type:'roll'}
-];
-const finalRounds=[
- {id:'fallMountain',name:'フォールマウンテン',desc:'障害物を越え、頂上のクラウンに触れて優勝！',type:'crown'},
- {id:'hex',name:'ヘキサゴン',desc:'踏んだ六角形タイルが消える。最後まで残れ！',type:'hex'},
- {id:'jump',name:'ジャンプ・ショーダウン',desc:'回転する2本のバーを避けて最後まで生き残れ！',type:'jump'}
-];
-const QUALIFY=[24,16,8];
-const COLORS=[0xff6688,0x35d6d0,0xffc94e,0x9b7bff,0x79e05b,0xff8c42,0x56a8ff,0xf17dce,0xffe9a5,0x76f1a0,0xd8ecff,0xb4a2ff];
-let bots=Array.from({length:32},(_,i)=>({id:'bot'+i,color:COLORS[i%COLORS.length],alive:true,botIndex:i,phase:Math.random()*10,baseLane:0,finished:false,finishTime:null,speed:5.2+Math.random()*2.45,aiTimer:Math.random()*1.5,aiThink:Math.random()*.3,aiTargetLane:0,aiJumpRequested:false,aiDiveRequested:false,aiDiveCooldown:Math.random()*2.5,aiX:0,aiZ:0,hitCooldown:0,bumpCooldown:0,stunTimer:0,traits:{awareness:.3+Math.random()*.68,patience:.2+Math.random()*.75,bravery:.2+Math.random()*.75,reaction:.16+Math.random()*.55,jumpChance:.25+Math.random()*.7,noise:.12+Math.random()*.38}}));
-let player={id:'player',color:0xffe760,alive:true,isPlayer:true,finished:false,finishTime:null,speed:9.0,phase:0,hitCooldown:0,bumpCooldown:0};
-let state='menu', roundIndex=0, chosenRaces=[], chosenFinal=null, currentRound=null, isFinalRace=false;
-let spectatorMode=false, crownTarget=null, spectatorTarget=null, spectatorTargetSwitch=0, spectatorSwipeId=null, spectatorSwipeStartX=0;
-let countdownActive=false,countdownRemaining=0,countdownTargetState='race';
-let cameraYaw=0,cameraPitch=0,lookPointer=null,lookLastX=0,lookLastY=0,lookStartX=0,lookStartY=0,lookMoved=false;
-let elapsed=0, stageTime=0, finishTarget=24, finishers=0, survivalElimTimer=6.2, lastHud=0;
-let obstacles=[], tiles=[], tileMap=new Map(), groundPlatforms=[], coursePath=[], stageBounds={kind:'race'}, worldActors=[], input={x:0,y:0,jump:false,dive:false}, keys=new Set();
-let survivalIsQualifier=false;
-let joystick={active:false,id:null,x:0,y:0,backHeld:false};
-let cameraLook=new THREE.Vector3(0,0,0), desiredCamera=new THREE.Vector3();
+// Scene / renderer
+if(!window.THREE){$('worldWrap').innerHTML='<div style="padding:24px;color:white;font-size:14px;line-height:1.7"><b>3Dエンジンを読み込めなかったよ</b><br>インターネットに接続してからページを再読み込みしてね。Three.jsをCDNから読み込む必要があるよ。</div>';throw new Error('Three.js CDN failed to load');}
+const canvas=$('gameCanvas');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9db8d4);scene.fog=new THREE.Fog(0x9db8d4,42,110);
+const camera=new THREE.PerspectiveCamera(58,1,.1,250);
+scene.add(new THREE.HemisphereLight(0xeaf5ff,0x5c6683,2.0));
+const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-15,24,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;scene.add(sun);
+const worldRoot=new THREE.Group();scene.add(worldRoot);
+const grid=new THREE.GridHelper(100,100,0x65749c,0x8b9abd);grid.position.y=-.01;worldRoot.add(grid);
+const backdrop=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x92a9c0,roughness:1}));backdrop.rotation.x=-Math.PI/2;backdrop.position.y=-2.5;worldRoot.add(backdrop);
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+let currentLookTarget=new THREE.Vector3(0,0,0);
+function resize(){const r=$('worldWrap').getBoundingClientRect();if(!r.width||!r.height)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe($('worldWrap'));window.addEventListener('resize',resize);resize();
 
-function mat(color,roughness=.65,metalness=0){return new THREE.MeshStandardMaterial({color,roughness,metalness});}
-function box(parent,w,h,d,color,x,y,z,extra={}){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color,extra.roughness??.68,extra.metalness??0));
- mesh.position.set(x,y,z);if(extra.rotationY)mesh.rotation.y=extra.rotationY;parent.add(mesh);return mesh;
-}
-function sphere(parent,r,color,x,y,z,segments=14){const m=new THREE.Mesh(new THREE.SphereGeometry(r,segments,Math.max(8,Math.floor(segments*.7))),mat(color,.55));m.position.set(x,y,z);parent.add(m);return m;}
-function addWorld(mesh){world.add(mesh);return mesh;}
-const HEX_RADIUS=1.12;
-function addGroundBox(x,z,w,d,color=0x647bc0,rotationY=0){
- const mesh=box(world,w,.62,d,color,x,-.31,z,{rotationY});
- groundPlatforms.push({shape:'box',x,z,halfW:w/2,halfD:d/2,rotationY,mesh});
- return mesh;
-}
-function addGroundCircle(x,z,r,color=0x647bc0){
- const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.62,40),mat(color,.68));
- mesh.position.set(x,-.31,z);world.add(mesh);
- groundPlatforms.push({shape:'circle',x,z,r,mesh});
- return mesh;
-}
-function addGroundRingSector(inner,outer,startAngle,angleLength,color=0x5b6fbd){
- const mesh=new THREE.Mesh(new THREE.RingGeometry(inner,outer,10,1,startAngle,angleLength),mat(color,.7));
- mesh.rotation.x=-Math.PI/2;mesh.position.y=-.025;world.add(mesh);
- groundPlatforms.push({shape:'ringSector',inner,outer,startAngle,angleLength,mesh});
- return mesh;
-}
-function angleInArc(angle,start,length){
- const tau=Math.PI*2;let d=(angle-start)%tau;if(d<0)d+=tau;return d<=length;
-}
-function nearestGroundPoint(x,z){
- let best=null,bestD=Infinity;
- const consider=(px,pz)=>{const d=(px-x)*(px-x)+(pz-z)*(pz-z);if(d<bestD){bestD=d;best={x:px,z:pz};}};
- if(stageBounds.kind==='hex'){
-  for(const t of tiles){if(!t.removed)consider(t.x,t.z);}
- }else{
-  for(const g of groundPlatforms){
-   if(g.shape==='circle'){
-    const dx=x-g.x,dz=z-g.z,d=Math.hypot(dx,dz)||1,rr=Math.min(g.r*.82,d);
-    consider(g.x+dx/d*rr,g.z+dz/d*rr);
-   }else if(g.shape==='ringSector'){
-    let a=(Math.atan2(-z,x)+Math.PI*2)%(Math.PI*2);
-    if(!angleInArc(a,g.startAngle,g.angleLength))a=g.startAngle+g.angleLength/2;
-    const r=Math.max(g.inner+.25,Math.min(g.outer-.25,Math.hypot(x,z)));
-    consider(Math.cos(a)*r,-Math.sin(a)*r);
-   }else if(g.shape==='box'){
-    const dx=x-g.x,dz=z-g.z,c=Math.cos(g.rotationY),s=Math.sin(g.rotationY);
-    const lx=THREE.MathUtils.clamp(dx*c-dz*s,-g.halfW+.18,g.halfW-.18);
-    const lz=THREE.MathUtils.clamp(dx*s+dz*c,-g.halfD+.18,g.halfD-.18);
-    consider(g.x+lx*c+lz*s,g.z-lx*s+lz*c);
-   }
-  }
+function material(color,roughness=.68,metalness=.02,opacity=1){return new THREE.MeshStandardMaterial({color,roughness,metalness,transparent:opacity<1,opacity});}
+function addBox(parent,size,pos,color,opacity=1){const m=new THREE.Mesh(new THREE.BoxGeometry(...size),material(color,.72,.02,opacity));m.position.set(...pos);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function makeBean(color){const g=new THREE.Group();const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.5,5,10),material(color,.42,.02));body.position.y=.66;body.castShadow=true;g.add(body);const eyeMat=material(0x20233b,.35);for(const x of [-.13,.13]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),eyeMat);eye.position.set(x,.9,-.335);g.add(eye);}const shine=material(0xffffff,.2);for(const x of [-.145,.115]){const e=new THREE.Mesh(new THREE.SphereGeometry(.018,8,6),shine);e.position.set(x,.925,-.38);g.add(e);}g.userData.body=body;return g;}
+function clearWorld(){for(const o of worldObjects){worldRoot.remove(o.group);disposeObject(o.group);}worldObjects=[];for(const b of bodies){worldRoot.remove(b.mesh);disposeObject(b.mesh);}bodies=[];player=null;}
+function disposeObject(obj){obj.traverse?.(n=>{if(n.geometry)n.geometry.dispose();if(n.material){if(Array.isArray(n.material))n.material.forEach(m=>m.dispose());else n.material.dispose();}});}
+function objectLabel(o){return o.name||TYPE_INFO[o.type]?.label||o.type;}
+function createWorldObject(data){const d=data;const group=new THREE.Group();group.position.set(...d.p);group.rotation.y=(d.rot||0)*Math.PI/180;group.userData.objectId=d.id;const [w,h,dep]=d.s;const c=TYPE_INFO[d.type]?.color||0x8899aa;let main=null,hit=[];
+ const addSolid=(mesh,kind=d.type)=>{hit.push({mesh,kind});return mesh;};
+ switch(d.type){
+ case 'platform':case 'paddedFloor':case 'slime':case 'jumpPad':case 'conveyor':case 'movingPlatform':
+   main=addBox(group,[w,h,dep],[0,0,0],c,d.type==='slime'?.82:1);addSolid(main);
+   if(d.type==='paddedFloor'){const top=addBox(group,[w*.94,.08,dep*.94],[0,h/2+.035,0],0x9be3ef);top.castShadow=false;}
+   if(d.type==='slime'){const top=addBox(group,[w*.98,.04,dep*.98],[0,h/2+.04,0],0x6dff65,.88);top.castShadow=false;}
+   if(d.type==='jumpPad'){const cap=new THREE.Mesh(new THREE.CylinderGeometry(Math.min(w,dep)*.34,Math.min(w,dep)*.4,.18,24),material(0xe5c4ff,.4));cap.position.y=h/2+.08;cap.castShadow=true;group.add(cap);}
+   if(d.type==='conveyor'){for(let x=-w*.35;x<=w*.36;x+=Math.max(.7,w/6)){const ar=new THREE.Mesh(new THREE.ConeGeometry(.18,.45,4),material(0xd9fff4));ar.rotation.x=Math.PI/2;ar.position.set(x,h/2+.13,0);group.add(ar);}}
+   if(d.type==='movingPlatform'){const edge=addBox(group,[w+.12,.12,dep+.12],[0,h/2,0],0xffda8b);edge.position.y=h/2+.04;}
+   break;
+ case 'ramp':
+   main=addBox(group,[w,h,dep],[0,0,0],c);main.rotation.x=-.18;addSolid(main);break;
+ case 'block':case 'wall':
+   main=addBox(group,[w,h,dep],[0,0,0],c);addSolid(main);break;
+ case 'spawn':
+   main=addBox(group,[w,.22,dep],[0,0,0],c);main.position.y=0;const startRing=new THREE.Mesh(new THREE.TorusGeometry(Math.max(1,w*.25),.09,8,32),material(0xb6ffff));startRing.rotation.x=Math.PI/2;startRing.position.y=.18;group.add(startRing);break;
+ case 'checkpoint':{
+   const post1=addBox(group,[.18,h,.18],[-w/2,0,0],c),post2=addBox(group,[.18,h,.18],[w/2,0,0],c),bar=addBox(group,[w,.18,.18],[0,h/2,0],0x9dffca);const flag=addBox(group,[w*.43,h*.3,.07],[.2,h*.25,-.06],0xfff0a5);flag.material.side=THREE.DoubleSide;break;}
+ case 'goal':{
+   const ring=new THREE.Mesh(new THREE.TorusGeometry(Math.max(.7,w*.37),.13,12,36),material(0xffde65,.3,.15));ring.position.y=h*.38;ring.castShadow=true;group.add(ring);const pole1=addBox(group,[.14,h,.14],[-w*.38,h*.25,0],0xffe07b),pole2=addBox(group,[.14,h,.14],[w*.38,h*.25,0],0xffe07b);const flag=addBox(group,[w*.82,.12,.1],[0,h*.48,0],0xff5b9b);break;}
+ case 'slimePit':{
+   const pool=new THREE.Mesh(new THREE.BoxGeometry(w,.16,dep),new THREE.MeshStandardMaterial({color:c,roughness:.25,transparent:true,opacity:.76,metalness:.08}));pool.position.y=-.08;group.add(pool);const tor=new THREE.Mesh(new THREE.BoxGeometry(w,.03,dep),new THREE.MeshBasicMaterial({color:0x9cff55,transparent:true,opacity:.4,wireframe:true}));tor.position.y=.01;group.add(tor);break;}
+ case 'routeNode':{
+   const orb=new THREE.Mesh(new THREE.SphereGeometry(.35,16,12),material(c,.28,.1,.9));orb.position.y=.15;group.add(orb);const ring=new THREE.Mesh(new THREE.TorusGeometry(.52,.035,6,24),material(0xffec9a));ring.rotation.x=Math.PI/2;ring.position.y=.18;group.add(ring);const number=makeTextSprite(String(routeIndex(d.id)+1));number.position.set(0,.85,0);number.scale.set(1,1,1);group.add(number);break;}
+ case 'bumper':{
+   const sphere=new THREE.Mesh(new THREE.SphereGeometry(Math.max(w,h,dep)*.5,24,18),new THREE.MeshStandardMaterial({color:c,roughness:.32,metalness:.12}));sphere.position.y=0;sphere.castShadow=true;group.add(sphere);const cap=new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),material(0xffffff));cap.position.set(0,.22,-.36);group.add(cap);break;}
+ case 'spinner':{
+   const base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.58,.36,20),material(0xc4cced));base.position.y=-.04;group.add(base);main=addBox(group,[w,h,dep],[0,.35,0],c);main.castShadow=true;const ball=new THREE.Mesh(new THREE.SphereGeometry(.35,16,12),material(0xffe2a0));ball.position.y=.35;group.add(ball);break;}
+ case 'fan':{
+   const pole=addBox(group,[.25,h,.25],[0,0,0],0x779bb5);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.35,16),material(c));hub.position.set(0,h*.3,0);group.add(hub);const blades=new THREE.Group();blades.position.copy(hub.position);for(let i=0;i<3;i++){const blade=addBox(blades,[.22,.12,1.4],[0,0,.75],0xb8f8ff);blade.rotation.y=i*Math.PI*2/3;}group.add(blades);group.userData.blades=blades;break;}
  }
- return best;
+ group.traverse(n=>{if(n.isMesh){n.userData.parentObjectId=d.id;}});
+ worldRoot.add(group);const obj={data:d,group,hit,baseY:d.p[1],phase:Math.random()*Math.PI*2};worldObjects.push(obj);return obj;
 }
-function saveGroundCheckpoint(actor,x=actor.group.position.x,z=actor.group.position.z){
- if(hasGround(x,z,actor)){actor.lastGroundX=x;actor.lastGroundZ=z;}
-}
-function restoreFromFall(actor){
- if(!actor?.group)return;
- let x=actor.lastGroundX,z=actor.lastGroundZ;
- if(!Number.isFinite(x)||!Number.isFinite(z)||!hasGround(x,z,actor)){
-  const nearest=nearestGroundPoint(actor.group.position.x,actor.group.position.z);
-  if(nearest){x=nearest.x;z=nearest.z;}
- }
- if(!Number.isFinite(x)||!Number.isFinite(z)){x=0;z=state==='race'?COURSE_START_Z:0;}
- actor.group.position.set(x,0,z);actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;
- actor.stunTimer=0;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
- actor.fallCount=(actor.fallCount||0)+1;actor.lastGroundX=x;actor.lastGroundZ=z;
- startSlimeEffect(actor);
- if(actor.isPlayer)toast('落下！ 最後の足場に復帰');
-}
-function newWorld(){scene.remove(world);world=new THREE.Group();scene.add(world);obstacles=[];tiles=[];tileMap=new Map();groundPlatforms=[];coursePath=[];worldActors=[];crownTarget=null;}
-function makeBean(actor){
- const group=new THREE.Group();
- const visual=new THREE.Group();visual.position.y=1.02;group.add(visual);
- const body=new THREE.Mesh(new THREE.CapsuleGeometry(.54,.68,5,12),mat(actor.color,.5,.02));visual.add(body);
- const belly=new THREE.Mesh(new THREE.SphereGeometry(.32,14,10),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.8,transparent:true,opacity:.12}));belly.position.set(0,-.15,-.43);belly.scale.set(1,.8,.25);visual.add(belly);
- for(const ex of [-.16,.16]){
-   const eye=sphere(visual,.105,0xffffff,ex,.15,-.473,12);eye.scale.set(.82,1.05,.5);
-   const pupil=sphere(visual,.052,0x17203d,ex+.012,.145,-.518,10);pupil.scale.set(.8,1,.45);
-   sphere(visual,.018,0xffffff,ex-.012,.17,-.54,8);
- }
- const footRing=new THREE.Mesh(new THREE.TorusGeometry(.42,.055,6,20),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.38}));footRing.rotation.x=Math.PI/2;footRing.position.y=.06;group.add(footRing);
- group.userData.visual=visual;group.userData.footRing=footRing;
- actor.group=group;actor.visual=visual;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor.slimeHeadingYaw=actor.group.rotation.y;actor._wasSlimeAffected=false;
- world.add(group);return group;
-}
-function resetActorForRound(actor,x,z){
- actor.finished=false;actor.finishTime=null;actor.vx=0;actor.vy=0;actor.vz=0;actor.grounded=true;actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;actor.stunTimer=0;actor.jumpLock=0;actor.hitCooldown=0;actor.bumpCooldown=0;actor.slimeEffectTimer=0;actor._wasSlimeAffected=false;setGhostAppearance(actor,false);actor.group.position.set(x,0,z);actor.group.rotation.set(0,0,0);actor.slimeHeadingYaw=0;actor.visual.rotation.set(0,0,0);actor.group.visible=true;actor.lastGroundX=x;actor.lastGroundZ=z;actor.fallCount=0;
-}
-function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
-function pickGameRounds(){chosenRaces=shuffle([...raceRounds,...survivalRounds]).slice(0,3);chosenFinal=finalRounds[Math.floor(Math.random()*finalRounds.length)];}
-function startRoundStage(stage,isFinal=false){if(['block','jumpClub','roll','hex','jump'].includes(stage.type))startSurvivalStage(stage,isFinal);else startRaceStage(stage,isFinal);}
-function courseCenterX(z){
- if(!coursePath.length)return 0;
- if(z>=coursePath[0].z)return coursePath[0].x;
- for(let i=0;i<coursePath.length-1;i++){
-  const a=coursePath[i],b=coursePath[i+1];
-  if(z<=a.z&&z>=b.z){const t=(a.z-z)/(a.z-b.z||1);return THREE.MathUtils.lerp(a.x,b.x,t);}
- }
- return coursePath[coursePath.length-1].x;
-}
-function courseSlope(z){return (courseCenterX(z+.15)-courseCenterX(z-.15))/.3;}
-function courseYawAt(z){return Math.atan(courseSlope(z));}
-function courseSidePoint(z,lateral){const yaw=courseYawAt(z);return {x:courseCenterX(z)+lateral*Math.cos(yaw),z:z-lateral*Math.sin(yaw),yaw};}
-function startCountdown(targetState){
- countdownTargetState=targetState;countdownActive=true;countdownRemaining=3.6;
- // Every round starts with a neutral forward view, but look input stays active during countdown.
- cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=false;
- countdownEl.textContent='3';countdownEl.style.display='flex';input.jump=false;input.dive=false;
-}
-function allAliveBots(){return bots.filter(b=>b.alive);}
-function currentActors(){return [player,...allAliveBots()];}
-function setOverlay(html){panel.innerHTML=html;overlay.style.display='flex';}
-function hideOverlay(){overlay.style.display='none';}
-function toast(text){toastEl.textContent=text;toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),1200);}
-function showMenu(){document.body.classList.remove('stick-active');state='menu';spectatorMode=false;spectatorTarget=null;document.body.classList.remove('spectating');countdownActive=false;countdownEl.style.display='none';hud.style.display='none';$('#touch-controls').style.display='none';overlay.style.display='flex';setOverlay(`<div class="eyebrow">FALL PARTY RACE</div><h1 class="logo-line">BEAN <span>BATTLE</span></h1><p>32体のBotと勝ち抜け！ シーズン1のレースとサバイバルを突破して、ファイナルでクラウンをつかもう。</p><div class="pill-row"><span class="pill">ランダムコース</span><span class="pill">ジャンプ＆ダイブ</span><span class="pill">全4ラウンド</span><span class="pill">毎回ランダム選出</span></div><div class="rules"><div class="rule"><b>📱 スマホ</b>左側をタップした位置に出るスティックで移動。右側をタップするとジャンプ（空中ならダイブ）、スワイプすると視点操作。</div><div class="rule"><b>⌨️ PC</b>WASD / 矢印で移動。Spaceでジャンプ、Shiftでダイブ。</div><div class="rule"><b>🏁 予選3回</b>ラウンドごとに脱落。順位を上げて次へ進もう。</div><div class="rule"><b>👑 ファイナル</b>生き残るか、クラウンレースで1位になれば優勝！</div></div><p style="font-size:11px;color:#a9c8ef">Three.jsを読み込むため、プレイ時はインターネット接続が必要だよ。</p><button id="start-btn" class="main-btn">ゲームスタート！</button>`);
- $('#start-btn').addEventListener('click',startGame,{once:true});
-}
-function buildCourse(stage){
- newWorld();stageBounds={kind:'platforms'};
- const id=stage.id,isCrown=stage.type==='crown';
- const rowZ=Array.from({length:12},(_,i)=>39-i*9.25);
- const layouts={
-  dizzy:[0,2.1,-2.1,2.9,-2.8,1.8,-1.8,2.6,-2.4,1.6,-1.4,0],
-  doors:[0,0,0,0,0,0,0,0,0,0,0,0],
-  fruit:[0,.8,-.8,.8,-.8,.8,-.8,.8,-.8,.8,-.8,0],
-  gate:[0,1.8,-1.8,1.8,-1.8,1.8,-1.8,1.8,-1.8,1.8,-1.8,0],
-  hit:[0,-2.2,-2.2,2.2,2.2,0,-2.2,-2.2,2.2,2.2,0,0],
-  seesaw:[0,-2.5,-4.0,-1.0,3.2,4.6,1.0,-3.4,-4.7,-1.0,2.8,0],
-  slimeClimb:[0,2.2,3.7,1.2,-2.1,-3.8,-1.0,2.5,4.0,1.4,-2.0,0],
-  whirly:[0,0,2.8,2.8,0,-2.8,-2.8,0,2.8,2.8,0,0],
-  fallMountain:[0,0,1.4,-1.4,1.4,0,-1.4,1.4,-1.4,0,0,0]
- };
- const offsets=layouts[id]||layouts.dizzy;
- coursePath=[{z:COURSE_START_Z,x:0},...rowZ.map((z,i)=>({z,x:offsets[i]})),{z:COURSE_FINISH_Z,x:offsets[offsets.length-1]}].sort((a,b)=>b.z-a.z);
- // Wide starting island, followed by separated floating platforms. There are no perimeter fences.
- addGroundBox(0,53.5,22.2,22.0,0x596fb8);
- if(id==='tiptoe'){
-  // Tip Toe: only the revealed safe route receives solid ground; every other position is a real hole.
-  let lane=0;const safe=[];
-  for(let i=0,z=41;z>-62;i++,z-=2.65){
-   if(i>0&&Math.random()<.76)lane=THREE.MathUtils.clamp(lane+(Math.random()<.5?-1:1),-3,3);
-   safe.push({x:lane*2.55,z});
-   const yaw=courseYawAt(z),center=courseCenterX(z)+lane*2.55;
-   addGroundBox(center,z,2.72,2.82,0x6f8bd0,yaw);
-   if(i%5===2&&Math.random()<.35){const branch=THREE.MathUtils.clamp(lane+(Math.random()<.5?-1:1),-3,3);addGroundBox(courseCenterX(z)+branch*2.55,z-1.1,2.4,2.25,0x7087c7,yaw);}
-  }
-  const goalX=courseCenterX(COURSE_FINISH_Z);
-  addGroundBox(goalX,COURSE_FINISH_Z+2.3,14.0,11.5,0x657ec5,courseYawAt(COURSE_FINISH_Z));
- }else{
-  const baseWidth=id==='fruit'?12.2:id==='slimeClimb'?8.8:9.8;
-  rowZ.forEach((z,i)=>{
-   const x=courseCenterX(z),yaw=courseYawAt(z);
-   let w=baseWidth,d=8.75;
-   if(i===0)d=7.0;
-   if(id==='slimeClimb'&&i%3===1)w=7.8;
-   if(id==='seesaw'){w=12.2;d=8.1;}
-   if(id==='gate')w=13.2;
-   if(isCrown){w=Math.max(8.2,11.8-i*.25);d=6.8;}else{d=id==='seesaw'?8.1:6.2;}
-   const platformMesh=addGroundBox(x,z,w,d,(i%2)?0x617bc4:0x536bb3,yaw);
-   if(id==='seesaw')worldActors.push({kind:'seesawPlatform',mesh:platformMesh,phase:i*.82,baseYaw:yaw});
-   // Occasional side islands create alternate lines without enclosing the player.
-   if(!isCrown&&i%3===1&&id!=='doors'&&id!=='fruit'){
-    const side=(i%2?1:-1)*(w*.5+1.75);
-    const point=courseSidePoint(z-2.0,side);
-    addGroundBox(point.x,point.z,3.0,2.9,0x7187c9,point.yaw);
-   }
-  });
-  const finishPoint=courseSidePoint(COURSE_FINISH_Z+2.1,0);
-  addGroundBox(finishPoint.x,finishPoint.z,isCrown?15.0:14.0,11.5,0x6b82c8,finishPoint.yaw);
- }
- const startPoint=courseSidePoint(COURSE_START_Z-.8,0),finishPoint=courseSidePoint(COURSE_FINISH_Z+.2,0);
- box(world,21.2,.04,.68,0xfff0a0,startPoint.x,.035,startPoint.z,{rotationY:startPoint.yaw});
- box(world,15.8,.05,.8,0xffdf59,finishPoint.x,.04,finishPoint.z,{rotationY:finishPoint.yaw});
- for(let lateral=-6.0;lateral<=6.0;lateral+=1.5){const q=courseSidePoint(COURSE_FINISH_Z+.2,lateral);box(world,.72,.055,.82,0xffffff,q.x,.075,q.z,{rotationY:q.yaw});}
- // A finish arch, not a boundary fence.
- const archL=courseSidePoint(COURSE_FINISH_Z+.2,-6.4),archR=courseSidePoint(COURSE_FINISH_Z+.2,6.4);
- box(world,.55,4.2,.55,0xffcf4f,archL.x,2.05,archL.z,{rotationY:archL.yaw});
- box(world,.55,4.2,.55,0xffcf4f,archR.x,2.05,archR.z,{rotationY:archR.yaw});
- box(world,13.2,.5,.65,0xffcf4f,finishPoint.x,4.1,finishPoint.z,{rotationY:finishPoint.yaw});
- const crownY=isCrown?3.05:4.9;
- const crown=new THREE.Mesh(new THREE.TorusGeometry(.78,.2,8,20),mat(0xffef75,.3,.45));
- crown.position.set(finishPoint.x,crownY,finishPoint.z);world.add(crown);crown.rotation.x=Math.PI/2;
- if(isCrown)crownTarget=new THREE.Vector3(finishPoint.x,crownY,finishPoint.z);
- const rows=isCrown?[0,1,2,3,4,5,6,7,8,9,10,11]:[1,3,5,7,9,10];
- rows.forEach((ri,j)=>{
-  const z=rowZ[ri],cx=courseCenterX(z),yaw=courseYawAt(z);
-  if(id==='dizzy'){
-   addGroundCircle(cx,z,2.9,0x6b8bd0);
-   addRotatingBeam(z,10.5,1.05+(j%3)*.13,.9,0x52eee4,j*.55,cx,yaw);
-   if(j%2===0){addRollingBall(z-2.0,1.05,1.25,2.5,j,cx,yaw);}
-  }else if(id==='doors'){
-   addDoorRow(z,j,cx,yaw);
-  }else if(id==='fruit'){
-   for(let k=-1;k<=1;k++)addRollingBall(z,1.18,1.25+Math.abs(k)*.12,1.8,j*1.3+k*.8,cx+k*4.1,yaw);
-  }else if(id==='gate'){
-   addGateSet(z,j,cx,yaw);
-   if(j%2===0)addMover(z,2.6,1.15,1.0,1.15,4.8,j*.9,'mover',cx,yaw);
-  }else if(id==='hit'){
-   if(j%2===0)addHammer(z,j,cx,yaw);else addRotatingBeam(z,12.5,1.25,.86,0x5af4e3,j,cx,yaw);
-  }else if(id==='seesaw'){
-   const platform=groundPlatforms.find(g=>g.shape==='box'&&Math.abs(g.x-cx)<.05&&Math.abs(g.z-z)<.05);
-   if(platform)platform.mesh.material.color.setHex(j%2?0x8c82d8:0x6f87cf);
-   box(world,.65,.9,.8,0xffd56d,cx,-.78,z,{rotationY:yaw});
-   if(j%2===0)addRotatingBeam(z,8.8,.82,.9,0x55eadd,j*.4,cx,yaw);
-  }else if(id==='slimeClimb'){
-   addMover(z,3.6,2.0,1.4,1.25+(j%2)*.25,6.3,j*.8,'slime',cx,yaw);
-   if(j%2===1)addBarrierSet(z,j,cx,yaw);
-   else addHammer(z,j,cx,yaw);
-  }else if(id==='whirly'){
-   addRotatingBeam(z,14.0,1.5+(j%2)*.2,1.05,0x55f4e5,j*.72,cx,yaw);
-   if(j%2===0)addHammer(z,j,cx,yaw);
-  }else if(isCrown){
-   if(j%3===0)addHammer(z,j,cx,yaw);
-   else if(j%3===1)addRollingBall(z,1.22,1.5,3.3,j,cx,yaw);
-   else addRotatingBeam(z,15.0,1.45,1.0,0x55f4e5,j*.8,cx,yaw);
-  }
- });
- // A few visual landmarks; they sit outside the playable route and are not fences.
- for(let i=0;i<30;i++){
-  const x=(i%2===0?-1:1)*(18+Math.random()*20),z=55-Math.random()*125,h=3+Math.random()*13,w=2+Math.random()*5;
-  const building=box(world,w,h,w,[0x5a78c2,0x7d68bd,0x65b9d5,0xff9ecb][i%4],x,h/2-1,z);
-  building.material.transparent=true;building.material.opacity=.55;
- }
-}
-function addRotatingBeam(z,length,speed,y,color=0x5af4e3,phase=0,x=0,yaw=0){
- const pivot=new THREE.Group();pivot.position.set(x,y,z);pivot.rotation.y=yaw+phase;world.add(pivot);
- const bar=box(pivot,length,.42,.78,color,0,0,0,{metalness:.1});
- sphere(pivot,.48,0xffe66b,-length/2,0,0,12);sphere(pivot,.48,0xffe66b,length/2,0,0,12);
- obstacles.push({kind:'beam',mesh:pivot,bar,length,speed,phase,y,z,x});
-}
-function addHammer(z,i,x=0,yaw=0){
- const side=(i%2===0?-1:1),pivot=new THREE.Group();pivot.position.set(x+side*3.1,1.25,z);pivot.rotation.y=yaw;world.add(pivot);
- const bar=box(pivot,8,.48,.7,0xff7a9e,0,0,0);sphere(pivot,.82,0xffd76a,4,0,.02,14);sphere(pivot,.24,0xffffff,4.25,.18,-.26,10);
- obstacles.push({kind:'hammer',mesh:pivot,bar,length:8,speed:(i%2===0?1:-1)*(1.15+i*.08),phase:i*1.8,y:1.25,z,x:pivot.position.x});
-}
-function addMover(z,w,h,d,speed,amp,phase=0,kind='mover',centerX=0,yaw=0){
- const slime=kind==='slime';
- const mesh=box(world,w,h,d,slime?0xff4fa3:0x58cfe8,centerX,h/2,z,{metalness:.08,rotationY:yaw});
- const cap=box(world,w*.65,.16,d*.9,slime?0xffb7d8:0xb8f5ff,centerX,h+.02,z,{rotationY:yaw});
- if(slime){mesh.material.transparent=true;mesh.material.opacity=.86;cap.material.transparent=true;cap.material.opacity=.94;}
- obstacles.push({kind,mesh,cap,width:w,height:h,depth:d,speed,amp,phase,z,x:centerX,centerX,centerZ:z,centerYaw:yaw,travelMin:-amp,travelMax:amp});
-}
-function addRollingBall(z,r,speed,amp,phase=0,centerX=0,yaw=0){
- const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),mat(0xffcc51,.35,.05));mesh.position.set(centerX,r+.1,z);world.add(mesh);
- const stripe=new THREE.Mesh(new THREE.TorusGeometry(r*.78,.09,6,18),mat(0xff6c9d));stripe.rotation.x=Math.PI/2;mesh.add(stripe);
- obstacles.push({kind:'ball',mesh,r,speed,amp,phase,z,x:centerX,centerX,centerZ:z,centerYaw:yaw,travelMin:-amp,travelMax:amp});
-}
-function addDoorRow(z,i,centerX=0,yaw=0){
- const open=Math.floor(Math.random()*3),lanes=[-4.7,0,4.7];
- lanes.forEach((lane,index)=>{
-  if(index===open)return;
-  const x=centerX+lane*Math.cos(yaw),zz=z-lane*Math.sin(yaw);
-  const mesh=box(world,4.15,2.85,.72,0x8f91e5,x,1.42,zz,{rotationY:yaw});
-  box(mesh,3.35,1.35,.13,0xffffff,0,.05,-.39);
-  obstacles.push({kind:'wallblock',mesh,width:4.15,height:2.85,depth:.72,x,z:zz,wall:false,vx:0,vz:0});
- });
-}
-function addBarrierSet(z,i,centerX=0,yaw=0){
- const gap=(i%2===0?-4.0:4.0),width=7.0;
- for(const side of [-1,1]){
-  const lateral=gap+side*(width/2+.35),x=centerX+lateral*Math.cos(yaw),zz=z-lateral*Math.sin(yaw);
-  const m=box(world,width,.9,.7,0x8b8bff,x,.45,zz,{rotationY:yaw});
-  obstacles.push({kind:'barrier',mesh:m,width,height:.9,depth:.7,x,z:zz});
- }
-}
-function addGateSet(z,i,centerX=0,yaw=0){
- const lanes=[-4.45,0,4.45];
- lanes.forEach((lane,k)=>{
-  const x=centerX+lane*Math.cos(yaw),zz=z-lane*Math.sin(yaw),width=4.25,height=2.65;
-  const baseY=1.34,phase=i*.91+k*2.17;
-  const mesh=box(world,width,height,.82,[0x8b8bff,0x6fe9e8,0xff83b8][k],x,baseY,zz,{rotationY:yaw});
-  obstacles.push({kind:'gate',mesh,width,height,depth:.82,x,z:zz,baseY,lift:2.15,speed:1.18+(k%2)*.17,phase});
- });
-}
-function addWallGate(z,i,centerX=0,yaw=0){
- const gap=(i%2===0?-5.2:5.2),width=10.8;
- for(const side of [-1,1]){
-  const lateral=gap+side*(width/2),x=centerX+lateral*Math.cos(yaw),zz=z-lateral*Math.sin(yaw);
-  const m=box(world,width,3.1,1.05,0x72d7f7,x,1.55,zz,{rotationY:yaw});
-  obstacles.push({kind:'wallblock',mesh:m,width,height:3.1,depth:1.05,x,z:zz});
- }
-}
-function distPointSegment(px,pz,x1,z1,x2,z2){
- const dx=x2-x1,dz=z2-z1,den=dx*dx+dz*dz;
- let t=den?((px-x1)*dx+(pz-z1)*dz)/den:0;t=Math.max(0,Math.min(1,t));
- const x=x1+t*dx,z=z1+t*dz;return Math.hypot(px-x,pz-z);
-}
-function setGhostAppearance(actor,enabled){
- if(!actor?.group)return;
- actor.group.traverse(obj=>{
-  if(!obj.isMesh||!obj.material)return;
-  const mats=Array.isArray(obj.material)?obj.material:[obj.material];
-  for(const m of mats){
-   if(!m.userData.__ghostOriginal)m.userData.__ghostOriginal={transparent:m.transparent,opacity:m.opacity,depthWrite:m.depthWrite};
-   const original=m.userData.__ghostOriginal;
-   if(enabled){m.transparent=true;m.opacity=Math.min(original.opacity,.3);m.depthWrite=false;}
-   else{m.transparent=original.transparent;m.opacity=original.opacity;m.depthWrite=original.depthWrite;}
-   m.needsUpdate=true;
-  }
- });
-}
-function vibrateImpact(strong=false){
- // Vibration works only on browsers/devices that expose the Vibration API; iOS Safari may ignore it.
- try{if(typeof navigator!=='undefined'&&typeof navigator.vibrate==='function')navigator.vibrate(strong?[70,35,85]:[45,25,55]);}catch{}
-}
-function startSlimeEffect(actor){
- if(!actor?.group)return;
- actor.slimeEffectTimer=3;actor.slimeHeadingYaw=actor.group.rotation.y;actor._wasSlimeAffected=true;
- actor.stunTimer=0;actor.vx=0;actor.vz=0;actor.vy=0;actor.grounded=true;
- actor.diveTimer=0;actor.diveBurstTimer=0;actor.diveRecovery=0;actor.diveRecoveryPending=false;
- setGhostAppearance(actor,true);
- if(actor.isPlayer){
-  // Lock the camera to the course's forward view while the player can only move backward.
-  cameraYaw=0;cameraPitch=0;lookPointer=null;lookMoved=true;
-  document.body.classList.add('slime-back-mode');joystick.x=0;joystick.y=0;joystick.backHeld=false;
-  toast('スライム状態！ 3秒間、後ろにしか進めない！');
- }
-}
-function obstacleHit(actor,o){
- if(!actor.group||!actor.alive||!actor.group.visible||(actor.slimeEffectTimer||0)>0)return false;
- const p=actor.group.position,center=o.mesh.position;
- let hit=false,nx=0,nz=0,contactLocalX=0;
- const isRotating=o.kind==='beam'||o.kind==='hammer';
- const isSolid=['wallblock','barrier','blockwall'].includes(o.kind);
- const isMoving=isRotating||o.kind==='mover'||o.kind==='slime'||o.kind==='ball'||o.kind==='blockwall'||o.kind==='gate';
- if(isRotating){
-  const angle=o.mesh.rotation.y,dx=p.x-center.x,dz=p.z-center.z;
-  contactLocalX=THREE.MathUtils.clamp(dx*Math.cos(angle)-dz*Math.sin(angle),-o.length/2,o.length/2);
-  const nearestX=center.x+Math.cos(angle)*contactLocalX;
-  const nearestZ=center.z-Math.sin(angle)*contactLocalX;
-  const ddx=p.x-nearestX,ddz=p.z-nearestZ,d=Math.hypot(ddx,ddz);
-  const vertical=(p.y+1.9>o.y-.28&&p.y+.12<o.y+.28);
-  if(d<.98&&vertical){hit=true;nx=ddx/(d||1);nz=ddz/(d||1);}
- }else if(o.kind==='ball'){
-  const dx=p.x-center.x,dz=p.z-center.z,d=Math.hypot(dx,dz);
-  if(d<o.r+.72&&p.y<o.r+1.35){hit=true;nx=dx/(d||1);nz=dz/(d||1);}
- }else{
-  const dx=p.x-center.x,dz=p.z-center.z,angle=o.mesh.rotation?.y||0;
-  const c=Math.cos(angle),sn=Math.sin(angle);
-  const lx=dx*c-dz*sn,lz=dx*sn+dz*c;
-  const isHardWall=isSolid;
-  const halfW=(o.width||1)/2+.56,halfD=(o.depth||1)/2+.62;
-  const minY=center.y-(o.height||1)/2,maxY=center.y+(o.height||1)/2;
-  const vertical=(p.y+1.9>minY&&p.y+.1<maxY+.12);
-  if(Math.abs(lx)<halfW&&Math.abs(lz)<halfD&&vertical){
-   hit=true;
-   if(isHardWall){
-    // Push the bean completely outside the expanded oriented box every frame.
-    // This runs even during hit cooldown, preventing a later frame from tunnelling through.
-    const penX=halfW-Math.abs(lx),penZ=halfD-Math.abs(lz);
-    const localVx=(actor.vx||0)*c-(actor.vz||0)*sn;
-    const localVz=(actor.vx||0)*sn+(actor.vz||0)*c;
-    if(penX<penZ){
-     const sign=Math.abs(lx)>.025?Math.sign(lx):(localVx>0?-1:1);
-     const targetLX=sign*(halfW+.035),delta=targetLX-lx;
-     p.x+=delta*c;p.z-=delta*sn;nx=sign*c;nz=-sign*sn;
-    }else{
-     let sign;
-     if(Math.abs(lz)>.025)sign=Math.sign(lz);
-     else if(o.kind==='blockwall'&&Math.hypot(o.vx||0,o.vz||0)>.15)sign=Math.sign((o.vx||0)*sn+(o.vz||0)*c)||1;
-     else sign=localVz>0?-1:1;
-     const targetLZ=sign*(halfD+.035),delta=targetLZ-lz;
-     p.x+=delta*sn;p.z+=delta*c;nx=sign*sn;nz=sign*c;
-    }
-   }else{
-    const px=halfW-Math.abs(lx),pz=halfD-Math.abs(lz);
-    if(px<pz){nx=Math.sign(lx||-(actor.vx||1))*c;nz=-Math.sign(lx||-(actor.vx||1))*sn;}
-    else{nx=Math.sign(lz||-(actor.vz||1))*sn;nz=Math.sign(lz||-(actor.vz||1))*c;}
-   }
-  }
- }
- if(!hit)return false;
- // Every slime obstacle applies the same 3-second ghost/backward-only effect to every bean.
- if(o.kind==='slime'){
-  if((actor.slimeEffectTimer||0)<=0){startSlimeEffect(actor);if(actor.isPlayer)vibrateImpact(true);}
-  return true;
- }
- if(isSolid){
-  const n=Math.hypot(nx,nz)||1;nx/=n;nz/=n;
-  const ovx=o.vx||0,ovz=o.vz||0;
-  const actorNormal=(actor.vx||0)*nx+(actor.vz||0)*nz;
-  const obstacleNormal=ovx*nx+ovz*nz;
-  // Static walls remove only velocity directed into the wall. Moving Block Party walls
-  // carry/push beans in the direction of the advancing wall instead of letting them clip through.
-  if(o.kind==='blockwall'&&obstacleNormal>0.25){
-   const target=obstacleNormal;
-   if(actorNormal<target){actor.vx=(actor.vx||0)+nx*(target-actorNormal);actor.vz=(actor.vz||0)+nz*(target-actorNormal);}
-  }else{
-   const relative=actorNormal-obstacleNormal;
-   if(relative<0){actor.vx=(actor.vx||0)-nx*relative;actor.vz=(actor.vz||0)-nz*relative;}
-  }
-  actor.hitCooldown=Math.min(actor.hitCooldown||0,.07);
-  return true;
- }
- // Soft/moving hazards use a cooldown so one collision doesn't retrigger every frame.
- if(actor.hitCooldown>0)return false;
- let ovx=o.vx||0,ovz=o.vz||0,rotationalSpeed=0;
- if(isRotating){
-  const angle=o.mesh.rotation.y;
-  ovx=-Math.sin(angle)*contactLocalX*o.speed;
-  ovz=-Math.cos(angle)*contactLocalX*o.speed;
-  rotationalSpeed=Math.hypot(ovx,ovz);
- }
- const nLen=Math.hypot(nx,nz);
- if(nLen<.001){const rvx=(actor.vx||0)-ovx,rvz=(actor.vz||0)-ovz,rl=Math.hypot(rvx,rvz)||1;nx=rvx/rl;nz=rvz/rl;}else{nx/=nLen;nz/=nLen;}
- const impactSpeed=Math.max(rotationalSpeed,Math.hypot(ovx,ovz));
- const kick=7.9+(isMoving?Math.min(6.8,impactSpeed*.58):0);
- actor.hitCooldown=.78;
- actor.stunTimer=Math.max(actor.stunTimer||0,isMoving?1.42:1.28);
- actor.vx=(actor.vx||0)*.18+nx*kick+ovx*.52;
- actor.vz=(actor.vz||0)*.18+nz*kick+ovz*.52;
- actor.vy=Math.max(actor.vy||0,isMoving?7.5:6.1);
- if(actor.isPlayer){toast('吹っ飛ばされた！ しばらく動けない！');if(isMoving)vibrateImpact(false);}
- return true;
-}
-function updateObstacles(dt){
- const pressure=1+Math.min(.55,Math.max(0,stageTime-12)*.012);
- for(const o of obstacles){
-  const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;
-  if(o.kind==='beam'||o.kind==='hammer'){
-   o.mesh.rotation.y+=o.speed*pressure*dt;
-  }else if(o.kind==='mover'||o.kind==='slime'){
-   if(o.motionPhase===undefined)o.motionPhase=stageTime*o.speed+o.phase;else o.motionPhase+=o.speed*pressure*dt;
-   const mid=((o.travelMax??o.amp)+(o.travelMin??-o.amp))/2,range=((o.travelMax??o.amp)-(o.travelMin??-o.amp))/2;
-   o.x=mid+Math.sin(o.motionPhase)*range;
-   const dx=o.x*Math.cos(o.centerYaw||0),dz=-o.x*Math.sin(o.centerYaw||0);
-   o.mesh.position.x=(o.centerX||0)+dx;o.mesh.position.z=(o.centerZ??o.z)+dz;o.z=o.mesh.position.z;
-   o.cap.position.x=o.mesh.position.x;o.cap.position.z=o.mesh.position.z;
-  }else if(o.kind==='ball'){
-   if(o.motionPhase===undefined)o.motionPhase=stageTime*o.speed+o.phase;else o.motionPhase+=o.speed*pressure*dt;
-   const mid=((o.travelMax??o.amp)+(o.travelMin??-o.amp))/2,range=((o.travelMax??o.amp)-(o.travelMin??-o.amp))/2;
-   o.x=mid+Math.sin(o.motionPhase)*range;
-   const dx=o.x*Math.cos(o.centerYaw||0),dz=-o.x*Math.sin(o.centerYaw||0);
-   o.mesh.position.x=(o.centerX||0)+dx;o.mesh.position.z=(o.centerZ??o.z)+dz;o.z=o.mesh.position.z;
-   o.mesh.rotation.x+=dt*o.speed*2*pressure;o.mesh.rotation.z+=dt*o.speed*pressure;
-  }else if(o.kind==='gate'){
-   o.mesh.position.y=o.baseY+(Math.sin(stageTime*o.speed+o.phase)+1)*.5*o.lift;
-  }
-  if(dt>0){o.vx=(o.mesh.position.x-oldX)/dt;o.vz=(o.mesh.position.z-oldZ)/dt;}
- }
- for(const p of worldActors){
-  if(p.kind==='seesawPlatform'){
-   const tilt=Math.sin(stageTime*.95+p.phase)*.13;
-   p.mesh.rotation.z=tilt*Math.cos(p.baseYaw);p.mesh.rotation.x=tilt*Math.sin(p.baseYaw);
-  }else if(p.kind==='roller'){
-   p.mesh.rotation.z+=p.speed*dt;
-  }
- }
-}
-function updateBlockWalls(dt){
- if(currentRound?.type!=='block')return;
- for(const o of obstacles){
-  if(o.kind!=='blockwall'||!o.wall)continue;
-  const oldX=o.mesh.position.x,oldZ=o.mesh.position.z;
-  o.mesh.position.z-=o.speed*dt;o.z=o.mesh.position.z;
-  if(o.mesh.position.z<-17){o.mesh.position.z=17;o.z=17;const gap=Math.random()<.5?-4.7:4.7;o.mesh.position.x=Math.sign(o.mesh.position.x)*(Math.abs(o.mesh.position.x)>6?Math.abs(o.mesh.position.x):6)+gap*.5;o.vx=0;o.vz=0;}
-  else{o.vx=(o.mesh.position.x-oldX)/dt;o.vz=(o.mesh.position.z-oldZ)/dt;}
- }
-}
-function touchedCrown(actor){
- if(!crownTarget||!actor?.group)return false;
- const p=actor.group.position;
- const horizontal=Math.hypot(p.x-crownTarget.x,p.z-crownTarget.z);
- const headY=p.y+1.68;
- return horizontal<1.08&&Math.abs(headY-crownTarget.y)<.82;
-}
-function enterSpectatorMode(){
- if(spectatorMode)return;
- spectatorMode=true;spectatorTarget=null;spectatorTargetSwitch=Infinity;document.body.classList.add('spectating');
- subInfoEl.textContent='ゴール！ 左側をスワイプして観戦対象を変更';
- const controls=$('#touch-controls');controls.style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- switchSpectatorTarget(1);
- toast('ゴール！ 左側をスワイプして観戦');
-}
-function switchSpectatorTarget(direction=1){
- const pool=bots.filter(b=>b.alive&&b.group&&b.group.visible&&!b.finished).sort((a,b)=>a.group.position.z-b.group.position.z);
- const fallback=bots.filter(b=>b.alive&&b.group&&b.group.visible).sort((a,b)=>a.group.position.z-b.group.position.z);
- const candidates=pool.length?pool:fallback;if(!candidates.length)return;
- let index=candidates.indexOf(spectatorTarget);if(index<0)index=direction>0?-1:0;
- spectatorTarget=candidates[(index+direction+candidates.length)%candidates.length];spectatorTargetSwitch=8;
- toast(`観戦中：Bot ${spectatorTarget.botIndex+1}`);
-}
-function startGame(){
- document.body.classList.remove('stick-active');countdownActive=false;countdownEl.style.display='none';cameraYaw=0;cameraPitch=0;spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
- pickGameRounds();roundIndex=0;survivalIsQualifier=false;player.alive=true;player.color=0xffe760;player.isPlayer=true;
- bots.forEach(b=>{b.alive=true;b.speed=7.7+Math.random()*1.7;b.phase=Math.random()*15;b.aiTimer=Math.random()*1.1;b.aiThink=Math.random()*.3;b.aiTargetLane=0;b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.5+Math.random()*2.8;b.stunTimer=0;b.bumpCooldown=0;b.hitCooldown=0;});
- hud.style.display='block';hideOverlay();$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- startRoundStage(chosenRaces[0],false);
-}
-function startRaceStage(stage,isFinal){
- document.body.classList.remove('stick-active');spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
- hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- countdownEl.style.display='none';currentRound=stage;isFinalRace=isFinal;survivalIsQualifier=false;state='race';elapsed=0;stageTime=0;finishers=0;
- buildCourse(stage);
- const active=allAliveBots();
- active.forEach((b,i)=>makeBean(b));makeBean(player);
- const cols=9;
- active.forEach((b,i)=>{
-  const col=i%cols,row=Math.floor(i/cols);const x=(col-(Math.min(cols,active.length-row*cols)-1)/2)*2.2;
-  resetActorForRound(b,Math.max(-9.3,Math.min(9.3,x)),50-row*2.45);
-  b.baseLane=x;b.speed=7.7+Math.random()*1.7;b.aiTargetLane=x;b.aiThink=Math.random()*(b.traits?.reaction||.35);b.aiJumpRequested=false;b.aiDiveRequested=false;b.aiDiveCooldown=.4+Math.random()*2.6;b.aiJumpCooldown=.4+Math.random()*1.8;b.bumpCooldown=0;
- });
- resetActorForRound(player,0,54.5);
- if(isFinal){player.speed=8.65;active.forEach(b=>b.speed=8.0+Math.random()*2.0);finishTarget=1;}
- else {player.speed=9.0;finishTarget=QUALIFY[roundIndex];}
- stageBounds={kind:'race'};
- updateHud(true);progressLabel.textContent=isFinal?'クラウンへ！':'ゴールまで';
- const kicker=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;
- stageKickerEl.textContent=kicker;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
- camera.position.set(0,8,42);cameraLook.set(0,1,-5);
- startCountdown('race');
-}
-function getInput(){
- if((player.slimeEffectTimer||0)>0){
-  input.x=0;input.y=(joystick.backHeld||keys.has('KeyS')||keys.has('ArrowDown'))?-1:0;input.jump=false;input.dive=false;return;
- }
- let x=0,y=0;
- if(keys.has('KeyA')||keys.has('ArrowLeft'))x-=1;if(keys.has('KeyD')||keys.has('ArrowRight'))x+=1;
- if(keys.has('KeyW')||keys.has('ArrowUp'))y+=1;if(keys.has('KeyS')||keys.has('ArrowDown'))y-=1;
- x+=joystick.x;y+=-joystick.y;
- const len=Math.hypot(x,y);if(len>1){x/=len;y/=len;}
- input.x=x;input.y=y;
-}
-function doJump(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0)return;input.jump=true;}
-function doDive(){if(countdownActive||(state!=='race'&&state!=='survival')||(player.slimeEffectTimer||0)>0)return;input.dive=true;}
-function controlPlayer(dt){
- const a=player,p=player.group;if(!p||a.finished)return;
- a.hitCooldown=Math.max(0,a.hitCooldown-dt);a.bumpCooldown=Math.max(0,(a.bumpCooldown||0)-dt);
- a.jumpLock=Math.max(0,a.jumpLock-dt);
- const oldDiveTimer=a.diveTimer||0;
- a.slimeEffectTimer=Math.max(0,(a.slimeEffectTimer||0)-dt);
- if(a.slimeEffectTimer<=0&&a._wasSlimeAffected){a._wasSlimeAffected=false;setGhostAppearance(a,false);document.body.classList.remove('slime-back-mode');joystick.backHeld=false;}
- const oldSlimeTimer=a.slimeEffectTimer;
- if(oldSlimeTimer>0)a._wasSlimeAffected=true;
- a.diveTimer=Math.max(0,oldDiveTimer-dt);
- a.diveBurstTimer=Math.max(0,(a.diveBurstTimer||0)-dt);
- a.diveRecovery=Math.max(0,(a.diveRecovery||0)-dt);
- a.stunTimer=Math.max(0,(a.stunTimer||0)-dt);
- if(oldDiveTimer>0&&a.diveTimer<=0){
-  if(a.grounded){if(a.diveRecovery<=0)a.diveRecovery=.28;a.diveRecoveryPending=false;}
-  else a.diveRecoveryPending=true;
- }
- const heading=courseYawAt(p.position.z)+cameraYaw;
- const c=Math.cos(heading),sn=Math.sin(heading);
- const moveX=input.x*c-input.y*sn;
- const moveZ=-input.x*sn-input.y*c;
- const stunned=a.stunTimer>0;
- if(stunned){
-  a.vx*=Math.exp(-2.35*dt);a.vz*=Math.exp(-2.35*dt);
- }else{
-  let speed=(state==='survival'?7.3:a.speed);
-  let accel=a.grounded?28:15;
-  if(a.diveRecovery>0&&a.diveBurstTimer<=0){speed*=.42;accel*=.38;}
-  a.vx+=moveX*accel*dt;a.vz+=moveZ*accel*dt;
-  const hasMove=Math.abs(input.x)+Math.abs(input.y)>.02;
-  const drag=a.diveBurstTimer>0?.23:(hasMove?1.6:7.0);
-  const damp=Math.exp(-drag*dt);a.vx*=damp;a.vz*=damp;
-  const max=speed*(a.diveBurstTimer>0?2.25:(a.diveRecovery>0?.42:1));
-  const v=Math.hypot(a.vx,a.vz);if(v>max){a.vx*=max/v;a.vz*=max/v;}
-  if(input.jump&&a.grounded&&a.jumpLock<=0){a.vy=8.2;a.grounded=false;a.jumpLock=.18;}
-  if(input.dive&&a.diveTimer<=0){
-   // A long, slightly rising dive. Re-diving during recovery travels less far but resets recovery.
-   const wasRecovering=a.diveRecovery>0;
-   const faceYaw=a.group.rotation.y,faceX=-Math.sin(faceYaw),faceZ=-Math.cos(faceYaw);
-   const facingLen=Math.hypot(faceX,faceZ)||1;
-   const launchSpeed=wasRecovering?3.6:23.5;
-   a.vx=faceX/facingLen*launchSpeed+a.vx*.12;
-   a.vz=faceZ/facingLen*launchSpeed+a.vz*.12;
-   a.vy=Math.max(a.vy,5.4);a.diveTimer=.54;a.diveBurstTimer=.31;a.diveRecovery=1.35;a.diveRecoveryPending=true;a.jumpLock=.22;
-  }
- }
- input.jump=false;input.dive=false;
- a.vy-=22*dt;p.position.x+=a.vx*dt;p.position.z+=a.vz*dt;p.position.y+=a.vy*dt;
- const groundUnderPlayer=hasGround(p.position.x,p.position.z,a);
- if(p.position.y<=0&&a.vy<=0&&(groundUnderPlayer||(a.slimeEffectTimer||0)>0)){p.position.y=0;a.vy=0;a.grounded=true;if(groundUnderPlayer)saveGroundCheckpoint(a);}
- else {a.grounded=false;}
- if(a.diveRecoveryPending&&a.diveTimer<=0&&a.grounded&&a.stunTimer<=0){if(a.diveRecovery<=0)a.diveRecovery=.28;a.diveRecoveryPending=false;}
- if(a.stunTimer>0){a.visual.rotation.x=1.32;a.visual.rotation.z=Math.sign(a.vx||1)*.32;}
- else if(a.diveTimer>0){a.visual.rotation.x=-.95;a.visual.rotation.z=-a.vx*.035;}
- else{a.visual.rotation.x=THREE.MathUtils.damp(a.visual.rotation.x,0,9,dt);a.visual.rotation.z=THREE.MathUtils.damp(a.visual.rotation.z,-a.vx*.025,7,dt);}
- // The model's face points toward local -Z, so the yaw sign on X must be negative.
- if(Math.hypot(a.vx,a.vz)>.22)a.group.rotation.y=THREE.MathUtils.damp(a.group.rotation.y,Math.atan2(-a.vx,-a.vz),7,dt);
- if(state==='race'){
-  if(currentRound?.type==='crown'){
-   if(!a.finished&&a.grounded&&touchedCrown(a)){a.finished=true;a.finishTime=stageTime;a.vx=0;a.vz=0;toast('クラウンにタッチ！');}
-   if(!a.finished&&p.position.z<=COURSE_FINISH_Z+.35){p.position.z=COURSE_FINISH_Z+.35;a.vz=Math.max(0,a.vz);}
-  }else if(a.grounded&&hasGround(p.position.x,p.position.z,a)&&p.position.z<=COURSE_FINISH_Z&&!a.finished){a.finished=true;a.finishTime=stageTime;p.position.z=COURSE_FINISH_Z;a.vx=0;a.vz=0;enterSpectatorMode();}
-  if(p.position.y<-3)restoreFromFall(a);
-  if(!a.finished){for(const o of obstacles)obstacleHit(a,o);}
- }else if(state==='survival'){
-  if(stageBounds.kind==='hex'&&a.grounded)touchTileAt(p.position.x,p.position.z);
-  if(stageBounds.kind!=='hex'&&obstacles.length){for(const o of obstacles)obstacleHit(a,o);}
-  if(p.position.y<-3)restoreFromFall(a);
- }
-}
-function hasGround(x,z,actor){
- if(stageBounds.kind==='hex')return !!findTile(x,z);
- for(const g of groundPlatforms){
-  if(g.shape==='circle'&&Math.hypot(x-g.x,z-g.z)<=g.r)return true;
-  if(g.shape==='ringSector'){
-   const r=Math.hypot(x,z),a=(Math.atan2(-z,x)+Math.PI*2)%(Math.PI*2);
-   if(r>=g.inner&&r<=g.outer&&angleInArc(a,g.startAngle,g.angleLength))return true;
-  }
-  if(g.shape==='box'){
-   const dx=x-g.x,dz=z-g.z,c=Math.cos(g.rotationY),s=Math.sin(g.rotationY);
-   const lx=dx*c-dz*s,lz=dx*s+dz*c;
-   if(Math.abs(lx)<=g.halfW&&Math.abs(lz)<=g.halfD)return true;
-  }
- }
- return false;
-}
-function obstacleRiskAt(x,z,o,extra=1.25,eta=0){
- if(!o?.mesh)return 0;
- const center=o.mesh.position;
- if(o.kind==='beam'||o.kind==='hammer'){
-  const angle=o.mesh.rotation.y+(o.speed||0)*eta;
-  const dx=Math.cos(angle)*o.length/2,dz=-Math.sin(angle)*o.length/2;
-  const dist=distPointSegment(x,z,center.x-dx,center.z-dz,center.x+dx,center.z+dz);
-  return THREE.MathUtils.clamp((.98+extra-dist)/(.98+extra),0,1);
- }
- if(o.kind==='ball'||o.kind==='mover'||o.kind==='slime'){
-  const cx=center.x+(o.vx||0)*eta,cz=center.z+(o.vz||0)*eta;
-  const radius=o.kind==='ball'?o.r+.72:(o.width||2)/2+.55;
-  const depth=o.kind==='ball'?o.r+.65:(o.depth||1)+.55;
-  const dx=Math.max(0,Math.abs(x-cx)-radius),dz=Math.max(0,Math.abs(z-cz)-depth);
-  const d=Math.hypot(dx,dz);
-  return THREE.MathUtils.clamp((extra+1-d)/(extra+1),0,1);
- }
- const angle=o.mesh.rotation?.y||0,dx=x-center.x,dz=z-center.z;
- const lx=dx*Math.cos(angle)-dz*Math.sin(angle),lz=dx*Math.sin(angle)+dz*Math.cos(angle);
- const hw=(o.width||1)/2+extra,hd=(o.depth||1)/2+extra;
- if(Math.abs(lx)<hw&&Math.abs(lz)<hd)return 1;
- const d=Math.hypot(Math.max(0,Math.abs(lx)-hw),Math.max(0,Math.abs(lz)-hd));
- return THREE.MathUtils.clamp((extra-d)/extra,0,1);
-}
-function chooseRaceBotPlan(b,p){
- const traits=b.traits||{awareness:.5,patience:.5,bravery:.5,reaction:.3,noise:.25,jumpChance:.5};
- const nearCrown=currentRound?.type==='crown'&&p.z<-34;
- const preferred=nearCrown?THREE.MathUtils.clamp(Math.sin(stageTime*.8+b.phase)*.35,-.45,.45):THREE.MathUtils.clamp((b.baseLane||0)*.38+Math.sin(stageTime*.36+b.phase)*.8,-5.2,5.2);
- const lanes=[preferred,0,-5,-3.2,-1.5,1.5,3.2,5,THREE.MathUtils.clamp(b.aiTargetLane??preferred,-5.3,5.3)];
- let bestLane=preferred,bestScore=-Infinity;
- for(const laneRaw of lanes){
-  const lane=THREE.MathUtils.clamp(laneRaw,-5.3,5.3);
-  let danger=0;
-  for(const o of obstacles){
-   const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-   if(ahead<-.8||ahead>17.5)continue;
-   const eta=Math.max(0,ahead/Math.max(3,b.speed));
-   const evalX=courseCenterX(oz+.35)+lane;
-   danger=Math.max(danger,obstacleRiskAt(evalX,oz+1.05,o,1.05,eta));
-  }
-  const lanePreference=Math.abs(lane-preferred)*(.07+.1*traits.patience);
-  const randomBias=(Math.random()-.5)*traits.noise;
-  const centerPenalty=nearCrown?Math.abs(lane)*.24:0;
-  const score=-danger*(1.2+traits.awareness*3.3)-lanePreference-centerPenalty+randomBias;
-  if(score>bestScore){bestScore=score;bestLane=lane;}
- }
- b.aiTargetLane=bestLane;
- b.aiThink=.18+traits.reaction*(.48+(1-traits.awareness)*.4);
- b.aiJumpRequested=false;b.aiDiveRequested=false;
- let jumpRisk=0;
- for(const o of obstacles){
-  const oz=o.mesh?.position.z??o.z??0,ahead=p.z-oz;
-  if(ahead<.3||ahead>6.5)continue;
-  const risk=obstacleRiskAt(p.x,oz+.8,o,1.25,Math.max(0,ahead/Math.max(3,b.speed)));
-  jumpRisk=Math.max(jumpRisk,risk);
-  const jumpable=['beam','hammer','barrier','mover','slime','ball','gate'].includes(o.kind);
-  const chance=THREE.MathUtils.clamp(traits.jumpChance*(.62+traits.awareness*.48),.28,.94);
-  if(jumpable&&risk>.2&&ahead<5.3&&Math.random()<chance){b.aiJumpRequested=true;break;}
- }
- // Not every bean reacts perfectly: they sometimes jump too early or ignore a hazard.
- if(currentRound?.type==='crown'&&p.z<-39.2&&b.grounded&&b.aiJumpCooldown<=0&&crownTarget){
-  const d=Math.hypot(p.x-crownTarget.x,p.z-crownTarget.z);
-  if(d<4.7&&Math.random()<.56+traits.awareness*.34)b.aiJumpRequested=true;
- }
- // Read the next pieces of actual floor and jump before a gap, rather than walking off it.
- if(b.grounded&&!b.aiJumpRequested){
-  const lateral=THREE.MathUtils.clamp(p.x-courseCenterX(p.z),-5.6,5.6);
-  let gapAhead=Infinity;
-  for(const distance of [2.35,3.35,4.35,5.3]){
-   const q=courseSidePoint(p.z-distance,lateral);
-   if(!hasGround(q.x,q.z,b)){gapAhead=distance;break;}
-  }
-  if(gapAhead>1.8&&gapAhead<=5.3&&Math.random()<THREE.MathUtils.clamp(.7+traits.awareness*.22,.62,.94))b.aiJumpRequested=true;
- }
- // Dive in clear gaps to gain distance, or dive after a jump to clear a low obstacle.
- if(b.aiDiveCooldown<=0&&!b.diveTimer&&Math.random()<(b.grounded ? .065 : (.16+traits.bravery*.2))){
-  if(!b.grounded&&jumpRisk>.12&&Math.random()<.48+traits.awareness*.34)b.aiDiveRequested=true;
-  else if(jumpRisk<.22&&Math.random()<.48+traits.bravery*.3)b.aiDiveRequested=true;
-  else if(jumpRisk>.3&&jumpRisk<.75&&Math.random()<.18+traits.bravery*.2)b.aiDiveRequested=true;
- }
- if(nearCrown&&!b.grounded&&b.aiDiveCooldown<=0&&Math.random()<.55+traits.bravery*.3)b.aiDiveRequested=true;
-}
-function resolveBeanCollisions(actors,dt){
- const list=actors.filter(a=>a&&a.alive&&a.group&&a.group.visible&&!a.finished&&(a.slimeEffectTimer||0)<=0);
- for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
-  const a=list[i],b=list[j],pa=a.group.position,pb=b.group.position;
-  if(Math.abs(pa.y-pb.y)>1.2)continue;
-  let dx=pa.x-pb.x,dz=pa.z-pb.z,d=Math.hypot(dx,dz),minDist=1.08;
-  if(d>=minDist)continue;
-  if(d<.001){const angle=(i*13+j*7)*.37;dx=Math.cos(angle);dz=Math.sin(angle);d=1;}
-  const nx=dx/d,nz=dz/d,overlap=minDist-d;
-  pa.x+=nx*overlap*.52;pa.z+=nz*overlap*.52;pb.x-=nx*overlap*.48;pb.z-=nz*overlap*.48;
-  a.bumpCooldown=Math.max(0,(a.bumpCooldown||0)-dt);b.bumpCooldown=Math.max(0,(b.bumpCooldown||0)-dt);
-  const rel=(a.vx-b.vx)*nx+(a.vz-b.vz)*nz;
-  if(rel>2.8&&a.bumpCooldown<=0&&b.bumpCooldown<=0){
-   const impulse=Math.min(5.2,(rel-2)*.42);
-   a.vx=(a.vx||0)+nx*impulse;a.vz=(a.vz||0)+nz*impulse;
-   b.vx=(b.vx||0)-nx*impulse;b.vz=(b.vz||0)-nz*impulse;
-   if(rel>7){a.stunTimer=Math.max(a.stunTimer||0,.48);b.stunTimer=Math.max(b.stunTimer||0,.48);}
-   a.bumpCooldown=.65;b.bumpCooldown=.65;
-  }
- }
-}
-function updateRaceBots(dt){
- const active=allAliveBots();
- for(const b of active){if(!b.group)continue;
-  b.hitCooldown=Math.max(0,b.hitCooldown-dt);b.bumpCooldown=Math.max(0,(b.bumpCooldown||0)-dt);
-  b.stunTimer=Math.max(0,(b.stunTimer||0)-dt);b.aiThink=(b.aiThink||0)-dt;b.aiJumpCooldown=Math.max(0,(b.aiJumpCooldown||0)-dt);b.aiDiveCooldown=Math.max(0,(b.aiDiveCooldown||0)-dt);
-  b.slimeEffectTimer=Math.max(0,(b.slimeEffectTimer||0)-dt);if(b.slimeEffectTimer<=0&&b._wasSlimeAffected){b._wasSlimeAffected=false;setGhostAppearance(b,false);}
-  b.diveTimer=Math.max(0,(b.diveTimer||0)-dt);b.diveBurstTimer=Math.max(0,(b.diveBurstTimer||0)-dt);b.diveRecovery=Math.max(0,(b.diveRecovery||0)-dt);
-  if(b.finished)continue;
-  const p=b.group.position,traits=b.traits||{awareness:.5,reaction:.3,patience:.5,bravery:.5};
-  if(b.slimeEffectTimer>0){const syaw=b.slimeHeadingYaw??b.group.rotation.y;b.vx=Math.sin(syaw)*3.1;b.vz=Math.cos(syaw)*3.1;b.vy=0;b.grounded=true;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;}
-  else if(b.stunTimer>0){b.vx*=Math.exp(-2.15*dt);b.vz*=Math.exp(-1.65*dt);}
-  else{
-   if(b.aiThink<=0)chooseRaceBotPlan(b,p);
-   const targetX=courseCenterX(p.z)+THREE.MathUtils.clamp(b.aiTargetLane,-9.4,9.4);
-   const yaw=courseYawAt(p.z),forwardX=-Math.sin(yaw),forwardZ=-Math.cos(yaw),rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
-   const lateral=THREE.MathUtils.clamp((targetX-p.x)*(1.75+traits.awareness*.75),-9.2,9.2);
-   let targetVx=forwardX*b.speed+rightX*lateral,targetVz=forwardZ*b.speed+rightZ*lateral;
-   if(b.diveBurstTimer>0){b.vx*=Math.exp(-.24*dt);b.vz*=Math.exp(-.24*dt);}
-   else if(b.diveRecovery>0){targetVx*=.42;targetVz*=.42;b.vx=THREE.MathUtils.damp(b.vx,targetVx,1.15,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,1.15,dt);}
-   else{b.vx=THREE.MathUtils.damp(b.vx,targetVx,2.6+traits.reaction,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,2.4+traits.patience*.55,dt);}
-   if(b.aiJumpRequested&&b.aiJumpCooldown<=0&&b.grounded){b.vy=7.35+traits.bravery*.7;b.grounded=false;b.aiJumpCooldown=2.5+Math.random()*2.4;b.aiJumpRequested=false;}
-   if(b.aiDiveRequested&&b.diveTimer<=0){
-    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),speed=recovering?3.9:20.2;
-    b.vx=faceX*speed+b.vx*.1;b.vz=faceZ*speed+b.vz*.1;b.vy=Math.max(b.vy,5.1);
-    b.diveTimer=.52;b.diveBurstTimer=.3;b.diveRecovery=1.22;b.aiDiveCooldown=3.1+Math.random()*3.2;b.aiDiveRequested=false;
-   }
-  }
-  p.x+=b.vx*dt;p.z+=b.vz*dt;
-  b.vy-=22*dt;p.y+=b.vy*dt;
-  if(p.y<=0&&b.vy<=0&&(hasGround(p.x,p.z,b)||(b.slimeEffectTimer||0)>0)){p.y=0;b.vy=0;b.grounded=true;if(hasGround(p.x,p.z,b))saveGroundCheckpoint(b);}else b.grounded=false;
-  if(p.y<-3)restoreFromFall(b);
-  for(const o of obstacles)obstacleHit(b,o);
-  if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
-  b.visual.rotation.x=b.stunTimer>0?1.2:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
-  if(currentRound?.type==='crown'){
-   if(!b.finished&&touchedCrown(b)){b.finished=true;b.finishTime=stageTime;b.vx=0;b.vz=0;}
-   if(!b.finished&&p.z<=COURSE_FINISH_Z+.35){p.z=COURSE_FINISH_Z+.35;b.vz=Math.max(0,b.vz);}
-  }else if(b.grounded&&hasGround(p.x,p.z,b)&&p.z<=COURSE_FINISH_Z){p.z=COURSE_FINISH_Z;b.finished=true;b.finishTime=stageTime;b.vx=0;b.vz=0;}
- }
- resolveBeanCollisions([player,...active],dt);
- if(isFinalRace){
-  const botFinishers=active.filter(b=>b.finished).sort((a,b)=>a.finishTime-b.finishTime);
-  const firstBot=botFinishers[0];
-  if(player.finished&&(!firstBot||player.finishTime<=firstBot.finishTime)){finishFinal(true,'クラウンに触れた！');return;}
-  if(firstBot){finishFinal(false,'Botが先にクラウンに触れた…');return;}
-  if(stageTime>55){finishFinal(false,'時間切れ！クラウンに届かなかった…');return;}
- }else{
-  const n=active.filter(b=>b.finished).length+(player.finished?1:0);
-  if(n>=finishTarget){endQualifier();return;}
-  if(stageTime>42){endQualifier(true);return;}
- }
-}
-function endQualifier(timeout=false){
- if(state!=='race'||isFinalRace)return;
- const participants=[player,...allAliveBots()];
- const sorted=participants.slice().sort((a,b)=>{
-  const af=a.finished?0:1,bf=b.finished?0:1;
-  if(af!==bf)return af-bf;
-  if(a.finished&&b.finished)return a.finishTime-b.finishTime;
-  return a.group.position.z-b.group.position.z;
- });
- const survivors=sorted.slice(0,Math.min(finishTarget,sorted.length));
- const survived=survivors.includes(player);
- const survivorIds=new Set(survivors.map(a=>a.id));
- bots.forEach(b=>{if(b.alive&&!survivorIds.has(b.id)){b.alive=false;if(b.group)b.group.visible=false;}});
- state='between';
- if(!survived){finishEliminated(`予選${roundIndex+1}で脱落…`,`${player.finished?'ゴールしたけど、通過順位に届かなかった。':'ゴールに間に合わなかった。'} 次のゲームでリベンジしよう！`);return;}
- const place=sorted.indexOf(player)+1;
- const isLast=roundIndex===2;
- hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">${isLast?'FINAL QUALIFIED':'QUALIFIED!'}</div><h2>${isLast?'ファイナル進出！':'予選突破！'}</h2><p>${currentRound.name}を突破！<br>今回の順位：<b>${place}位</b> ／ 通過人数：${survivors.length}人</p><div class="pill-row"><span class="pill">残り ${survivors.length} 人</span><span class="pill">${isLast?'次はファイナル！':'次の予選へ'}</span></div><button id="continue-btn" class="main-btn">${isLast?'ファイナルへ！':'次のラウンドへ'}</button>`);
- $('#continue-btn').addEventListener('click',()=>{roundIndex++;if(roundIndex<3)startRoundStage(chosenRaces[roundIndex],false);else startFinalStage();},{once:true});
-}
-function startFinalStage(){
- roundIndex=3;
- startRoundStage(chosenFinal,true);
-}
-function buildArenaBase(kind){
- newWorld();
- if(kind==='circle'){
-  // Jump Club / Jump Showdown: a ring made of separate platform sectors, with no guard rails.
-  const segments=32,step=Math.PI*2/segments;
-  for(let i=0;i<segments;i++)addGroundRingSector(5.7,14.5,i*step,step*.84,(i%2)?0x5b6fbd:0x627bc5);
-  addGroundCircle(0,0,2.72,0x5b8fca);
- }else if(kind==='hex'){
-  // Hex-A-Gone: actual six-sided tiles arranged on a pointy-top axial hex grid.
-  for(let q=-5;q<=5;q++)for(let r=-5;r<=5;r++){
-   if(Math.abs(q+r)>5)continue;
-   const x=HEX_RADIUS*Math.sqrt(3)*(q+r/2),z=HEX_RADIUS*1.5*r;
-   const geometry=new THREE.CylinderGeometry(HEX_RADIUS,HEX_RADIUS,.48,6,1);
-   geometry.rotateY(Math.PI/6);
-   const mesh=new THREE.Mesh(geometry,mat([0x56bfe4,0x62dfdc,0x7c9bff,0x71c9e8][(q-r+40)%4],.62));
-   mesh.position.set(x,-.24,z);world.add(mesh);
-   const tile={q,r,ix:q,iz:r,x,z,mesh,touched:false,expire:0,removed:false};
-   tiles.push(tile);tileMap.set(`${q},${r}`,tile);
-  }
- }
- // No enclosing boundary walls, outer fence, or decorative posts.
- for(let i=0;i<24;i++){const a=Math.random()*Math.PI*2,r=18+Math.random()*10,y=2+Math.random()*8;sphere(world,.25+Math.random()*.3,[0xffffff,0xffd6f0,0xb5f9ff][i%3],Math.cos(a)*r,y,Math.sin(a)*r,8);}
-}
-function startSurvivalStage(stage,isFinal=false){
- document.body.classList.remove('stick-active');spectatorMode=false;spectatorTarget=null;spectatorTargetSwitch=0;spectatorSwipeId=null;
- document.body.classList.remove('spectating','slime-back-mode');joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;
- cameraYaw=0;cameraPitch=0;lookPointer=null;
- hideOverlay();hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';countdownEl.style.display='none';
- currentRound=stage;isFinalRace=false;survivalIsQualifier=!isFinal;state='survival';elapsed=0;stageTime=0;survivalElimTimer=5.8;obstacles=[];
- const kind=(stage.type==='jump'||stage.type==='jumpClub')?'circle':stage.type==='hex'?'hex':stage.type==='roll'?'roll':'platforms';stageBounds={kind};
- if(kind==='circle'||kind==='hex')buildArenaBase(kind);else newWorld();
- if(stage.type==='block'){
-  // Block Party uses separated floor panels rather than a single large invisible slab.
-  for(const z of [-12,-5,2,9,16])for(const x of [-8,0,8])addGroundBox(x,z,4.0,4.2,((z/7|0)+(x/8|0))%2?0x637bc0:0x536bb1);
-  addBlockWall(15,0);addBlockWall(-15,1);
- }else if(stage.type==='roll'){
-  // Roll Out: three separate rotating cylinders, with open gaps between every roller.
-  for(const x of [-8,0,8]){
-   const radius=1.62,length=27.0;
-   const geometry=new THREE.CylinderGeometry(radius,radius,length,14,1,false);geometry.rotateX(Math.PI/2);
-   const mesh=new THREE.Mesh(geometry,mat(0x5d75bd,.62));mesh.position.set(x,-radius,0);world.add(mesh);
-   groundPlatforms.push({shape:'box',x,z:0,halfW:radius,halfD:length/2,rotationY:0,mesh});
-   worldActors.push({kind:'roller',mesh,speed:(x===0?1:-1.0)*(x<0?1.0:1.15)});
-  }
-  addMover(-7,2.4,1.15,1.1,1.0,.72,.4,'slime',-8,0);
-  addMover(6,2.4,1.15,1.1,1.15,.72,2.2,'slime',8,0);
-  addRotatingBeam(0,5.8,.9,.92,0x58ece0,.6,0,0);
- }else if(stage.type==='jump'){
-  addRotatingBeam(0,33,1.12,.78,0xff6ea7,.4);
-  addRotatingBeam(0,33,-.72,2.82,0x61f6ee,1.45);
- }else if(stage.type==='jumpClub'){
-  addRotatingBeam(0,29,1.05,.8,0xff6ea7,.35);
- }else if(stage.type==='hex'){
-  // Tiles are the only support; each one is a proper six-sided prism.
- }
- const active=allAliveBots();active.forEach(b=>makeBean(b));makeBean(player);
- let spawnPoints=[];
- if(kind==='circle'){
-  for(let i=0;i<33;i++){const step=Math.PI*2/32,a=((i%32)+.5+(Math.random()-.5)*.18)*step,r=9.2+(i%3)*.55;spawnPoints.push({x:Math.cos(a)*r,z:-Math.sin(a)*r});}
- }else if(kind==='hex'){
-  const candidates=tiles.filter(t=>Math.max(Math.abs(t.q),Math.abs(t.r),Math.abs(t.q+t.r))<=3&&!(t.q===0&&t.r===0));
-  spawnPoints=shuffle(candidates).slice(0,32).map(t=>({x:t.x,z:t.z}));
-  spawnPoints.unshift({x:0,z:0});
- }else if(kind==='roll'){
-  for(let i=0;i<33;i++){const lane=[-8,0,8][i%3];spawnPoints.push({x:lane+(Math.random()-.5)*1.25,z:(Math.random()-.5)*19});}
- }else{
-  const padCenters=[];for(const z of [-12,-5,2,9,16])for(const x of [-8,0,8])padCenters.push({x,z});
-  spawnPoints=padCenters.map(p=>({x:p.x+(Math.random()-.5)*1.0,z:p.z+(Math.random()-.5)*1.0}));
-  while(spawnPoints.length<33){const p=padCenters[Math.floor(Math.random()*padCenters.length)];spawnPoints.push({x:p.x+(Math.random()-.5)*2.0,z:p.z+(Math.random()-.5)*1.8});}
- }
- resetActorForRound(player,spawnPoints[0].x,spawnPoints[0].z);
- active.forEach((b,i)=>{
-  const s=spawnPoints[(i+1)%spawnPoints.length];resetActorForRound(b,s.x,s.z);
-  const a=i/Math.max(1,active.length)*Math.PI*2;b.aiX=Math.cos(a+Math.PI/2);b.aiZ=Math.sin(a+Math.PI/2);
-  b.aiTimer=.1+Math.random()*.35;b.aiSpeed=4.4+Math.random()*1.5;b.jumpNext=.7+Math.random()*2.2;b.aiDiveCooldown=.8+Math.random()*2.8;b.aiDiveRequested=false;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;b.stunTimer=0;b.bumpCooldown=0;
- });
- if(survivalIsQualifier)finishTarget=QUALIFY[roundIndex];
- hud.style.display='block';$('#touch-controls').style.display=matchMedia('(pointer:coarse)').matches?'block':'none';
- stageKickerEl.textContent=isFinal?'FINAL ROUND':`QUALIFIER ${roundIndex+1} / 3`;stageNameEl.textContent=stage.name;subInfoEl.textContent=stage.desc;
- progressLabel.textContent=stage.type==='hex'?'六角タイルを渡れ！':stage.type==='block'?'壁を避けろ！':'足場を維持しろ！';progressFill.style.width='100%';
- camera.position.set(0,13,17);cameraLook.set(0,0,0);updateHud(true);startCountdown(isFinal?'survival':'survival');
-}
-function addBlockWall(z,idx){
- const gap=idx===0?-3.5:3.5;
- const leftX=-8.5+gap,rightX=8.5+gap;
- const left=box(world,11,3.2,1.2,0xff719f,leftX,1.6,z);
- const right=box(world,11,3.2,1.2,0x5fe8e4,rightX,1.6,z);
- obstacles.push({kind:'blockwall',mesh:left,width:11,height:3.2,depth:1.2,z,x:left.position.x,wall:true,dir:-1,speed:3.7,active:true});
- obstacles.push({kind:'blockwall',mesh:right,width:11,height:3.2,depth:1.2,z,x:right.position.x,wall:true,dir:-1,speed:3.7,active:true});
-}
-function findTile(x,z){
- const qf=(Math.sqrt(3)/3*x-z/3)/HEX_RADIUS,rf=(2/3*z)/HEX_RADIUS;
- let rx=Math.round(qf),rz=Math.round(rf),ry=Math.round(-qf-rf);
- const dx=Math.abs(rx-qf),dy=Math.abs(ry-(-qf-rf)),dz=Math.abs(rz-rf);
- if(dx>dy&&dx>dz)rx=-ry-rz;else if(dy>dz)ry=-rx-rz;else rz=-rx-ry;
- const tile=tileMap.get(`${rx},${rz}`);
- if(!tile||tile.removed)return null;
- const lx=x-tile.x,lz=z-tile.z;
- if(Math.abs(lx)>HEX_RADIUS*.8661+.035||Math.abs(lz)>HEX_RADIUS-Math.abs(lx)/Math.sqrt(3)+.035)return null;
- return tile;
-}
-function touchTileAt(x,z){const tile=findTile(x,z);if(tile&&!tile.touched){tile.touched=true;tile.expire=stageTime+1.75;tile.mesh.material.color.setHex(0xffbe5b);}}
-function updateTiles(dt){
- for(const t of tiles){if(t.removed)continue;if(t.touched){const remaining=t.expire-stageTime;t.mesh.position.y=-.24-Math.max(0,(1.75-remaining))*.22;if(remaining<.65)t.mesh.material.color.setHex(0xff5c79);if(remaining<=0){t.removed=true;world.remove(t.mesh);}}}
-}
-function chooseSurvivalBotPlan(b){
- const p=b.group.position,t=b.traits||{awareness:.5,patience:.4,bravery:.5,noise:.2,jumpChance:.5,reaction:.3};
- const hex=stageBounds.kind==='hex';
- const step=hex?1.58:2.25;
- const dirs=[];
- for(let i=0;i<16;i++){const a=i*Math.PI/8;dirs.push([Math.cos(a),Math.sin(a)]);}
- dirs.push([0,0]);
- let best=[b.aiX||0,b.aiZ||1],bestScore=-Infinity;
- const others=[player,...allAliveBots()].filter(a=>a!==b&&a?.alive&&a.group&&a.group.visible);
- for(const [dx,dz] of dirs){
-  const nx=p.x+dx*step,nz=p.z+dz*step;let score=0;
-  if(!hasGround(nx,nz,b))score-=18;else score+=1.4;
-  if(stageBounds.kind==='circle'){const r=Math.hypot(nx,nz);score+=Math.min(r-5.8,14.3-r)*.025;}
-  if(hex){const tile=findTile(nx,nz);if(!tile)score-=15;else if(tile.touched)score-=6+Math.max(0,1.2-(tile.expire-stageTime))*2;else score+=2.2;}
-  for(const o of obstacles){
-   const danger=obstacleRiskAt(nx,nz,o,hex?1.5:2.0,0);
-   if(danger>.02)score-=danger*(1.4+t.awareness*3.4);
-  }
-  let crowd=0;
-  for(const other of others){const op=other.group.position,d=Math.hypot(nx-op.x,nz-op.z);if(d<1.8)crowd+=(1.8-d)*.38;}
-  score-=crowd*(.4+t.patience);
-  score+=(dx*(b.aiX||0)+dz*(b.aiZ||0))*(.18+t.patience*.7);
-  score+=(Math.random()-.5)*t.noise;
-  if(dx===0&&dz===0)score-=hex?3.6:.45;
-  if(score>bestScore){bestScore=score;best=[dx,dz];}
- }
- const len=Math.hypot(best[0],best[1])||1;b.aiX=best[0]/len;b.aiZ=best[1]/len;
- b.aiTimer=.2+(1-t.awareness)*.48+t.reaction*.25;
- b.aiJumpRequested=false;b.aiDiveRequested=false;
- if(b.grounded&&b.jumpNext<=0&&Math.random()<t.jumpChance){
-  const nearbyDanger=obstacles.some(o=>['beam','hammer','barrier','mover','slime','ball','gate'].includes(o.kind)&&obstacleRiskAt(p.x+b.aiX*1.4,p.z+b.aiZ*1.4,o,1.35,.12)>.32);
-  if(nearbyDanger&&Math.random()<THREE.MathUtils.clamp(.68+t.awareness*.24,.55,.94))b.aiJumpRequested=true;
-  else if(hex&&Math.random()<.15)b.aiJumpRequested=true;
- }
- const forwardRisk=obstacles.reduce((max,o)=>Math.max(max,obstacleRiskAt(p.x+b.aiX*1.5,p.z+b.aiZ*1.5,o,hex?1.3:1.7,.18)),0);
- if((b.aiDiveCooldown||0)<=0&&!b.diveTimer){
-  if(!b.grounded&&forwardRisk>.08&&Math.random()<.34+t.awareness*.35)b.aiDiveRequested=true;
-  else if(b.grounded&&forwardRisk>.24&&forwardRisk<.82&&Math.random()<.10+t.bravery*.18)b.aiDiveRequested=true;
-  else if(b.grounded&&forwardRisk<.18&&Math.random()<.11+t.bravery*.12)b.aiDiveRequested=true;
-  else if(hex&&!b.grounded&&Math.random()<.12+t.bravery*.12)b.aiDiveRequested=true;
- }
-}
-function updateSurvivalBots(dt){
- for(const b of allAliveBots()){
-  if(!b.group)continue;
-  b.hitCooldown=Math.max(0,b.hitCooldown-dt);b.bumpCooldown=Math.max(0,(b.bumpCooldown||0)-dt);
-  b.stunTimer=Math.max(0,(b.stunTimer||0)-dt);b.aiTimer-=dt;b.jumpNext-=dt;b.aiDiveCooldown=Math.max(0,(b.aiDiveCooldown||0)-dt);
-  b.slimeEffectTimer=Math.max(0,(b.slimeEffectTimer||0)-dt);if(b.slimeEffectTimer<=0&&b._wasSlimeAffected){b._wasSlimeAffected=false;setGhostAppearance(b,false);}
-  b.diveTimer=Math.max(0,(b.diveTimer||0)-dt);b.diveBurstTimer=Math.max(0,(b.diveBurstTimer||0)-dt);b.diveRecovery=Math.max(0,(b.diveRecovery||0)-dt);
-  const p=b.group.position,t=b.traits||{awareness:.5,reaction:.3,bravery:.5};
-  if(b.slimeEffectTimer>0){const syaw=b.slimeHeadingYaw??b.group.rotation.y;b.vx=Math.sin(syaw)*2.8;b.vz=Math.cos(syaw)*2.8;b.vy=0;b.grounded=true;b.diveTimer=0;b.diveBurstTimer=0;b.diveRecovery=0;}
-  else if(b.stunTimer>0){b.vx*=Math.exp(-2.3*dt);b.vz*=Math.exp(-2.3*dt);}
-  else{
-   if(b.aiTimer<=0)chooseSurvivalBotPlan(b);
-   const sp=b.aiSpeed||4.8,targetVx=b.aiX*sp,targetVz=b.aiZ*sp;
-   if(b.diveBurstTimer>0){b.vx*=Math.exp(-.28*dt);b.vz*=Math.exp(-.28*dt);}
-   else if(b.diveRecovery>0){b.vx=THREE.MathUtils.damp(b.vx,targetVx*.45,1.5,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz*.45,1.5,dt);}
-   else{b.vx=THREE.MathUtils.damp(b.vx,targetVx,2.5+t.reaction,dt);b.vz=THREE.MathUtils.damp(b.vz,targetVz,2.5+t.reaction,dt);}
-   if(b.aiJumpRequested&&b.grounded){b.vy=7.0+(t.bravery||.5)*.8;b.grounded=false;b.jumpNext=2.2+Math.random()*2.4;b.aiJumpRequested=false;}
-   if(b.aiDiveRequested&&b.diveTimer<=0){
-    const recovering=b.diveRecovery>0,faceX=-Math.sin(b.group.rotation.y),faceZ=-Math.cos(b.group.rotation.y),launch=recovering?2.6:10.8;
-    b.vx=faceX*launch+b.vx*.12;b.vz=faceZ*launch+b.vz*.12;b.vy=Math.max(b.vy,4.7);
-    b.diveTimer=.46;b.diveBurstTimer=.23;b.diveRecovery=.92;b.aiDiveCooldown=2.6+Math.random()*3.0;b.aiDiveRequested=false;
-   }
-  }
-  p.x+=b.vx*dt;p.z+=b.vz*dt;
-  b.vy-=22*dt;p.y+=b.vy*dt;
-  if(p.y<=0&&b.vy<=0&&(hasGround(p.x,p.z,b)||(b.slimeEffectTimer||0)>0)){p.y=0;b.vy=0;b.grounded=true;if(hasGround(p.x,p.z,b))saveGroundCheckpoint(b);}else b.grounded=false;
-  if(stageBounds.kind==='hex'&&b.grounded&&hasGround(p.x,p.z,b))touchTileAt(p.x,p.z);
-  if(stageBounds.kind!=='hex'){for(const o of obstacles)obstacleHit(b,o);}
-  if((b.slimeEffectTimer||0)<=0&&Math.hypot(b.vx,b.vz)>.2)b.group.rotation.y=THREE.MathUtils.damp(b.group.rotation.y,Math.atan2(-b.vx,-b.vz),5,dt);
-  b.visual.rotation.x=b.stunTimer>0?1.25:(b.diveTimer>0?-.95:(b.grounded?0:-.18));
-  if(p.y<-3)restoreFromFall(b);
- }
- resolveBeanCollisions([player,...allAliveBots()],dt);
-}
-function updateSurvival(dt){
- updateTiles(dt);updateSurvivalBots(dt);
- if(state!=='survival')return;
- if(survivalIsQualifier){
-  if(stageTime>=42)endSurvivalQualifier();
-  return;
- }
- if(allAliveBots().length===0)finishFinal(true,'最後まで生き残った！');
- if(stageTime>90)finishFinal(true,'90秒間耐え抜いた！');
-}
-function endSurvivalQualifier(){
- if(state!=='survival'||!survivalIsQualifier)return;
- const participants=[player,...allAliveBots()].filter(a=>a.alive&&a.group?.visible);
- participants.sort((a,b)=>(a.fallCount||0)-(b.fallCount||0));
- const survivors=participants.slice(0,Math.min(finishTarget,participants.length));
- const survived=survivors.includes(player),ids=new Set(survivors.map(a=>a.id));
- bots.forEach(b=>{if(b.alive&&!ids.has(b.id)){b.alive=false;if(b.group)b.group.visible=false;}});
- survivalIsQualifier=false;state='between';
- if(!survived){finishEliminated(`予選${roundIndex+1}で脱落…`,`足場から落ちた回数が多く、通過順位に届かなかった。次のゲームでリベンジしよう！`);return;}
- const place=participants.indexOf(player)+1,isLast=roundIndex===2;
- hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">${isLast?'FINAL QUALIFIED':'QUALIFIED!'}</div><h2>${isLast?'ファイナル進出！':'予選突破！'}</h2><p>${currentRound.name}を突破！<br>今回の順位：<b>${place}位</b> ／ 通過人数：${survivors.length}人</p><div class="pill-row"><span class="pill">残り ${survivors.length} 人</span><span class="pill">落下回数：${player.fallCount||0}回</span></div><button id="continue-btn" class="main-btn">${isLast?'ファイナルへ！':'次のラウンドへ'}</button>`);
- $('#continue-btn').addEventListener('click',()=>{roundIndex++;if(roundIndex<3)startRoundStage(chosenRaces[roundIndex],false);else startFinalStage();},{once:true});
-}
-function eliminateActor(actor,byFall){
- if(!actor||!actor.alive)return;
- actor.alive=false;if(actor.group)actor.group.visible=false;
- if(actor.isPlayer){if(survivalIsQualifier)return;finishFinal(false,byFall?'脱落…':'脱落…');}
- else if(state==='survival'&&!survivalIsQualifier&&allAliveBots().length===0){finishFinal(true,'最後まで生き残った！');}
-}
-function finishFinal(won,message){
- if(state==='result'||state==='menu')return;
- document.body.classList.remove('stick-active');state='result';hud.style.display='none';$('#touch-controls').style.display='none';
- const finalName=currentRound?.name||'ファイナル';
- setOverlay(`<div class="eyebrow">${won?'CROWN WINNER':'GAME OVER'}</div><h1 class="logo-line">${won?'YOU <span>WIN!</span>':'ONE MORE <span>TRY!</span>'}</h1><h2>${message}</h2><p>${finalName}での戦いはここまで！<br>${won?'おめでとう！ 次のゲームでは別のラウンド構成が選ばれるよ。':'もう一度挑戦して、今度こそクラウンをつかもう。'}</p><div class="pill-row"><span class="pill">予選3ラウンド</span><span class="pill">Bot 32体</span><span class="pill">ファイナル：${finalName}</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
- $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
-}
-function finishEliminated(title,desc){
- document.body.classList.remove('stick-active');hud.style.display='none';$('#touch-controls').style.display='none';
- setOverlay(`<div class="eyebrow">ELIMINATED</div><h2>${title}</h2><p>${desc}</p><div class="pill-row"><span class="pill">挑戦ラウンド：${roundIndex+1} / 4</span><span class="pill">Botは毎回32体</span></div><button id="restart-btn" class="main-btn">もう一度プレイ</button><button id="menu-btn" class="main-btn secondary">タイトルへ戻る</button>`);
- $('#restart-btn').addEventListener('click',startGame,{once:true});$('#menu-btn').addEventListener('click',showMenu,{once:true});
-}
-function updateHud(force=false){
- if(!force&&stageTime-lastHud<.13)return;lastHud=stageTime;
- const remaining=state==='race'?bots.filter(b=>b.alive&&!b.finished).length+(player.alive&&!player.finished?1:0):allAliveBots().length+(player.alive?1:0);
- aliveNumberEl.textContent=`${remaining} 人`;
- $('#alive-caption').textContent=spectatorMode?'観戦中':'残り';
- const phase=state==='race'?(isFinalRace?'ファイナル':'予選'):state==='survival'?'ファイナル':'';
- if(state==='race'){
-  const progress=THREE.MathUtils.clamp((COURSE_START_Z-player.group.position.z)/(COURSE_START_Z-COURSE_FINISH_Z),0,1);
-  progressFill.style.width=`${(progress*100).toFixed(1)}%`;
-  progressLabel.textContent=spectatorMode?'観戦中':(isFinalRace?'クラウンへ！':'ゴールまで');
- }else if(state==='survival'){
-  progressFill.style.width=`${Math.max(0,100-stageTime/70*100)}%`;
-  progressLabel.textContent=`生き残り ${Math.floor(stageTime)}秒`;
- }
-}
-function updateCamera(dt){
- if(!player.group)return;
- let followed=player.group.position;
- if(spectatorMode&&state==='race'){
-  // Keep the chosen bean selected; switch only on a manual swipe or when it can no longer be watched.
-  if(!spectatorTarget||!spectatorTarget.alive||!spectatorTarget.group?.visible||spectatorTarget.finished){
-   const pool=bots.filter(b=>b.alive&&b.group&&b.group.visible&&!b.finished).sort((a,b)=>a.group.position.z-b.group.position.z);
-   spectatorTarget=pool[0]||bots.find(b=>b.group?.visible)||null;
-  }
-  if(spectatorTarget?.group)followed=spectatorTarget.group.position;
- }
- const p=followed;
- const angle=cameraYaw;
- if(state==='race'){
-  desiredCamera.set(p.x+Math.sin(angle)*9.5,Math.max(5.7,p.y+6.8+cameraPitch*6),p.z+Math.cos(angle)*9.5);
-  cameraLook.set(p.x-Math.sin(angle)*5.8,p.y+1.2-cameraPitch*3.8,p.z-Math.cos(angle)*5.8);
- }else if(state==='survival'){
-  desiredCamera.set(p.x+Math.sin(cameraYaw)*17,13+p.y*.2+cameraPitch*6,p.z+Math.cos(cameraYaw)*17);
-  cameraLook.set(p.x-Math.sin(cameraYaw)*1.5,.4-cameraPitch*3.8,p.z-Math.cos(cameraYaw)*1.5);
- }else{
-  desiredCamera.set(0,10,24);cameraLook.set(0,0,0);
- }
- camera.position.lerp(desiredCamera,1-Math.exp(-3.2*dt));camera.lookAt(cameraLook);
-}
-function tick(){requestAnimationFrame(tick);let dt=Math.min(clock.getDelta(),.04);
- if(countdownActive){
-  countdownRemaining-=dt;
-  countdownEl.textContent=countdownRemaining>.6?String(Math.min(3,Math.ceil(countdownRemaining-.6))):'GO!';
-  if(countdownRemaining<=0){countdownActive=false;countdownEl.style.display='none';input.jump=false;input.dive=false;toast('スタート！');}
- }else if(state==='race'){
-  stageTime+=dt;elapsed+=dt;updateObstacles(dt);getInput();controlPlayer(dt);updateRaceBots(dt);
-  if(state==='race'){
-   if(isFinalRace&&player.finished)finishFinal(true,'クラウンをつかんだ！');
-   updateHud();
-  }
- }else if(state==='survival'){
-  stageTime+=dt;elapsed+=dt;updateObstacles(dt);updateBlockWalls(dt);getInput();controlPlayer(dt);if(state==='survival')updateSurvival(dt);updateHud();
- }else if(state==='menu'){
-  // Slow camera drift while the title is displayed.
-  camera.position.x=Math.sin(performance.now()*.00015)*.5;camera.lookAt(0,0,0);
- }
- if(player.group&&player.group.visible&&player.grounded&&state!=='menu'){
-  const ring=player.group.userData.footRing;if(ring){ring.material.opacity=.3+Math.sin(performance.now()*.01)*.08;}
- }
- updateCamera(dt);renderer.render(scene,camera);
-}
+function routeIndex(id){return stage.objects.filter(o=>o.type==='routeNode').findIndex(o=>o.id===id);}
+function makeTextSprite(text){const c=document.createElement('canvas');c.width=128;c.height=64;const x=c.getContext('2d');x.fillStyle='#171c36';x.beginPath();x.roundRect(15,8,98,48,16);x.fill();x.strokeStyle='#ffe69b';x.lineWidth=5;x.stroke();x.fillStyle='white';x.font='bold 30px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText(text,64,33);const tex=new THREE.CanvasTexture(c);const m=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));return m;}
+function rebuildWorld(){clearWorld();for(const o of stage.objects)createWorldObject(o);updateSelectionVisual();}
 
-window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));renderer.setSize(window.innerWidth,window.innerHeight);});
-for(const eventName of ['selectstart','contextmenu','dblclick'])document.addEventListener(eventName,e=>e.preventDefault(),{capture:true});
-for(const eventName of ['gesturestart','gesturechange','gestureend'])document.addEventListener(eventName,e=>e.preventDefault(),{passive:false});
-document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
-window.addEventListener('keydown',e=>{
- if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);
- if(e.code==='Space'&&!e.repeat)doJump();if(e.code==='ShiftLeft'||e.code==='ShiftRight'){if(!e.repeat)doDive();}
- if(state==='menu'&&e.code==='Enter')$('#start-btn')?.click();
-});
-window.addEventListener('keyup',e=>keys.delete(e.code));
-window.addEventListener('blur',()=>{keys.clear();input.jump=false;input.dive=false;});
-const stickBase=$('#stick-base'),stickKnob=$('#stick-knob'),stickZone=$('#stick-zone'),lookZone=$('#look-zone');
-function setStick(clientX,clientY){
- const r=stickBase.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
- let dx=clientX-cx,dy=clientY-cy;const max=43,d=Math.hypot(dx,dy);
- if(d>max){dx=dx/d*max;dy=dy/d*max;}
- joystick.x=dx/max;joystick.y=dy/max;
- stickKnob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-}
-function placeStickAt(clientX,clientY){
- const zr=stickZone.getBoundingClientRect();
- stickBase.style.left=(clientX-zr.left-66)+'px';stickBase.style.top=(clientY-zr.top-66)+'px';stickBase.style.bottom='auto';stickBase.style.transform='none';
-}
-function resetStickHome(){
- stickBase.style.removeProperty('left');stickBase.style.removeProperty('top');stickBase.style.removeProperty('bottom');stickBase.style.removeProperty('transform');
- stickKnob.style.transform='translate(-50%,-50%)';
-}
-stickZone.addEventListener('pointerdown',e=>{
- e.preventDefault();
- if(spectatorMode){spectatorSwipeId=e.pointerId;spectatorSwipeStartX=e.clientX;try{stickZone.setPointerCapture(e.pointerId);}catch{}return;}
- if(joystick.active)return;joystick.active=true;joystick.id=e.pointerId;document.body.classList.add('stick-active');
- try{stickZone.setPointerCapture(e.pointerId);}catch{}
- if((player.slimeEffectTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;return;}
- placeStickAt(e.clientX,e.clientY);setStick(e.clientX,e.clientY);
-});
-stickZone.addEventListener('pointermove',e=>{
- if(spectatorMode&&spectatorSwipeId===e.pointerId){e.preventDefault();return;}
- if(joystick.active&&joystick.id===e.pointerId){e.preventDefault();if((player.slimeEffectTimer||0)>0){joystick.backHeld=true;joystick.x=0;joystick.y=1;}else setStick(e.clientX,e.clientY);}
-});
-function releaseStick(e){
- if(spectatorSwipeId!==null&&(e.pointerId===undefined||spectatorSwipeId===e.pointerId)){
-  if(e.type==='pointerup'){const dx=e.clientX-spectatorSwipeStartX;if(Math.abs(dx)>24)switchSpectatorTarget(dx<0?1:-1);}
-  spectatorSwipeId=null;return;
- }
- if(joystick.active&&(e.pointerId===undefined||joystick.id===e.pointerId)){joystick.active=false;joystick.id=null;joystick.x=0;joystick.y=0;joystick.backHeld=false;document.body.classList.remove('stick-active');resetStickHome();}
-}
-stickZone.addEventListener('pointerup',releaseStick);stickZone.addEventListener('pointercancel',releaseStick);stickZone.addEventListener('lostpointercapture',releaseStick);
-lookZone.addEventListener('pointerdown',e=>{
- if(!(state==='race'||state==='survival'))return;
- e.preventDefault();lookPointer=e.pointerId;lookLastX=e.clientX;lookLastY=e.clientY;lookStartX=e.clientX;lookStartY=e.clientY;lookMoved=false;
- try{lookZone.setPointerCapture(e.pointerId);}catch{}
-});
-lookZone.addEventListener('pointermove',e=>{
- if(lookPointer!==e.pointerId)return;e.preventDefault();
- if((player.slimeEffectTimer||0)>0)return;
- const dx=e.clientX-lookLastX,dy=e.clientY-lookLastY;lookLastX=e.clientX;lookLastY=e.clientY;
- if(Math.hypot(e.clientX-lookStartX,e.clientY-lookStartY)>10)lookMoved=true;
- cameraYaw-=dx*.0065;cameraYaw=((cameraYaw+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
- cameraPitch=THREE.MathUtils.clamp(cameraPitch+dy*.0045,-.55,.7);
-});
-function endLook(e){
- if(lookPointer===null||(e.pointerId!==undefined&&lookPointer!==e.pointerId))return;
- if(!lookMoved&&!countdownActive&&!spectatorMode&& (state==='race'||state==='survival')&&(player.slimeEffectTimer||0)<=0){if(player.grounded)doJump();else doDive();}
- lookPointer=null;
-}
-lookZone.addEventListener('pointerup',endLook);lookZone.addEventListener('pointercancel',()=>{lookPointer=null;});lookZone.addEventListener('lostpointercapture',()=>{lookPointer=null;});
+function spawnBody(isPlayer,index=0,total=1){const spawn=stage.objects.find(o=>o.type==='spawn');const p=spawn?spawn.p:[0,.1,4];const spacing=.95;const cols=Math.min(8,total);const row=Math.floor(index/cols),col=index%cols;const x=(col-(Math.min(total,cols)-1)/2)*spacing;const z=Math.floor(index/cols)*.9;
+ const mesh=makeBean(isPlayer?0xff5c9a:COLORS[index%COLORS.length]);mesh.position.set(p[0]+x,p[1]+.75,p[2]+z);worldRoot.add(mesh);
+ const b={id:uid(),isPlayer,index,mesh,pos:new THREE.Vector3(p[0]+x,p[1]+.75,p[2]+z),vel:new THREE.Vector3(),grounded:false,coyote:0,jumpBuffer:0,diveTime:0,diveCooldown:0,recovery:0,stun:0,alive:true,finished:false,finishTime:null,checkpoint:new THREE.Vector3(p[0]+x,p[1]+.75,p[2]+z),checkpointActive:false,progress:0,aiNode:0,aiThink:0,aiWander:null,aiWanderTime:0,landed:false,airTime:0,carry:new THREE.Vector3(),lastGround:null,qualifies:true};
+ b.mesh.userData.body=b;if(isPlayer)player=b;bodies.push(b);return b;}
+function spawnRound(withBots=true){for(const b of bodies){worldRoot.remove(b.mesh);disposeObject(b.mesh);}bodies=[];player=null;const spCount=withBots?32:1;for(let i=0;i<spCount;i++)spawnBody(i===0,i,spCount);}
 
-// A basic fallback for browsers without WebGL.
-if(!renderer.capabilities.isWebGL2&&!renderer.capabilities.isWebGL){setOverlay('<h2>このブラウザではゲームを起動できないみたい</h2><p>Chrome / Edge / Safariの最新版で開いてみてね。</p>');}
-showMenu();tick();
+function solidObjects(){return worldObjects.filter(o=>TYPE_INFO[o.data.type]?.solid||['platform','paddedFloor','ramp','block','wall','slime','jumpPad','conveyor','movingPlatform'].includes(o.data.type));}
+function boxBounds(o){const d=o.data;const c=o.group.position;const half=new THREE.Vector3(d.s[0]/2,d.s[1]/2,d.s[2]/2);return {minX:c.x-half.x,maxX:c.x+half.x,minY:c.y-half.y,maxY:c.y+half.y,minZ:c.z-half.z,maxZ:c.z+half.z,half};}
+function localXZ(o,pos){const yaw=o.group.rotation.y,dx=pos.x-o.group.position.x,dz=pos.z-o.group.position.z;return {x:Math.cos(yaw)*dx-Math.sin(yaw)*dz,z:Math.sin(yaw)*dx+Math.cos(yaw)*dz};}
+function insideObjectXZ(o,pos,r=PHYS.beanRadius){const q=localXZ(o,pos),d=o.data;return Math.abs(q.x)<d.s[0]/2+r&&Math.abs(q.z)<d.s[2]/2+r;}
+function detectGround(body,prevY){const foot=body.pos.y-PHYS.beanHeight/2,prevFoot=prevY-PHYS.beanHeight/2;let best=null,bestTop=-Infinity;for(const o of solidObjects()){const d=o.data;const b=boxBounds(o);let top=b.maxY;const q=localXZ(o,body.pos);let inside=Math.abs(q.x)<d.s[0]/2+PHYS.beanRadius&&Math.abs(q.z)<d.s[2]/2+PHYS.beanRadius;if(d.type==='ramp'){const slope=-.18;top=o.group.position.y+(d.s[1]/2)*Math.cos(slope)-q.z*Math.sin(slope);}
+  if(!inside)continue;const crossed=prevFoot>=top-.18&&foot<=top+.12;const near=foot<=top+.12&&foot>=top-1.35;if((crossed||near)&&body.vel.y<=1&&top>bestTop){best={o,top};bestTop=top;}}
+ if(best){body.pos.y=best.top+PHYS.beanHeight/2;body.vel.y=Math.max(0,body.vel.y);body.grounded=true;body.coyote=.11;body.lastGround=best.o;return best.o;}body.grounded=false;body.lastGround=null;return null;}
+function resolveSides(body){for(const o of solidObjects()){const d=o.data;if(d.type==='ramp')continue;const b=boxBounds(o);const minFoot=body.pos.y-PHYS.beanHeight/2,maxHead=body.pos.y+PHYS.beanHeight/2;if(maxHead<b.minY+.02||minFoot>b.maxY-.04)continue;const q=localXZ(o,body.pos),ox=d.s[0]/2+PHYS.beanRadius-Math.abs(q.x),oz=d.s[2]/2+PHYS.beanRadius-Math.abs(q.z);if(ox<=0||oz<=0)continue;const yaw=o.group.rotation.y;if(ox<oz){const sign=q.x<0?-1:1,shift=sign*(ox+.004);body.pos.x+=Math.cos(yaw)*shift;body.pos.z-=Math.sin(yaw)*shift;if(Math.abs(body.vel.x)>4)maybeKnock(body,Math.abs(body.vel.x));body.vel.x=0;}else{const sign=q.z<0?-1:1,shift=sign*(oz+.004);body.pos.x+=Math.sin(yaw)*shift;body.pos.z+=Math.cos(yaw)*shift;if(Math.abs(body.vel.z)>4)maybeKnock(body,Math.abs(body.vel.z));body.vel.z=0;}}}
+function maybeKnock(body,impact){if(body.isPlayer||impact>PHYS.knockThreshold){if(impact>PHYS.knockThreshold){body.stun=Math.max(body.stun,PHYS.knockDuration);body.vel.y=Math.max(body.vel.y,2.2);}}}
+function handleBeanCollisions(){for(let i=0;i<bodies.length;i++){const a=bodies[i];if(!a.alive)continue;for(let j=i+1;j<bodies.length;j++){const b=bodies[j];if(!b.alive)continue;const dy=Math.abs(a.pos.y-b.pos.y);if(dy>PHYS.beanHeight*.7)continue;const dx=a.pos.x-b.pos.x,dz=a.pos.z-b.pos.z,dist=Math.hypot(dx,dz),min=PHYS.beanRadius*1.65;if(dist>0&&dist<min){const nx=dx/dist,nz=dz/dist,push=(min-dist)*.5;a.pos.x+=nx*push;a.pos.z+=nz*push;b.pos.x-=nx*push;b.pos.z-=nz*push;const rel=(a.vel.x-b.vel.x)*nx+(a.vel.z-b.vel.z)*nz;if(rel<0){const impulse=-rel*.42;a.vel.x+=nx*impulse;a.vel.z+=nz*impulse;b.vel.x-=nx*impulse;b.vel.z-=nz*impulse;if(impulse>PHYS.knockThreshold*.65){maybeKnock(a,impulse);maybeKnock(b,impulse);}}}}}}
+
+function getInput(body,dt){if(body.isPlayer){let x=touchMove.x,z=touchMove.y;if(keys.KeyA||keys.ArrowLeft)x-=1;if(keys.KeyD||keys.ArrowRight)x+=1;if(keys.KeyW||keys.ArrowUp)z-=1;if(keys.KeyS||keys.ArrowDown)z+=1;const m=Math.hypot(x,z);if(m>1){x/=m;z/=m;}const jump=jumpPressed,dive=divePressed;jumpPressed=false;divePressed=false;return {x,z,jump,dive};}
+ const routes=stage.objects.filter(o=>o.type==='routeNode');let target=null;if(routes.length&&body.aiNode<routes.length){const t=routes[body.aiNode];target=new THREE.Vector3(t.p[0],t.p[1]+.4,t.p[2]);if(body.pos.distanceTo(target)<1.25){body.aiNode++;if(body.aiNode<routes.length){const next=routes[body.aiNode];target=new THREE.Vector3(next.p[0],next.p[1]+.4,next.p[2]);}else target=null;}}
+ if(!target){const goal=stage.objects.find(o=>o.type==='goal');if(goal)target=new THREE.Vector3(...goal.p);else{const spawn=stage.objects.find(o=>o.type==='spawn'),base=routes.length?routes[routes.length-1].p:(spawn?spawn.p:[0,0,0]);if(!body.aiWander||body.aiWanderTime<=0||body.pos.distanceTo(body.aiWander)<1.1){body.aiWander=new THREE.Vector3(base[0]+rand(-3.5,3.5),base[1]+.4,base[2]+rand(-3.5,3.5));body.aiWanderTime=rand(1.8,3.8);}target=body.aiWander;}}
+ const dx=target.x-body.pos.x,dz=target.z-body.pos.z;const dist=Math.hypot(dx,dz)||1;let x=dx/dist,z=dz/dist;let jump=false;
+ const obstacle=solidObjects().some(o=>{const b=boxBounds(o);const along=(body.pos.x-b.minX);const cx=(b.minX+b.maxX)/2,cz=(b.minZ+b.maxZ)/2;const vx=cx-body.pos.x,vz=cz-body.pos.z;const forward=vx*x+vz*z,side=Math.abs(vx*z-vz*x);return forward>.3&&forward<2.4&&side<(o.data.s[0]+o.data.s[2])*.25&&b.maxY-body.pos.y<2.8&&b.maxY-body.pos.y>.15;});
+ if(body.grounded&&body.aiThink<=0&&(obstacle||target.y-body.pos.y>.65)&&Math.random()<.72){jump=true;body.aiThink=rand(.7,1.3);}return {x,z,jump,dive:false};}
+function nearestSlime(body){for(const o of worldObjects){if(o.data.type!=='slime')continue;const b=boxBounds(o);if(insideObjectXZ(o,body.pos)&&Math.abs((body.pos.y-PHYS.beanHeight/2)-b.maxY)<.28)return o;}return null;}
+function updateBody(body,dt){if(!body.alive||body.finished)return;
+ body.aiThink=Math.max(0,body.aiThink-dt);body.aiWanderTime=Math.max(0,body.aiWanderTime-dt);body.jumpBuffer=Math.max(0,body.jumpBuffer-dt);body.diveCooldown=Math.max(0,body.diveCooldown-dt);body.diveTime=Math.max(0,body.diveTime-dt);body.recovery=Math.max(0,body.recovery-dt);body.stun=Math.max(0,body.stun-dt);body.coyote=Math.max(0,body.coyote-dt);
+ let input=getInput(body,dt);if(input.jump)body.jumpBuffer=.13;
+ const len=Math.hypot(input.x,input.z);let dirX=0,dirZ=0;if(len>.001){const x=input.x/len,z=input.z/len;if(body.isPlayer){const sy=Math.sin(cameraYaw),cy=Math.cos(cameraYaw);dirX=x*cy+(-z)*sy;dirZ=x*sy+z*cy;}else{dirX=x;dirZ=z;}}
+ if(body.isPlayer&&input.dive&&body.diveCooldown<=0&&body.recovery<=0&&body.stun<=0){const f=len>.08?new THREE.Vector3(dirX,0,dirZ):new THREE.Vector3(Math.sin(cameraYaw),0,-Math.cos(cameraYaw));if(body.grounded)body.vel.y=Math.max(body.vel.y,PHYS.diveLift);body.vel.x+=f.x*PHYS.diveSpeed;body.vel.z+=f.z*PHYS.diveSpeed;body.diveTime=.48;body.recovery=PHYS.diveRecovery;body.diveCooldown=PHYS.diveCooldown;body.grounded=false;}
+ if(!body.isPlayer&&input.jump&&body.grounded&&body.recovery<=0){body.jumpBuffer=.12;}
+ if(body.jumpBuffer>0&&(body.grounded||body.coyote>0)&&body.recovery<=0&&body.stun<=0){body.vel.y=PHYS.jumpSpeed;body.grounded=false;body.coyote=0;body.jumpBuffer=0;body.airTime=0;}
+ const controllable=body.stun<=0&&body.recovery<=0;const desiredX=controllable?dirX*PHYS.walkSpeed:0,desiredZ=controllable?dirZ*PHYS.walkSpeed:0;const accel=body.grounded?PHYS.groundAccel:PHYS.airAccel;const airFactor=body.grounded?1:PHYS.airSteer;
+ body.vel.x+=(desiredX-body.vel.x)*Math.min(1,accel*airFactor*dt/Math.max(PHYS.walkSpeed,1));body.vel.z+=(desiredZ-body.vel.z)*Math.min(1,accel*airFactor*dt/Math.max(PHYS.walkSpeed,1));
+ if(len<.05&&body.grounded){const drag=Math.exp(-PHYS.groundDrag*dt);body.vel.x*=drag;body.vel.z*=drag;}else if(!body.grounded){const drag=Math.exp(-PHYS.airDrag*dt);body.vel.x*=drag;body.vel.z*=drag;}
+ if(body.diveTime>0){body.vel.x*=1.002;body.vel.z*=1.002;}
+ const slime=nearestSlime(body);if(slime){body.vel.x*=Math.exp(-2.6*dt);body.vel.z*=Math.exp(-2.6*dt);}
+ // Gizmos apply forces / conveyors
+ for(const o of worldObjects){const d=o.data,dx=body.pos.x-o.group.position.x,dz=body.pos.z-o.group.position.z,dist=Math.hypot(dx,dz);if(d.type==='bumper'&&dist<Math.max(...d.s)*.5+.55&&Math.abs(body.pos.y-o.group.position.y)<1.3){const n=dist>0?1/dist:1;body.vel.x+=dx*n*17*dt;body.vel.z+=dz*n*17*dt;body.vel.y=Math.max(body.vel.y,3.5);if(dist<.8)maybeKnock(body,11);}
+  if(d.type==='fan'&&dist<d.s[0]*1.6&&Math.abs(body.pos.y-o.group.position.y)<d.s[1]*1.3){const n=dist>0?1/dist:1;body.vel.x+=dx*n*d.power*dt;body.vel.z+=dz*n*d.power*dt;body.vel.y+=d.power*.12*dt;}
+  if(d.type==='jumpPad'&&dist<Math.max(d.s[0],d.s[2])*.45&&Math.abs(body.pos.y-(o.group.position.y+d.s[1]/2+PHYS.beanHeight/2))<.36&&body.grounded){body.vel.y=PHYS.jumpSpeed*1.28;body.grounded=false;}
+  if(d.type==='conveyor'&&insideObjectXZ(o,body.pos)&&body.grounded){body.vel.x-=Math.sin(o.group.rotation.y)*d.power*dt*2.1;body.vel.z-=Math.cos(o.group.rotation.y)*d.power*dt*2.1;}
+  if(d.type==='spinner'){const yaw=o.group.rotation.y,lx=Math.cos(yaw)*dx-Math.sin(yaw)*dz,lz=Math.sin(yaw)*dx+Math.cos(yaw)*dz;if(Math.abs(lx)<d.s[0]/2+PHYS.beanRadius&&Math.abs(lz)<d.s[2]/2+PHYS.beanRadius&&Math.abs(body.pos.y-(o.group.position.y+.35))<.85){const side=Math.abs(lz)<Math.abs(lx)?(lz>=0?1:-1):(lx>=0?1:-1);const nx=Math.abs(lz)<Math.abs(lx)?-Math.sin(yaw)*side:Math.cos(yaw)*side;const nz=Math.abs(lz)<Math.abs(lx)?Math.cos(yaw)*side:Math.sin(yaw)*side;body.vel.x+=nx*(5+Math.abs(d.power||1))*dt*5;body.vel.z+=nz*(5+Math.abs(d.power||1))*dt*5;maybeKnock(body,PHYS.knockThreshold+1);}}
+ }
+ body.vel.y=Math.max(PHYS.terminalVelocity,body.vel.y-PHYS.gravity*dt);const prevY=body.pos.y;body.pos.x+=body.vel.x*dt;body.pos.y+=body.vel.y*dt;body.pos.z+=body.vel.z*dt;
+ const landed=detectGround(body,prevY);resolveSides(body);if(landed&&body.vel.length()>11)maybeKnock(body,body.vel.length()*.55);
+ if(body.grounded)body.airTime=0;else body.airTime+=dt;
+ // Checkpoint and goal triggers
+ for(const o of worldObjects){const d=o.data,dx=body.pos.x-o.group.position.x,dz=body.pos.z-o.group.position.z,dy=Math.abs(body.pos.y-o.group.position.y);if(d.type==='checkpoint'&&Math.abs(localXZ(o,body.pos).x)<d.s[0]*.6&&Math.abs(localXZ(o,body.pos).z)<1&&dy<d.s[1]){body.checkpoint.set(body.pos.x,body.pos.y,body.pos.z);body.checkpointActive=true;}
+  if(d.type==='goal'&&Math.abs(localXZ(o,body.pos).x)<d.s[0]*.55&&Math.abs(localXZ(o,body.pos).z)<1.15&&dy<d.s[1]*.8&&body.pos.y>o.group.position.y-.5){body.finished=true;body.finishTime=gameState?gameState.elapsed:0;}
+  if(d.type==='slimePit'&&insideObjectXZ(o,body.pos,0)&&body.pos.y<o.group.position.y+1.2){if(gameState?.testMode||body.checkpointActive){body.pos.copy(body.checkpoint);body.vel.set(0,0,0);body.stun=.35;}else body.alive=false;}
+ }
+ if(body.pos.y< -14){if(gameState?.testMode||body.checkpointActive){body.pos.copy(body.checkpoint);body.vel.set(0,0,0);body.stun=.35;}else{body.alive=false;}}
+ body.mesh.position.copy(body.pos);const speed=Math.hypot(body.vel.x,body.vel.z);if(speed>.15&&body.stun<=0){const targetRot=Math.atan2(-body.vel.x,-body.vel.z);body.mesh.rotation.y=targetRot;}
+ const bodyMesh=body.mesh.userData.body;if(bodyMesh){bodyMesh.rotation.z=body.stun>0?Math.sin(performance.now()*.018)*.55:body.diveTime>0?-.85:0;bodyMesh.rotation.x=body.diveTime>0?-.22:0;}
+ body.progress=body.finished?1:estimateProgress(body);
+}
+function estimateProgress(body){const routes=stage.objects.filter(o=>o.type==='routeNode'),spawn=stage.objects.find(o=>o.type==='spawn'),goal=stage.objects.find(o=>o.type==='goal');const points=[spawn?new THREE.Vector3(...spawn.p):new THREE.Vector3(0,0,8),...routes.map(o=>new THREE.Vector3(...o.p))];if(goal)points.push(new THREE.Vector3(...goal.p));if(points.length<2)return 0;let total=0,lengths=[];for(let i=0;i<points.length-1;i++){const l=points[i].distanceTo(points[i+1]);lengths.push(l);total+=l;}if(total<.001)return 0;let bestDistance=Infinity,bestProgress=0,travelled=0;for(let i=0;i<points.length-1;i++){const a=points[i],v=points[i+1].clone().sub(a),len2=v.lengthSq(),t=len2?clamp(body.pos.clone().sub(a).dot(v)/len2,0,1):0,nearest=a.clone().addScaledVector(v,t),distance=nearest.distanceToSquared(body.pos);if(distance<bestDistance){bestDistance=distance;bestProgress=(travelled+t*lengths[i])/total;}travelled+=lengths[i];}return clamp(bestProgress,0,.99);}
+function updateMovingObjects(t){for(const o of worldObjects){const d=o.data;if(d.type==='spinner'){o.group.rotation.y=(d.rot||0)*Math.PI/180+t*(d.power||1)*.8;}
+ if(d.type==='fan'&&o.group.userData.blades)o.group.userData.blades.rotation.z=t*5*(d.power||1);
+ if(d.type==='movingPlatform'){const before=o.group.position.clone();o.group.position.x=d.p[0]+Math.sin(t*(d.power||1))*(d.s[0]*.7);o.group.position.z=d.p[2]+Math.cos(t*(d.power||1)*.7)*(d.s[2]*.45);const delta=o.group.position.clone().sub(before);for(const b of bodies){if(b.grounded&&b.lastGround===o){b.pos.add(delta);b.mesh.position.copy(b.pos);}}}
+ }}
+
+function cameraUpdate(dt){if(mode==='editor'){const cp=Math.cos(editorPitch);camera.position.set(currentLookTarget.x+Math.sin(editorYaw)*cp*editorDistance,currentLookTarget.y+Math.sin(editorPitch)*editorDistance,currentLookTarget.z+Math.cos(editorYaw)*cp*editorDistance);camera.lookAt(currentLookTarget);}else if(player){const target=player.pos.clone().add(new THREE.Vector3(0,1.0,0));const behind=new THREE.Vector3(-Math.sin(cameraYaw)*8,4.2,Math.cos(cameraYaw)*8);const wanted=target.clone().add(behind);camera.position.lerp(wanted,1-Math.exp(-5*dt));camera.lookAt(target.clone().add(new THREE.Vector3(0,.3,0)));}}
+
+// Editor UI and object placement
+function updateStageFields(){ $('stageName').value=stage.name;$('stageType').value=stage.type;$('stageTime').value=stage.timeLimit;$('useQual').value=stage.useQual?'yes':'no';$('useFinal').value=stage.useFinal?'yes':'no';$('objectCount').textContent=stage.objects.length+' OBJECTS';$('listCount').textContent=stage.objects.length; }
+function syncStageFields(){stage.name=$('stageName').value.slice(0,48)||'無題ラウンド';stage.type=$('stageType').value;stage.timeLimit=clamp(Number($('stageTime').value)||120,15,900);stage.useQual=$('useQual').value==='yes';stage.useFinal=$('useFinal').value==='yes';saveDraft();}
+function renderObjectList(){const box=$('objectList');box.innerHTML='';for(const o of stage.objects){const row=document.createElement('div');row.className='object-row'+(o.id===selectedId?' selected':'');const icon=document.createElement('span');icon.textContent=({platform:'▰',goal:'🏁',checkpoint:'⚑',routeNode:'◆',spinner:'✳',bumper:'●',slime:'☣'}[o.type]||'◇');const nm=document.createElement('span');nm.className='nm';nm.textContent=objectLabel(o);const pick=document.createElement('button');pick.textContent='選択';pick.onclick=()=>selectObject(o.id);row.append(icon,nm,pick);box.append(row);} }
+function updateInspector(){const o=stage.objects.find(x=>x.id===selectedId);$('noSelection').classList.toggle('hidden',!!o);$('inspector').classList.toggle('hidden',!o);if(!o)return;$('objName').value=o.name;$('objX').value=o.p[0];$('objY').value=o.p[1];$('objZ').value=o.p[2];$('objW').value=o.s[0];$('objH').value=o.s[1];$('objD').value=o.s[2];$('objRot').value=o.rot;$('objPower').value=o.power;}
+function selectObject(id){selectedId=id;updateInspector();renderObjectList();updateSelectionVisual();}
+function updateSelectionVisual(){for(const o of worldObjects){const chosen=o.data.id===selectedId;const old=o.group.getObjectByName('selectionRing');if(old){o.group.remove(old);disposeObject(old);}if(chosen){const ring=new THREE.Mesh(new THREE.BoxGeometry(o.data.s[0]+.12,o.data.s[1]+.12,o.data.s[2]+.12),new THREE.MeshBasicMaterial({color:0x4ae8ff,wireframe:true,transparent:true,opacity:.95}));ring.name='selectionRing';o.group.add(ring);}}}
+function rebuildSelected(){const o=stage.objects.find(x=>x.id===selectedId);if(!o)return;const index=stage.objects.findIndex(x=>x.id===selectedId);const old=worldObjects.find(x=>x.data.id===selectedId);if(old){worldRoot.remove(old.group);disposeObject(old.group);worldObjects.splice(worldObjects.indexOf(old),1);}createWorldObject(o);updateSelectionVisual();renderObjectList();updateStageFields();saveDraft();}
+function addObject(type,at=[0,0,0]){const info=TYPE_INFO[type];if(!info)return;const idx=stage.objects.filter(o=>o.type==='routeNode').length;const d={id:uid(),type,name:type==='routeNode'?`ルート点 ${idx+1}`:info.label,p:[Number(at[0].toFixed(2)),Number(at[1].toFixed(2)),Number(at[2].toFixed(2))],s:[...info.defaultSize],rot:0,power:type==='fan'?9:type==='spinner'?1:1};stage.objects.push(d);createWorldObject(d);selectObject(d.id);updateStageFields();saveDraft();showToast(`${info.label}を配置したよ`);}
+function inspectorApply(){const o=stage.objects.find(x=>x.id===selectedId);if(!o)return;o.name=$('objName').value||TYPE_INFO[o.type].label;o.p=[$('objX').value,$('objY').value,$('objZ').value].map(Number);o.s=[$('objW').value,$('objH').value,$('objD').value].map(v=>Math.max(.2,Number(v)||1));o.rot=Number($('objRot').value)||0;o.power=Number($('objPower').value)||1;rebuildSelected();}
+['objName','objX','objY','objZ','objW','objH','objD','objRot','objPower'].forEach(id=>$(id).addEventListener('change',inspectorApply));
+$('duplicateBtn').onclick=()=>{const o=stage.objects.find(x=>x.id===selectedId);if(!o)return;const d=clone(o);d.id=uid();d.name+=' コピー';d.p[0]+=.8;d.p[2]+=.8;stage.objects.push(d);createWorldObject(d);selectObject(d.id);updateStageFields();saveDraft();};
+$('deleteBtn').onclick=()=>{if(!selectedId)return;stage.objects=stage.objects.filter(o=>o.id!==selectedId);selectedId=null;rebuildWorld();updateInspector();renderObjectList();updateStageFields();saveDraft();};
+$('objectPalette').addEventListener('click',e=>{const b=e.target.closest('[data-type]');if(!b)return;placementType=b.dataset.type;toolMode='place';$('toolToggle').textContent='配置モード';document.querySelectorAll('.objbtn').forEach(x=>x.classList.toggle('active',x===b));showToast(`${TYPE_INFO[placementType].label}を配置モードにしたよ`);});
+$('stageName').addEventListener('change',syncStageFields);$('stageType').addEventListener('change',syncStageFields);$('stageTime').addEventListener('change',syncStageFields);$('useQual').addEventListener('change',syncStageFields);$('useFinal').addEventListener('change',syncStageFields);
+$('saveStageBtn').onclick=()=>{syncStageFields();const existing=library.findIndex(x=>x.id===stage.id);if(existing>=0)library[existing]=clone(stage);else library.push(clone(stage));saveLibrary();showToast('ライブラリに保存したよ');};
+$('newStageBtn').onclick=()=>{if(!confirm('今の編集内容はライブラリに保存した？ 新しいステージを作る？'))return;stage=makeBlankStage();selectedId=null;rebuildWorld();updateStageFields();updateInspector();renderObjectList();saveDraft();showToast('新しいステージを作成したよ');};
+$('clearStageBtn').onclick=()=>{if(!confirm('ステージ上のオブジェクトをすべて削除する？'))return;stage.objects=[];selectedId=null;rebuildWorld();updateStageFields();updateInspector();renderObjectList();saveDraft();};
+function renderLibrary(){const box=$('stageLibrary');box.innerHTML='';if(!library.length){box.textContent='まだ保存されたステージはないよ。';return;}for(const s of library){const row=document.createElement('div');row.className='stageitem';const nm=document.createElement('span');nm.className='nm';nm.textContent=`${s.name} · ${s.type==='race'?'レース':'サバイバル'}`;const load=document.createElement('button');load.textContent='開く';load.onclick=()=>{stage=normalizeStage(s);selectedId=null;rebuildWorld();updateStageFields();updateInspector();renderObjectList();saveDraft();showToast('ステージを開いたよ');};const del=document.createElement('button');del.textContent='×';del.className='danger';del.onclick=()=>{library=library.filter(x=>x.id!==s.id);saveLibrary();};row.append(nm,load,del);box.append(row);}}
+
+function utcSuffix(){let n=Math.floor(Date.now()/60000),s='';do{const r=n%36;s='0123456789abcdefghijklmnopqrstuvwxyz'[r]+s;n=Math.floor(n/36);}while(n);return s.padStart(6,'0');}
+function downloadBlob(blob,name){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+$('exportBtn').onclick=()=>{syncStageFields();const payload={format:'FGR',version:1,createdAt:new Date().toISOString(),stage:clone(stage)};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const base=(stage.name||'Round').replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_');downloadBlob(blob,`${base}_${utcSuffix()}.fgr`);showToast('.fgrを書き出したよ');};
+$('importBtn').onclick=()=>$('fileInput').click();$('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const txt=await file.text();const raw=JSON.parse(txt);const data=raw.stage||raw;if(raw.format!=='FGR'&&data.format!=='FGR'&&!Array.isArray(data.objects))throw new Error('FGR形式ではないみたい');const s=normalizeStage(data);stage=s;selectedId=null;rebuildWorld();updateStageFields();updateInspector();renderObjectList();saveDraft();const i=library.findIndex(x=>x.id===s.id);if(i>=0)library[i]=clone(s);else library.push(clone(s));saveLibrary();showToast(`${file.name}を読み込んだよ`);}catch(err){alert('読み込みに失敗したよ: '+err.message);}e.target.value='';});
+
+// Canvas editor interaction: click ground to place, click mesh to select, drag to orbit
+function setPointer(ev){const r=canvas.getBoundingClientRect();pointer.x=((ev.clientX-r.left)/r.width)*2-1;pointer.y=-((ev.clientY-r.top)/r.height)*2+1;raycaster.setFromCamera(pointer,camera);}
+function editorPointerDown(ev){if(mode!=='editor')return;pointerDown={x:ev.clientX,y:ev.clientY,id:ev.pointerId,moved:false};canvas.setPointerCapture?.(ev.pointerId);}
+function editorPointerMove(ev){if(mode!=='editor'||!pointerDown)return;const dx=ev.clientX-pointerDown.x,dy=ev.clientY-pointerDown.y;if(Math.abs(dx)+Math.abs(dy)>3)pointerDown.moved=true;if(pointerDown.moved){editorYaw-=dx*.006;editorPitch=clamp(editorPitch+dy*.005,.13,1.35);pointerDown.x=ev.clientX;pointerDown.y=ev.clientY;}}
+function editorPointerUp(ev){if(mode!=='editor'||!pointerDown)return;const moved=pointerDown.moved;pointerDown=null;if(moved)return;setPointer(ev);const meshes=[];worldObjects.forEach(o=>o.group.traverse(n=>{if(n.isMesh)meshes.push(n);}));const hits=raycaster.intersectObjects(meshes,false);
+ if(toolMode==='select'){let found=null;for(const h of hits){let id=h.object.userData.parentObjectId;if(id){found=id;break;}}if(found)selectObject(found);else{selectedId=null;updateInspector();renderObjectList();updateSelectionVisual();}return;}
+ const point=new THREE.Vector3();if(hits.length)point.copy(hits[0].point);else raycaster.ray.intersectPlane(groundPlane,point);const snap=v=>Math.round(v*2)/2;const size=TYPE_INFO[placementType].defaultSize;let y=point.y;if(['platform','paddedFloor','ramp','slime','block','wall','jumpPad','conveyor','movingPlatform','bumper'].includes(placementType))y+=size[1]/2;addObject(placementType,[snap(point.x),Number(y.toFixed(2)),snap(point.z)]);} 
+$('toolToggle').onclick=()=>{toolMode=toolMode==='place'?'select':'place';$('toolToggle').textContent=toolMode==='place'?'配置モード':'選択モード';showToast(toolMode==='place'?'クリックでオブジェクトを配置':'クリックでオブジェクトを選択');};
+canvas.addEventListener('pointerdown',editorPointerDown);canvas.addEventListener('pointermove',editorPointerMove);canvas.addEventListener('pointerup',editorPointerUp);canvas.addEventListener('pointercancel',()=>pointerDown=null);
+canvas.addEventListener('wheel',e=>{if(mode==='editor'){editorDistance=clamp(editorDistance+e.deltaY*.025,7,65);e.preventDefault();}},{passive:false});
+$('focusBtn').onclick=()=>{editorYaw=.8;editorPitch=.52;editorDistance=24;currentLookTarget.set(0,0,0);};
+
+// Game states / rounds / qualification
+function showModal(title,text,buttons){$('modalTitle').textContent=title;$('modalText').textContent=text;$('modalActions').innerHTML='';for(const item of buttons){const b=document.createElement('button');b.textContent=item.label;b.className=item.class||'';b.onclick=item.action;$('modalActions').append(b);}$('modalMessage').classList.remove('hidden');}
+function hideModal(){$('modalMessage').classList.add('hidden');}
+function setMode(next){mode=next;$('tabEditor').classList.toggle('active',next==='editor');$('tabPlay').classList.toggle('active',next==='play');$('editorPanel').classList.toggle('hidden',next!=='editor');$('editorBar').classList.toggle('hidden',next!=='editor');$('gameHud').classList.toggle('hidden',next==='editor');$('touchControls').style.display=(next==='test'||next==='play')?'block':'none';$('mobileTip').style.display=(next==='test'||next==='play')?'block':'none';$('modePill').textContent=next==='editor'?'ROUND CREATOR':next==='test'?'TEST PLAY':'SHOW MODE';$('viewportLabel').textContent=next==='editor'?'EDITOR VIEW · ドラッグで視点回転 / ホイールでズーム':next==='test'?'TEST PLAY · WASD / Space / Ctrl':'SHOW MODE · 32 BEANS';hideModal();resize();}
+function makeShowQueue(){const quals=library.filter(s=>s.useQual!==false);const finals=library.filter(s=>s.useFinal!==false);const pool=library.length?library:[stage];if(!pool.length)return [];function draw(list,n,prefer){let source=list.length?list:pool;let arr=source.map(x=>clone(x));for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}const out=[];while(out.length<n)out.push(clone(arr[out.length%arr.length]));return out;}
+ const q=draw(quals.length?quals:pool,3);let fpool=finals.length?finals:pool;let final=draw(fpool,1)[0];return [...q,final];}
+function startTest(){syncStageFields();gameState={testMode:true,roundIndex:0,elapsed:0,limit:stage.timeLimit,roundType:stage.type,qualified:32,queue:[clone(stage)],showMode:false,finished:false};setMode('test');rebuildWorld();spawnRound(false);gameRunning=true;$('roundLabel').textContent='TEST PLAY';$('qualLabel').textContent=stage.type==='race'?'GOAL':'SURVIVE';$('timerLabel').textContent=stage.timeLimit.toFixed(1);showToast('テストプレイ開始！');}
+function startShow(){if(!library.length&&!stage.objects.length){alert('先にステージを作成して、ライブラリに保存してね。');return;}if(!editorBackup)editorBackup=clone(stage);const q=makeShowQueue();gameState={testMode:false,roundIndex:0,elapsed:0,limit:q[0].timeLimit,roundType:q[0].type,qualified:32,queue:q,showMode:true,finished:false,eliminated:0};loadShowRound(0);}
+function loadShowRound(index){gameState.roundIndex=index;gameState.elapsed=0;gameState.limit=gameState.queue[index].timeLimit||120;gameState.roundType=gameState.queue[index].type||'race';stage=normalizeStage(gameState.queue[index]);selectedId=null;rebuildWorld();setMode('play');spawnRound(true);gameRunning=true;$('roundLabel').textContent=index<3?`予選 ${index+1} / 3`:'FINAL';$('qualLabel').textContent=index===0?'TOP 24':index===1?'TOP 16':index===2?'TOP 8':'WIN';$('timerLabel').textContent=gameState.limit.toFixed(1);showToast(`${stage.name} スタート！`);}
+function endRound(){if(!gameRunning)return;gameRunning=false;const ranked=[...bodies].sort((a,b)=>{if(a.alive!==b.alive)return a.alive?-1:1;if(a.finished&&b.finished)return a.finishTime-b.finishTime;if(a.finished)return -1;if(b.finished)return 1;return b.progress-a.progress;});let playerRank=ranked.findIndex(b=>b.isPlayer)+1;const quotas=[24,16,8,1];const quota=quotas[gameState.roundIndex]||1;let passed=gameState.testMode?true:(gameState.roundType==='survival'?player.alive&&playerRank<=quota:player.finished?playerRank<=quota:playerRank<=quota&&gameState.elapsed>=gameState.limit);
+ if(gameState.testMode){showModal(player.alive?'テストプレイ終了':'リスポーン',player.finished?'ゴール到達！':`経過時間 ${gameState.elapsed.toFixed(1)} 秒`,[{label:'もう一度',class:'primary',action:()=>startTest()},{label:'エディタに戻る',action:()=>{setMode('editor');gameRunning=false;rebuildWorld();}}]);return;}
+ if(gameState.roundIndex<3){gameState.qualified=Math.max(1,quota);const title=passed?'QUALIFIED!':'ELIMINATED';const msg=passed?`順位 ${playerRank} 位！ 次のラウンドへ進出。`:`順位 ${playerRank} 位。今回はここで終了。`;showModal(title,msg,[{label:'結果を見る',class:passed?'good':'danger',action:()=>{if(!passed){if(editorBackup){stage=normalizeStage(editorBackup);editorBackup=null;updateStageFields();}setMode('editor');rebuildWorld();updateInspector();renderObjectList();return;}if(gameState.roundIndex===2){loadShowRound(3);}else{loadShowRound(gameState.roundIndex+1);}}}]);}else{const won=gameState.roundType==='survival'?(player.alive&&playerRank===1):(player.finished&&playerRank===1);showModal(won?'🏆 YOU WIN!':'FINAL 終了',won?'クラウン獲得！おめでとう！':`最終順位 ${playerRank} 位`,[{label:'もう一度プレイ',class:'primary',action:()=>startShow()},{label:'エディタに戻る',action:()=>{if(editorBackup){stage=normalizeStage(editorBackup);editorBackup=null;updateStageFields();}setMode('editor');rebuildWorld();updateInspector();renderObjectList();}}]);}}
+$('tabEditor').onclick=()=>{gameRunning=false;if(editorBackup){stage=normalizeStage(editorBackup);editorBackup=null;}setMode('editor');rebuildWorld();updateStageFields();updateInspector();renderObjectList();};$('tabPlay').onclick=()=>{gameRunning=false;showModal('SHOW MODE','保存したステージからランダムに3つの予選とファイナルを選ぶよ。', [{label:'32人ショー開始',class:'primary',action:startShow},{label:'今のステージをテスト',action:startTest},{label:'戻る',action:hideModal}]);};
+
+// Touch controls
+const stickZone=$('stickZone'),knob=$('stickKnob');function stickSet(e){const r=stickZone.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=r.width*.34,d=Math.hypot(dx,dy);if(d>max){dx=dx/d*max;dy=dy/d*max;}touchMove={x:dx/max,y:dy/max};knob.style.transform=`translate(${dx}px,${dy}px)`;}
+stickZone.addEventListener('pointerdown',e=>{touchPointer=e.pointerId;stickZone.setPointerCapture(e.pointerId);stickSet(e);});stickZone.addEventListener('pointermove',e=>{if(e.pointerId===touchPointer)stickSet(e);});function resetStick(e){if(touchPointer===e.pointerId){touchPointer=null;touchMove={x:0,y:0};knob.style.transform='';}}stickZone.addEventListener('pointerup',resetStick);stickZone.addEventListener('pointercancel',resetStick);
+function bindAction(el,key){el.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;if(key==='Space')jumpPressed=true;if(key==='ControlLeft')divePressed=true;el.setPointerCapture?.(e.pointerId);});const up=()=>keys[key]=false;el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);}bindAction($('jumpTouch'),'Space');bindAction($('diveTouch'),'ControlLeft');
+window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!keys[e.code]){if(e.code==='Space')jumpPressed=true;if(e.code==='ControlLeft'||e.code==='ControlRight')divePressed=true;}keys[e.code]=true;});window.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{keys={};touchMove={x:0,y:0};});
+
+// Camera drag in gameplay rotates camera, editor drag orbits the level
+let gameDrag=null;canvas.addEventListener('pointerdown',e=>{if(mode==='play'||mode==='test'){gameDrag={x:e.clientX,y:e.clientY};}});canvas.addEventListener('pointermove',e=>{if(gameDrag&&(mode==='play'||mode==='test')){const dx=e.clientX-gameDrag.x;cameraYaw-=dx*.005;gameDrag.x=e.clientX;gameDrag.y=e.clientY;}});canvas.addEventListener('pointerup',()=>gameDrag=null);canvas.addEventListener('pointercancel',()=>gameDrag=null);
+
+// Main frame loop
+function updateHud(){if(!gameState)return;$('timerLabel').textContent=Math.max(0,gameState.limit-gameState.elapsed).toFixed(1);const alive=bodies.filter(b=>b.alive&&!b.finished).length;const rank=[...bodies].sort((a,b)=>{if(a.finished&&b.finished)return a.finishTime-b.finishTime;if(a.finished)return -1;if(b.finished)return 1;return b.progress-a.progress;}).findIndex(b=>b.isPlayer)+1;$('rankLabel').textContent=`${rank||'–'} / ${alive+(bodies.filter(b=>b.finished).length)}`;const p=player?.progress||0;$('progressBar').style.width=(p*100)+'%';}
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.04,(now-lastTime)/1000||0);lastTime=now;if(mode!=='editor'&&gameRunning){gameState.elapsed+=dt;updateMovingObjects(gameState.elapsed);for(const b of bodies)updateBody(b,dt);handleBeanCollisions();updateHud();const allDone=player&&(player.finished||!player.alive);const timeUp=gameState.elapsed>=gameState.limit;
+ if(gameState.testMode){if(allDone||timeUp)endRound();}else if(gameState.roundType==='race'){const finishedCount=bodies.filter(b=>b.finished).length;if((gameState.roundIndex===3&&finishedCount>=1)||(gameState.roundIndex<3&&player.finished&&finishedCount>=([24,16,8][gameState.roundIndex]||24))||timeUp||!player.alive)endRound();}else{const remaining=bodies.filter(b=>b.alive).length;if(timeUp||remaining<=([24,16,8,1][gameState.roundIndex]||1))endRound();}}
+ if(mode==='editor'){const t=performance.now()*.001;updateMovingObjects(t);}
+ cameraUpdate(dt);renderer.render(scene,camera);}
+requestAnimationFrame(frame);
+
+// Initialise
+rebuildWorld();updateStageFields();updateInspector();renderObjectList();renderLibrary();setMode('editor');
+window.addEventListener('beforeunload',saveDraft);
 </script>
 </body>
 </html>
